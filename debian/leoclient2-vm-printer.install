@@ -1,0 +1,3 @@
+usr/bin/run-vm-printer2-splitter
+usr/bin/run-vm-printer2-spooler
+etc/leoclient2/leoclient-vm-printer2.conf

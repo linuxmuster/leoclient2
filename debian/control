@@ -1,0 +1,69 @@
+Source: leoclient2
+Section: admin
+Priority: optional
+Maintainer: Ruediger Beck <jeffbeck@web.de>
+Build-Depends: debhelper , perl-base, fakeroot
+Standards-Version: 3.5.2
+
+
+Package: leoclient2-virtualbox
+Architecture: all
+Suggests: 
+Pre-Depends: 
+Depends: 
+Description: configuration for a VirtualBox machine winXP
+ provides virtualbox shared folders in the winXP machine to linuxmuster.net 
+ client shares (without using the network)
+
+Package: leoclient2-leovirtstarter-client
+Architecture: all
+Suggests: 
+Pre-Depends: leoclient2-leovirtstarter-common
+Depends: libfilesys-df-perl, liblog-log4perl-perl, zenity
+Description: alternativ software to start VirtualBox
+ leovirtstarter2-client copies and caches VirtualBox snapshots and starts
+ them
+
+
+Package: leoclient2-leovirtstarter-server
+Architecture: all
+Suggests: 
+Pre-Depends:
+Depends: leoclient2-leovirtstarter-common
+Description: prepare snapshots for leovirtstarter-client 
+ leovirtstarter-server compresses snapshots and determines theis sizes and 
+ syncs them to other servers
+
+
+Package: leoclient2-leovirtstarter-common
+Architecture: all
+Suggests: 
+Pre-Depends:
+Depends:  libfilesys-df-perl, libglib-perl
+Description: alternativ software to start VirtualBox
+ leovirtstarter-client copies and caches VirtualBox snapshots and starts
+ them
+
+
+Package: leoclient2-vm-printer
+Architecture: all
+Suggests: 
+Pre-Depends:
+Depends: liblinux-inotify2-perl, liblog-log4perl-perl
+Description: Watches a directory used for virtual machine printing. 
+ Sends the created files to the default printer
+
+
+
+Package: leoclient2-bsz-clientbundle
+Architecture: all
+Suggests: 
+Pre-Depends:
+Depends: leoclient2-virtualbox, leoclient2-leovirtstarter-client, leoclient2-vm-printer, linuxmuster-client-extras 
+Description: Complete bundle of packages at BSZ Leonberg 
+
+
+
+
+
+
