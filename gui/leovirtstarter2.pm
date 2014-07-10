@@ -3,7 +3,7 @@
 # It is released under the GPL Version 3
 # For Bugs send mail to (jeffbeck-at-web.de)
 
-package leovirtstarter;
+package leovirtstarter2;
 require Exporter;
 use utf8;
 use File::Basename;

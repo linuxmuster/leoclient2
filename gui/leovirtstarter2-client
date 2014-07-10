@@ -41,7 +41,7 @@ Log::Log4perl->easy_init({
                 level   => $DEBUG,
                 file    => ">>$log" } );    
 
-use leoclient2::leovirtstarter;
+use leoclient2::leovirtstarter2;
 use Filesys::Df;
 
 # Parsen der Optionen
