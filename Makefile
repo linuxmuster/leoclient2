@@ -8,6 +8,7 @@ VBOXDIR=$(DESTDIR)/usr/bin
 MENU=$(DESTDIR)/usr/share/menu
 # configs
 LEOCLIENTCONF=$(DESTDIR)/etc/leoclient2
+VIRTCONF=$(DESTDIR)/etc/leovirtstarter
 # Perl modules
 PERLMOD=$(DESTDIR)/usr/share/perl5/leoclient2
 BIN=$(DESTDIR)/usr/bin
@@ -51,35 +52,35 @@ default:
 leoclient2-leovirtstarter-client:
 	@echo '   * Installing the client script'
 	@install -d -m0755 -oroot -groot $(VBOXDIR)
-	@install -oroot -groot --mode=0755 gui/leovirtstarter-client $(VBOXDIR)
+	@install -oroot -groot --mode=0755 gui/leovirtstarter2-client $(VBOXDIR)
 	@echo '   * Installing the client configuration files'
 	@install -d -m755 -oroot -groot $(VIRTCONF)
-	@install -oroot -groot --mode=0644 gui/leovirtstarter.conf  $(VIRTCONF)
-	@install -oroot -groot --mode=0644 gui/leovirtstarter-onthego.conf  $(VIRTCONF)
+	#@install -oroot -groot --mode=0644 gui/leovirtstarter.conf  $(VIRTCONF)
+
 	@echo '   * Installing unity dash entry'
 	@install -d -m0755 -oroot -groot $(DESKTOP)
-	@install -oroot -groot --mode=0644 gui/leovirtstarter-client.desktop $(DESKTOP)
+	@install -oroot -groot --mode=0644 gui/leovirtstarter2-client.desktop $(DESKTOP)
 	@echo '   * Installing icon'
 	@install -d -m0755 -oroot -groot $(ICON)
-	@install -oroot -groot --mode=0644 gui/leovirtstarter-client.png $(ICON)
+	@install -oroot -groot --mode=0644 gui/leovirtstarter2-client.png $(ICON)
 
 
 leoclient2-leovirtstarter-server:
 	@echo '   * Installing the server script'
 	@install -d -m0755 -oroot -groot $(VBOXDIR)
-	@install -oroot -groot --mode=0755 gui/leovirtstarter-server $(VBOXDIR)
+	@install -oroot -groot --mode=0755 gui/leovirtstarter2-server $(VBOXDIR)
 	@echo '   * Installing the server configuration file'
 	@install -d -m755 -oroot -groot $(VIRTCONF)
-	@install -oroot -groot --mode=0644 gui/leovirtstarter-server.conf  $(VIRTCONF)
+	@install -oroot -groot --mode=0644 gui/leovirtstarter2-server.conf  $(VIRTCONF)
 
 
 leoclient2-leovirtstarter-common:
 	@echo '   * Installing the common configuration file'
 	@install -d -m755 -oroot -groot $(VIRTCONF)
-	@install -oroot -groot --mode=0644 gui/leovirtstarter.conf  $(VIRTCONF)
+	@install -oroot -groot --mode=0644 gui/leovirtstarter2.conf  $(VIRTCONF)
 	@echo '   * Installing the common module'
 	@install -d -m755 -oroot -groot $(PERLMOD)
-	@install -oroot -groot --mode=0644 gui/leovirtstarter.pm $(PERLMOD)
+	@install -oroot -groot --mode=0644 gui/leovirtstarter2.pm $(PERLMOD)
 
 
 
@@ -93,7 +94,7 @@ deb:
 
 
 clean:
-	rm -rf  debian/leoclient
+	rm -rf  debian/leoclient2
 
 
 leoclient2-vm-printer:

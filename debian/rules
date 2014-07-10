@@ -53,7 +53,6 @@ install: build
 	dh_installdirs
 
 	# Add here commands to install the package into debian/leoclient2
-#	$(MAKE) -B leoclient-virtualbox DESTDIR=$(CURDIR)/debian/leoclient2
 	$(MAKE) -B leoclient2-leovirtstarter-client DESTDIR=$(CURDIR)/debian/leoclient2
 	$(MAKE) -B leoclient2-leovirtstarter-server DESTDIR=$(CURDIR)/debian/leoclient2
 	$(MAKE) -B leoclient2-leovirtstarter-common DESTDIR=$(CURDIR)/debian/leoclient2
@@ -76,9 +75,9 @@ binary-indep: build install
 #	dh_installinit
 	dh_installcron
 # Install manpages for leoclient
-	dh_installman -pleoclient-virtualbox man/de/setup-virtualbox-nic.conf.de.5
+	#dh_installman -ppackage man/de/manpage
 #	dh_undocumented
-	dh_install --sourcedir=debian/leoclient
+	dh_install --sourcedir=debian/leoclient2
 	dh_link
 #	dh_strip
 	dh_compress
