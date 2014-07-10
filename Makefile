@@ -8,7 +8,7 @@ VBOXDIR=$(DESTDIR)/usr/bin
 MENU=$(DESTDIR)/usr/share/menu
 # configs
 LEOCLIENTCONF=$(DESTDIR)/etc/leoclient2
-VIRTCONF=$(DESTDIR)/etc/leovirtstarter
+VIRTCONF=$(DESTDIR)/etc/leovirtstarter2
 # Perl modules
 PERLMOD=$(DESTDIR)/usr/share/perl5/leoclient2
 BIN=$(DESTDIR)/usr/bin
@@ -54,8 +54,8 @@ leoclient2-leovirtstarter-client:
 	@install -d -m0755 -oroot -groot $(VBOXDIR)
 	@install -oroot -groot --mode=0755 gui/leovirtstarter2-client $(VBOXDIR)
 	@echo '   * Installing the client configuration files'
-	@install -d -m755 -oroot -groot $(VIRTCONF)
-	#@install -oroot -groot --mode=0644 gui/leovirtstarter.conf  $(VIRTCONF)
+	#@install -d -m755 -oroot -groot $(VIRTCONF)
+	#@install -oroot -groot --mode=0644 gui/leovirtstarter2.conf $(VIRTCONF)
 
 	@echo '   * Installing unity dash entry'
 	@install -d -m0755 -oroot -groot $(DESKTOP)
