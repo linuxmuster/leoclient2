@@ -16,7 +16,7 @@ my $on_the_go="-";
 
 
 # Einlesen der Konfigurationsdatei
-my $conf="/etc/leovirtstarter/leovirtstarter.conf";
+my $conf="/etc/leovirtstarter2/leovirtstarter2.conf";
 if (not -e $conf){
     print "ERROR: $conf not found!\n";
     exit;
