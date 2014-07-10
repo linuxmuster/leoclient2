@@ -1,6 +1,5 @@
-leoclient2 (0.0.1-1) precise; urgency=low
+leoclient2 (0.0.1-1) precise-testing; urgency=medium
 
   * First Revision
 
- -- root <jeffbeck@web.de>  Tue, 03 Aug 2010 18:13:17 +0200
-
+ -- bz <bz@overpower>  Thu, 10 Jul 2014 02:17:02 +0200
