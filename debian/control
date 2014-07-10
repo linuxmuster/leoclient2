@@ -6,14 +6,6 @@ Build-Depends: debhelper , perl-base, fakeroot
 Standards-Version: 3.5.2
 
 
-Package: leoclient2-virtualbox
-Architecture: all
-Suggests: 
-Pre-Depends: 
-Depends: 
-Description: configuration for a VirtualBox machine winXP
- provides virtualbox shared folders in the winXP machine to linuxmuster.net 
- client shares (without using the network)
 
 Package: leoclient2-leovirtstarter-client
 Architecture: all
@@ -59,7 +51,7 @@ Package: leoclient2-bsz-clientbundle
 Architecture: all
 Suggests: 
 Pre-Depends:
-Depends: leoclient2-virtualbox, leoclient2-leovirtstarter-client, leoclient2-vm-printer, linuxmuster-client-extras 
+Depends: leoclient2-leovirtstarter-client, leoclient2-vm-printer, linuxmuster-client-extras 
 Description: Complete bundle of packages at BSZ Leonberg 
 
 
