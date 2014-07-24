@@ -12,6 +12,18 @@ use File::Basename;
 use Log::Log4perl qw(:easy);
 use Sys::Hostname;
 
+# ????? get this from the config file
+my $vm_path_abs="/var/virtual/winxp";
+my $vm_name="winxp";
+
+
+# export command for the machine
+my $vm_path_export="export VBOX_USER_HOME=".$vm_path_abs."; ";
+
+# which filepath is used for the shared folder
+my $home = $ENV{'HOME'};
+my $shared_home_abs=$home;
+
 # get hostname
 my $hostname=hostname();
 
@@ -69,7 +81,24 @@ if ($on_the_go ne "" and -e $on_the_go){
             "  $Conf::common_configuration_file \n",
             "could not be processed (syntax error?)\n";
   print "$Conf::common_configuration_file processed succesfully\n"; 
+} elsif ($vm_path_abs ne ""){
+    # start a given vm
+    print "Starting Virtualbox \n";
+    my $remove_shared_folder=$vm_path_export.
+               "/usr/bin/VBoxManage sharedfolder remove $vm_name --name home";
+    my $add_shared_folder=$vm_path_export.
+               "/usr/bin/VBoxManage sharedfolder add $vm_name ".
+               "--name home --hostpath $shared_home_abs";
+    my $start_vm=$vm_path_export."/usr/bin/VBoxManage startvm $vm_name --type gui";
+    print "$remove_shared_folder\n";
+    print "$add_shared_folder\n";
+    print "$start_vm\n";
+    system("$remove_shared_folder");
+    system("$add_shared_folder");
+    system("$start_vm");
+    exit;
 } else {
+    # just start vitualbox
     print "   ERROR:  None of these configuration files found:\n";
     print "   * $Conf::common_configuration_file\n";
     print "   * $on_the_go\n";
