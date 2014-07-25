@@ -12,13 +12,22 @@ use File::Basename;
 use Log::Log4perl qw(:easy);
 use Sys::Hostname;
 
-# ????? get this from the config file
-my $vm_path_abs="/var/virtual/winxp";
-my $vm_name="winxp";
+
+# todo
+# read config into hash see line 84 ?????
+# create zenity chooser with hash
+# set $vm if only ONE vm is there
+# start using snapshots
+# Haken beim starten (Rechner starten / Virtualbox starten)
 
 
-# export command for the machine
-my $vm_path_export="export VBOX_USER_HOME=".$vm_path_abs."; ";
+# fill this hash with configs
+# vm -> abs_path
+my %vm=();
+my $vm_path_abs="";
+
+# shell export variable for the machine
+my $vm_path_export="";
 
 # which filepath is used for the shared folder
 my $home = $ENV{'HOME'};
@@ -35,9 +44,10 @@ my $host_gid=$host_entry[3];
 my ($host_room) = getgrgid($host_gid);
 
 #my $hostname=`hostname`;
-my $home = $ENV{'HOME'};
 chomp($hostname);
 my $on_the_go="";
+# Option --vm
+my $vm="";
 my $clean_cache=0;
 my $clean_log=0;
 my $help=0;
@@ -56,11 +66,14 @@ Log::Log4perl->easy_init({
 use leoclient2::leovirtstarter2;
 use Filesys::Df;
 
+
+
 # Parsen der Optionen
 my $testopt=GetOptions(
            "help|h" => \$help,
            "show-menu|menu" => \$show_menu,
            "on-the-go|g=s" => \$on_the_go,
+           "vm=s" => \$vm,
            "clean|clean-cache" => \$clean_cache,
            "clean-log" => \$clean_log,
            "ignore-virtualbox" => \$ignore_virtualbox,
@@ -70,26 +83,45 @@ my $testopt=GetOptions(
 # Prüfen, ob Optionen erkannt wurden, sonst Abbruch
 &leovirtstarter2::check_options($testopt);
 
-# Einlesen der Server Konfigurationsdatei
-if ($on_the_go ne "" and -e $on_the_go){
-    package ServerConf ; do "$on_the_go"; 
-    # overwriting configuration
-    $ServerConf::snapshot_search_dir_client=$snapshot_search_dir;
-} elsif (-e $Conf::common_configuration_file){
-  package ServerConf ; do "$Conf::common_configuration_file" 
-     || die "Fehler:  \n",
-            "  $Conf::common_configuration_file \n",
-            "could not be processed (syntax error?)\n";
-  print "$Conf::common_configuration_file processed succesfully\n"; 
-} elsif ($vm_path_abs ne ""){
+
+# read config ?????
+$vm{'winxp'}="/var/virtual/winxp";
+$vm{'win7'}="/var/virtual/win7";
+# path for vm
+
+if ($vm ne ""){
+    # start vm
+    $vm_path_abs=$vm{$vm};
+    #system("leovirtstarter2-client --vm $vm");
+    #exit;
+} else {
+    # show zenity chooser
+    my $zenity_list="/usr/bin/zenity --list --width=800 --height=400 ".
+       "--radiolist --title='Virtuelle Maschine wählen!' ".
+       "--column='' --column='Maschine' --column='Beschreibung' --column='Pfad' ".
+       "TRUE 'winxp' 'Windows XP' '/var/virtual/winxp' ".
+       "FALSE win7 'Windows 7' '/var/virtual/winxp2'";
+    #print "$zenity_list\n";
+    my $zenity_return=`$zenity_list`;
+    chomp($zenity_return);
+    print "ZEN: >$zenity_return<\n";
+    $vm=$zenity_return;
+    $vm_path_abs=$vm{$vm};
+}
+
+
+
+
+if ($vm_path_abs ne ""){
     # start a given vm
-    print "Starting Virtualbox \n";
+    print "##### Starting Virtual machine $vm\n";
+    $vm_path_export="export VBOX_USER_HOME=".$vm_path_abs."; ";
     my $remove_shared_folder=$vm_path_export.
-               "/usr/bin/VBoxManage sharedfolder remove $vm_name --name home";
+               "/usr/bin/VBoxManage sharedfolder remove $vm --name home";
     my $add_shared_folder=$vm_path_export.
-               "/usr/bin/VBoxManage sharedfolder add $vm_name ".
+               "/usr/bin/VBoxManage sharedfolder add $vm ".
                "--name home --hostpath $shared_home_abs";
-    my $start_vm=$vm_path_export."/usr/bin/VBoxManage startvm $vm_name --type gui";
+    my $start_vm=$vm_path_export."/usr/bin/VBoxManage startvm $vm --type gui";
     print "$remove_shared_folder\n";
     print "$add_shared_folder\n";
     print "$start_vm\n";
