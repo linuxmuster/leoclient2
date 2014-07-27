@@ -26,6 +26,12 @@ use Sys::Hostname;
 my %vm=();
 my $vm_path_abs="";
 
+# config dir
+my $conf="/etc/leoclient2";
+my $conf_machines=$conf."/machines";
+
+my @vm=();
+
 # shell export variable for the machine
 my $vm_path_export="";
 
@@ -84,10 +90,28 @@ my $testopt=GetOptions(
 &leovirtstarter2::check_options($testopt);
 
 
-# read config ?????
-$vm{'winxp'}="/var/virtual/winxp";
-$vm{'win7'}="/var/virtual/win7";
-# path for vm
+# read config 
+opendir CONF, $conf_machines;
+foreach my $machine (readdir CONF){
+    if ($machine eq "."){next};
+    if ($machine eq ".."){next};
+    my $path=&get_machine_path($machine);
+    #print "   $machine -->  $path\n";
+    $vm{$machine}=$path;
+    push @vm, $machine;
+}
+closedir CONF;
+@vm = sort @vm;
+
+
+# list machines alphabetically
+print "Machines from $conf_machines\n";
+foreach my $machine (@vm){
+    print "  $machine --> $vm{$machine}\n";    
+}
+print "Done.\n";
+
+
 
 if ($vm ne ""){
     # start vm
@@ -95,13 +119,39 @@ if ($vm ne ""){
     #system("leovirtstarter2-client --vm $vm");
     #exit;
 } else {
+#    my $vm_window = Gtk2::Window->new('toplevel');
+#    my @buttons = @vm;
+#    # create programm window: vm_window
+#    # $vm_window definded before check base image which shows it
+#    $vm_window->set_resizable(TRUE);
+#    #$vm_window->signal_connect(destroy => \&destroy_progress);
+#    $vm_window->signal_connect('delete_event' => sub { Gtk2->main_quit; });
+#    $vm_window->set_title("Maschine waehlen");
+#    $vm_window->set_border_width(0);
+#    # Fenstergroesse
+#    $vm_window->set_size_request( 800, 600 );
+#    # zentrieren
+#    $vm_window->set_position('center_always');
+#    my $vm = Gtk2::VBox->new(FALSE, 5);
+#    $vm->set_border_width(0);
+#    $vm_window->add($vm);
+#    $vm->show;
     # show zenity chooser
+#    my $zenity_list="/usr/bin/zenity --list --width=800 --height=400 ".
+#       "--radiolist --title='Virtuelle Maschine wählen!' ".
+#       "--column='' --column='Maschine' --column='Beschreibung' --column='Pfad' ".
+#       "TRUE 'winxp' 'Windows XP' '/var/virtual/winxp' ".
+#       "FALSE win7 'Windows 7' '/var/virtual/winxp2'";
     my $zenity_list="/usr/bin/zenity --list --width=800 --height=400 ".
        "--radiolist --title='Virtuelle Maschine wählen!' ".
-       "--column='' --column='Maschine' --column='Beschreibung' --column='Pfad' ".
-       "TRUE 'winxp' 'Windows XP' '/var/virtual/winxp' ".
-       "FALSE win7 'Windows 7' '/var/virtual/winxp2'";
-    #print "$zenity_list\n";
+       "--column='' --column='Maschine' --column='Beschreibung' --column='Pfad' ";
+    # add items
+    foreach my $machine (@vm){
+        print "  $machine --> $vm{$machine}\n";    
+        $zenity_list=$zenity_list."FALSE '$machine' '$machine' $vm{$machine} ";    
+    }
+    
+    print "$zenity_list\n";
     my $zenity_return=`$zenity_list`;
     chomp($zenity_return);
     print "ZEN: >$zenity_return<\n";
@@ -563,6 +613,15 @@ Gtk2->main;
 ############################################################
 # subs
 ############################################################
+
+sub get_machine_path {
+    my ($machine) = @_;
+    my $machine_abs=$conf_machines."/".$machine;
+    my $path=`cat $machine_abs`;
+    chomp($path);
+    return $path;
+}
+
 
 sub check_base_image {
     my ($home,$on_the_go) = @_;
