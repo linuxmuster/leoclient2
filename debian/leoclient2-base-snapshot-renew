@@ -1,0 +1,203 @@
+#!/bin/bash
+# Script created by Rainer Rössler (roesslerrr-at-web.de)
+# License: Free Software (License GPLv3)
+
+# Information
+echo
+echo "Im folgenden wird der aktuelle Snapshot einer virtuellen"
+echo "Maschine entfernt und ein neuer erzeugt."
+echo "Dadurch können Änderungen an der virtuellen"
+echo "Maschine in die Basis übernommen werden, wodurch"
+echo "der Snapshot wieder minimiert wird."
+echo
+echo "ACHTUNG: Dadurch werden vorhandene Snapshots für diese"
+echo "virtuelle Maschine auf Dauer unbrauchbar."
+
+YESNO="X"
+until [ `echo $YESNO` == "nZ" ] 
+do
+  echo
+  echo "Soll der Vorgang abgebrochen werden?"
+  echo "(j/n - Bestätigen mit der Enter-Taste): "
+  read YESNO
+  YESNO=`echo $YESNO"Z"`
+  echo
+  
+  if [ `echo $YESNO` == "jZ" ] 
+  then
+    echo
+    echo "ABBRUCH!"
+    echo 
+    exit 0
+  fi
+done
+
+# Interaktive Eingabe von MASCHINENNAME
+echo
+echo "Geben Sie den Namen der virtuellen Maschine ein"
+echo "(Keine Leerzeichen - bestätigen mit der Enter-Taste):"
+read MACHINENAME
+#echo $MACHINENAME
+if [ "`echo $MACHINENAME | grep ' '`" != "" ]
+then 
+ echo
+ echo "Es ist ein Leerzeichen enthalten. ABBRUCH!"
+ echo
+ exit 0
+fi
+
+# vordefinierter Pfad für VM
+VMPATH="/var/virtual"
+#echo $VMPATH
+
+# Abfrage wo die VM angelegt werden soll
+YESNO="x"
+until [ `echo $YESNO` == "j" ] 
+do
+  echo
+  echo "Ist die virtuelle Maschine im Verzeichnis $VMPATH/$MACHINENAME gespeichert?"
+  read -p "(j/n - Bestätigen mit der Enter-Taste): " YESNO
+  
+  if [ `echo $YESNO` == "n" ] 
+  then
+    echo
+    echo "Geben Sie den Pfad für die virtuelle Maschine an:"
+    echo "(Keine Leerzeichen - bestätigen mit der Enter-Taste):"
+    read VMPATH
+    
+    if [ "`echo $VMPATH | grep ' '`" != "" ]
+    then 
+     echo
+     echo "Es ist ein Leerzeichen enthalten. ABBRUCH!"
+     echo
+     exit 0
+    fi
+        
+    if [ `echo $VMPATH | cut -b 1` != "/" ]
+    then
+      VMPATH=`echo "/"$VMPATH`
+    fi 
+  fi
+
+done
+
+echo 
+
+if [ -d $VMPATH/$MACHINENAME/Snapshots ]
+then
+  if [ -f $VMPATH/$MACHINENAME/VirtualBox.xml ]
+  then
+    if [ -f $VMPATH/$MACHINENAME/$MACHINENAME.vbox ]
+    then
+      if [ -f /etc/leoclient2/$MACHINENAME/$MACHINENAME.conf ]
+      then
+        cd ~
+      else
+        echo "Die Konfigurationsdatei $MACHINENAME.conf gibt es nicht. ABBRUCH!"
+        exit 0
+      fi
+    else
+      echo "Die Konfigurationsdatei $MACHINENAME.vbox gibt es nicht. ABBRUCH!"
+      exit 0
+    fi
+  else
+    echo "Die Konfigurationsdatei VirtualBox.xml gibt es nicht. ABBRUCH!"
+    exit 0
+  fi
+else
+  echo "Diese Maschine gibt es nicht. ABBRUCH!"
+  exit 0
+fi
+echo
+
+cd ~
+
+HEIMAT=`pwd`
+ 
+if [ -f /tmp/heimatverzeichnis ]
+then
+  HEIMATTMP=`cat /tmp/heimatverzeichnis`
+else
+  HEIMATTMP="NEU"
+fi
+
+echo $HEIMAT > /tmp/heimatverzeichnis
+chmod 777 /tmp/heimatverzeichnis
+
+
+# Umgebungsvariable für virtuelle Maschine im Verzeichnis setzen
+export VBOX_USER_HOME=$VMPATH/$MACHINENAME/
+
+# Variable von VirtualBox setzen, um Standardverzeichnis einzustellen
+#VBoxManage setproperty machinefolder $VMPFAD/$MASCHINENNAME
+VBoxManage setproperty machinefolder $VMPATH
+
+
+# Maschine in VirtualBox registrieren
+#VBoxManage registervm $MACHINENAME.vbox
+
+# VirtualBox starten, um Betriebssystem zu installieren
+#virtualbox
+
+
+# Anzahl der Snapshots darf max. 1 sein
+SNAPSHOTS=`ls -al $VMPATH/$MACHINENAME/Snapshots | wc -l`
+while [ "$SNAPSHOTS" -gt "3" ]
+do
+  echo
+  echo "Es darf kein einziger Sicherungspunkt für die Maschine vorhanden sein."
+  echo 
+  echo "Alle Sicherungspunkte löschen!"
+  echo "VirtualBox wird dazu automatisch gestartet."
+  echo
+  sleep 7
+  virtualbox
+  
+  SNAPSHOTS=`ls -al $VMPATH/$MACHINENAME/Snapshots | wc -l`
+done
+
+
+echo
+echo "Für diese Maschine wird nun ein Sicherungspunkt erzeugt."
+# Snapshot erzeugen, wenn virtuelle Maschine fertig erzeugt wurde
+VBoxManage snapshot $MACHINENAME take snapshot-$MACHINENAME
+
+
+# Standard-Konfiguration sichern in Unterverzeichnis defaults
+if [ -d $VMPATH/$MACHINENAME/defaults ]
+then
+  cd ~
+else 
+  mkdir $VMPATH/$MACHINENAME/defaults
+fi
+cp $VMPATH/$MACHINENAME/compreg.dat $VMPATH/$MACHINENAME/defaults
+cp $VMPATH/$MACHINENAME/VirtualBox.xml $VMPATH/$MACHINENAME/defaults
+cp $VMPATH/$MACHINENAME/xpti.dat $VMPATH/$MACHINENAME/defaults 
+cp $VMPATH/$MACHINENAME/$MACHINENAME.vbox $VMPATH/$MACHINENAME/defaults 
+
+if [ -d $VMPATH/$MACHINENAME/snapshot-store/base ]
+then
+  cd ~
+else 
+  mkdir -p $VMPATH/$MACHINENAME/snapshot-store/base
+fi
+cd $VMPATH/$MACHINENAME/Snapshots
+zip -9 snapshot.zip *
+mv snapshot.zip $VMPATH/$MACHINENAME/snapshot-store/base/
+
+chmod -R 555 $VMPATH/$MACHINENAME
+chmod 777 $VMPATH/$MACHINENAME/Snapshots/*
+
+echo
+echo "Die Konfiguationsdateien und der Snapshot wurden gesichert."
+echo "Die Rechte der Dateien wurden angepasst." 
+
+echo
+echo "Die virtuelle Maschine kann nun mit dem Snapshotstarter benutzt werden."
+echo 
+echo "Wenn Sie die Basis für die virtuelle Maschine und den Snapshot neu"
+echo "erzeugen wollen, starten Sie das Script 'leoclient2-base-snapshot-renew'."
+echo
+
+exit 0
+
