@@ -5,6 +5,7 @@ DESTDIR=
 
 # Virtualbox
 VBOXDIR=$(DESTDIR)/usr/bin
+SBIN=$(DESTDIR)/usr/sbin
 MENU=$(DESTDIR)/usr/share/menu
 # configs
 LEOCLIENTCONF=$(DESTDIR)/etc/leoclient2
@@ -53,6 +54,9 @@ leoclient2-leovirtstarter-client:
 	@echo '   * Installing the client script'
 	@install -d -m0755 -oroot -groot $(VBOXDIR)
 	@install -oroot -groot --mode=0755 gui/leovirtstarter2-client $(VBOXDIR)
+	@install -d -m0755 -oroot -groot $(SBIN)
+	@install -oroot -groot --mode=0755 installer-scripts/leoclient2-init $(SBIN)
+	@install -oroot -groot --mode=0755 installer-scripts/leoclient2-base-snapshot-renew $(SBIN)
 	@echo '   * Installing the client configuration files'
 	#@install -d -m755 -oroot -groot $(VIRTCONF)
 	#@install -oroot -groot --mode=0644 gui/leovirtstarter2.conf $(VIRTCONF)
