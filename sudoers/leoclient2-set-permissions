@@ -4,7 +4,7 @@
 
 # set permissions of leoclient2 machine for a certain user
 
-CONFPATH="/media/localdisk/leoclient2/machines"
+CONFPATH="/etc/leoclient2/machines"
 MACHINES="`/bin/ls $CONFPATH`"
 #echo $MACHINES
 
