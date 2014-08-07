@@ -1,3 +1,9 @@
+leoclient2 (0.0.5-1) trusty-testing; urgency=low
+
+  * New Release with fixed early bugs
+
+ -- root <root@bszleo.de>  Thu, 07 Aug 2014 14:49:49 +0200
+
 leoclient2 (0.0.4-1) trusty-testing; urgency=low
 
   * New Release with installer scripts

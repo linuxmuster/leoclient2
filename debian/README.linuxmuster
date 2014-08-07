@@ -7,7 +7,7 @@ Testig git source code in a package:
 
 
 Make official package:
-../developer-tools/packaging
+make deb
 
 
 Update a manual installation:
