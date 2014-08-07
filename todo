@@ -1,3 +1,3 @@
-
+- if VirtualBox.xml is not writeable, call sodoers script
 - install sudoers to /usr/bin
 - add dependecies leoclint2 loenclient2.common in control file
