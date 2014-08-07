@@ -96,7 +96,7 @@ foreach my $machine (readdir CONF){
     if ($machine eq "."){next};
     if ($machine eq ".."){next};
     my $path=&get_machine_path($machine);
-    #print "   $machine -->  $path\n";
+    $machine=~s/.conf$//g;
     $vm{$machine}=$path;
     push @vm, $machine;
 }
@@ -110,7 +110,6 @@ foreach my $machine (@vm){
     print "  $machine --> $vm{$machine}\n";    
 }
 print "Done.\n";
-
 
 
 if ($vm ne ""){
