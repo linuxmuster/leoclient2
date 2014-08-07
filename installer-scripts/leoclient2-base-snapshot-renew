@@ -89,7 +89,7 @@ then
   then
     if [ -f $VMPATH/$MACHINENAME/$MACHINENAME.vbox ]
     then
-      if [ -f /etc/leoclient2/$MACHINENAME/$MACHINENAME.conf ]
+      if [ -f /etc/leoclient2/machines/$MACHINENAME.conf ]
       then
         cd ~
       else
@@ -185,8 +185,10 @@ cd $VMPATH/$MACHINENAME/Snapshots
 zip -9 snapshot.zip *
 mv snapshot.zip $VMPATH/$MACHINENAME/snapshot-store/base/
 
-chmod -R 555 $VMPATH/$MACHINENAME
-chmod 777 $VMPATH/$MACHINENAME/Snapshots/*
+chmod -R 777 $VMPATH/$MACHINENAME
+chmod -R 755 $VMPATH/$MACHINENAME/defaults
+chmod -R 755 $VMPATH/$MACHINENAME/snapshot-store/base
+chmod 755 $VMPATH/$MACHINENAME/$MACHINENAME.vdi
 
 echo
 echo "Die Konfiguationsdateien und der Snapshot wurden gesichert."

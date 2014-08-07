@@ -66,7 +66,7 @@ else
  mkdir -p $VMPATH/$MACHINENAME
 fi
 
-if [ -f /etc/leoclient2/$MACHINENAME/$MACHINENAME.conf ]
+if [ -f /etc/leoclient2/machines/$MACHINENAME.conf ]
 then
  echo
  echo "Die Konfigurationsdatei für diese Maschine gibt es schon. ABBRUCH!"
@@ -95,11 +95,14 @@ echo
 echo "Alle Einstellungen können auf der anschließend startenden Oberfläche"
 echo "von VirtualBox auch individuell eingestellt werden. "
 echo 
-echo "Wenn die Einstellungen wunschgemäß sind, wird die virtuellen Maschine"
-echo "gestartet und das Betriebssystem muss installiert werden."
+echo "Wenn die Einstellungen wunschgemäß sind, wird VirtualBox"
+echo "gestartet und das Betriebssystem muss auf der"
+echo "eingerichteten virtuellen Maschine installiert werden."
+echo "(Änderungen können später noch eingepflegt werden.)"
 echo
-echo "Ist dies abgeschlossen, wird die virtuelle Maschine heruntergefahren"
-echo "und VirtualBox beendet." 
+echo "Ist dies abgeschlossen, müssen Sie die virtuelle Maschine"
+echo "heruntergefahren und VirtualBox beenden. "
+echo "Erst danach wird dieses Script abgeschlossen."
 
 YESNO="X"
 until [ `echo $YESNO` == "jZ" ] 
@@ -207,14 +210,14 @@ else
 fi
 
 # Konfigurationsdatei für die virtuelle Maschie erstellen
-if [ -d /etc/leoclient2/$MACHINENAME ]
+if [ -d /etc/leoclient2/machines ]
 then
   cd ~
 else 
-  mkdir -p /etc/leoclient2/$MACHINENAME
+  mkdir -p /etc/leoclient2/machines
 fi
 
-echo $VMPATH/$MACHINENAME > /etc/leoclient2/$MACHINENAME/$MACHINENAME.conf
+echo $VMPATH/$MACHINENAME > /etc/leoclient2/machines/$MACHINENAME.conf
 
 # Standard-Konfiguration sichern in Unterverzeichnis defaults
 if [ -d $VMPATH/$MACHINENAME/defaults ]
@@ -238,8 +241,10 @@ cd $VMPATH/$MACHINENAME/Snapshots
 zip -9 snapshot.zip *
 mv snapshot.zip $VMPATH/$MACHINENAME/snapshot-store/base/
 
-chmod -R 555 $VMPATH/$MACHINENAME
-chmod 777 $VMPATH/$MACHINENAME/Snapshots/*
+chmod -R 777 $VMPATH/$MACHINENAME
+chmod -R 755 $VMPATH/$MACHINENAME/snapshot-store/base
+chmod -R 755 $VMPATH/$MACHINENAME/defaults
+chmod 755 $VMPATH/$MACHINENAME/$MACHINENAME.vdi
 
 echo
 echo "Die Konfiguationsdateien und der Snapshot wurden gesichert."
