@@ -54,9 +54,12 @@ chomp($hostname);
 my $on_the_go="";
 # Option --vm
 my $vm="";
+# Option --virtualbox
+my $virtualbox=0;
 my $clean_cache=0;
 my $clean_log=0;
 my $help=0;
+my $info=0;
 my $show_menu=0;
 my $snapshot_search_dir="";
 my $ignore_virtualbox=0;
@@ -77,9 +80,11 @@ use Filesys::Df;
 # Parsen der Optionen
 my $testopt=GetOptions(
            "help|h" => \$help,
+           "info|i" => \$info,
            "show-menu|menu" => \$show_menu,
            "on-the-go|g=s" => \$on_the_go,
            "vm=s" => \$vm,
+           "virtualbox|vbox" => \$virtualbox,
            "clean|clean-cache" => \$clean_cache,
            "clean-log" => \$clean_log,
            "ignore-virtualbox" => \$ignore_virtualbox,
@@ -88,6 +93,34 @@ my $testopt=GetOptions(
 
 # Prüfen, ob Optionen erkannt wurden, sonst Abbruch
 &leovirtstarter2::check_options($testopt);
+
+if ($help==1){
+   print('
+Options
+  -h  / --help
+  -i  / --info (list the available machines and exit)
+
+Power User:
+  --virtualbox / --vbox
+    Open the virtualbox window of the machine 
+    instead of starting the machine
+  --ignore-virtualbox (start leovirtstarter2 even if VirtualBox ist running)
+    This may overwrite the virtual harddisk of a running virtual machine,
+    which will therefore crash.
+
+
+Development:
+  --clean-cache   (clean all caches)
+  --clean-log     (clean all log files)
+
+Non-Server use:
+  --on-the-go /path/to/config/file  (using another config file)
+  --snapshots /path/to/zipped/snapshots (override path in config files)
+
+');
+   print "\n";
+   exit;
+}
 
 
 # read config 
@@ -104,12 +137,15 @@ closedir CONF;
 @vm = sort @vm;
 
 
-# list machines alphabetically
-print "Machines from $conf_machines\n";
-foreach my $machine (@vm){
-    print "  $machine --> $vm{$machine}\n";    
+if ($info==1){
+    # list machines alphabetically
+    print "\nMachines listed in ${conf_machines}:\n";
+    foreach my $machine (@vm){
+        printf "   %-10s %-50s \n",$machine,$vm{$machine};
+    }
+    print "\n";
+    exit;
 }
-print "Done.\n";
 
 
 if ($vm ne ""){
@@ -171,12 +207,17 @@ if ($vm_path_abs ne ""){
                "/usr/bin/VBoxManage sharedfolder add $vm ".
                "--name home --hostpath $shared_home_abs";
     my $start_vm=$vm_path_export."/usr/bin/VBoxManage startvm $vm --type gui";
+    my $start_vbox=$vm_path_export."/usr/bin/virtualbox";
     print "$remove_shared_folder\n";
     print "$add_shared_folder\n";
     print "$start_vm\n";
     system("$remove_shared_folder");
     system("$add_shared_folder");
-    system("$start_vm");
+    if ($virtualbox==1){
+        system("$start_vbox");
+    } else {
+        system("$start_vm");
+    }
     exit;
 } else {
     # just start vitualbox
@@ -209,31 +250,6 @@ if ($clean_log==1){
     INFO "Previous logfiles cleaned by leovirtstarter2-client --clean-log";
     INFO "########################## Exiting ###############################";
     exit;
-}
-
-
-if ($help==1){
-   print('
-Options
-  -h  / --help
-
-Power User:
-  --ignore-virtualbox (start leovirtstarter2 even if VirtualBox ist running)
-    This may overwrite the virtual harddisk of a running virtual machine,
-    which will therefore crash.
-
-
-Development:
-  --clean-cache   (clean all caches)
-  --clean-log     (clean all log files)
-
-Non-Server use:
-  --on-the-go /path/to/config/file  (using another config file)
-  --snapshots /path/to/zipped/snapshots (override path in config files)
-
-');
-   print "\n";
-   exit;
 }
 
 

@@ -1,3 +1,15 @@
+leoclient2 (0.0.7-1) trusty-testing; urgency=medium
+
+  * New Release with option --info and --virtulbox
+
+ -- bz <bz@overpower>  Mon, 11 Aug 2014 00:06:43 +0200
+
+leoclient2 (0.0.6-1) trusty-testing; urgency=medium
+
+  * New Release with sudoers script for login or leovirtstarter
+
+ -- bz <bz@overpower>  Sun, 10 Aug 2014 23:29:45 +0200
+
 leoclient2 (0.0.5-1) trusty-testing; urgency=low
 
   * New Release with fixed early bugs
