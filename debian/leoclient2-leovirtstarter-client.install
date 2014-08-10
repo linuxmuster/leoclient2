@@ -1,5 +1,7 @@
 etc/leoclient2/machines.conf
+etc/sudoers.d/leoclient2
 usr/bin/leovirtstarter2-client
+usr/bin/leoclient2-set-permissions
 usr/share/applications/leovirtstarter2-client.desktop
 usr/share/pixmaps/leovirtstarter2-client.png
 usr/sbin/leoclient2-init

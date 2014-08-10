@@ -1,0 +1,2 @@
+# for leoclient2
+%vboxusers ALL=(ALL) /usr/bin/leoclient2-set-permissions 

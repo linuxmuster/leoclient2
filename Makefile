@@ -4,7 +4,7 @@
 DESTDIR=
 
 # Virtualbox
-VBOXDIR=$(DESTDIR)/usr/bin
+BIN=$(DESTDIR)/usr/bin
 SBIN=$(DESTDIR)/usr/sbin
 MENU=$(DESTDIR)/usr/share/menu
 # configs
@@ -17,6 +17,8 @@ SBIN=$(DESTDIR)/usr/sbin
 DESKTOP=$(DESTDIR)/usr/share/applications
 ICON=$(DESTDIR)/usr/share/pixmaps
 INIT=$(DESTDIR)/etc/init.d
+ETC=$(DESTDIR)/etc/sudoers.d
+
 
 help:
 	@echo ' '
@@ -52,14 +54,18 @@ default:
 
 leoclient2-leovirtstarter-client:
 	@echo '   * Installing the client script'
-	@install -d -m0755 -oroot -groot $(VBOXDIR)
-	@install -oroot -groot --mode=0755 gui/leovirtstarter2-client $(VBOXDIR)
+	@install -d -m0755 -oroot -groot $(BIN)
+	@install -oroot -groot --mode=0755 gui/leovirtstarter2-client $(BIN)
+	@install -oroot -groot --mode=0755 sudoers/leoclient2-set-permissions $(BIN)
 	@install -d -m0755 -oroot -groot $(SBIN)
 	@install -oroot -groot --mode=0755 installer-scripts/leoclient2-init $(SBIN)
 	@install -oroot -groot --mode=0755 installer-scripts/leoclient2-base-snapshot-renew $(SBIN)
 	@echo '   * Installing the client configuration files'
 	#@install -d -m755 -oroot -groot $(VIRTCONF)
 	#@install -oroot -groot --mode=0644 gui/leovirtstarter2.conf $(VIRTCONF)
+	@echo '   * Installing sudoers stuff'
+	@install -d -m0644 -oroot -groot $(ETC)
+	@install -oroot -groot --mode=0440 sudoers/leoclient2 $(ETC)
 
 	@echo '   * Installing unity dash entry'
 	@install -d -m0755 -oroot -groot $(DESKTOP)
@@ -71,8 +77,8 @@ leoclient2-leovirtstarter-client:
 
 leoclient2-leovirtstarter-server:
 	@echo '   * Installing the server script'
-	@install -d -m0755 -oroot -groot $(VBOXDIR)
-	@install -oroot -groot --mode=0755 gui/leovirtstarter2-server $(VBOXDIR)
+	@install -d -m0755 -oroot -groot $(BIN)
+	@install -oroot -groot --mode=0755 gui/leovirtstarter2-server $(BIN)
 	@echo '   * Installing the server configuration file'
 	@install -d -m755 -oroot -groot $(VIRTCONF)
 	@install -oroot -groot --mode=0644 gui/leovirtstarter2-server.conf  $(VIRTCONF)
