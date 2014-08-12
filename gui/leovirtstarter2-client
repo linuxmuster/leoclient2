@@ -215,7 +215,7 @@ if ($vm_path_abs ne ""){
     print "$remove_shared_folder\n";
     print "$add_shared_folder\n";
     print "$start_vm\n";
-    &check_writeable($vm_path_abs,$vm);
+    &fix_vbox_permissions($vm_path_abs,$vm);
     system("$remove_shared_folder");
     system("$add_shared_folder");
     if ($virtualbox==1){
@@ -634,21 +634,13 @@ Gtk2->main;
 # subs
 ############################################################
 
-sub check_writeable {
+sub fix_vbox_permissions {
     my ($abs_path) = @_;
-    my $abs_file=$abs_path."/".$vm.".vbox";
-    #print "Pfad: $abs_path\n";
-    #print "File: $abs_file\n";
-    if (-w $abs_file){
-        # OK
-        print "OK: $abs_file is writeable\n";
-    } else {
-        print "WARNING: $abs_file NOT writeable!\n";
-        print "   * trying to repair ...\n";
-        my $command="sudo /usr/bin/leoclient2-set-permissions";
-        print "$command\n";
-        system($command);
-    }
+    #my $abs_file=$abs_path."/".$vm.".vbox";
+    print "Fixing permissions with sudoers script\n";
+    my $command="sudo /usr/bin/leoclient2-set-permissions";
+    print "$command\n";
+    system($command);
 }
 
 sub get_machine_path {
