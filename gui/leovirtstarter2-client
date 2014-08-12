@@ -123,7 +123,11 @@ Non-Server use:
 }
 
 
-# read config 
+# read config
+if (not -d $conf_machines){
+    print "\nERROR: Configuration directory $conf_machines does not exist\n\n";
+    exit;
+} 
 opendir CONF, $conf_machines;
 foreach my $machine (readdir CONF){
     if ($machine eq "."){next};
