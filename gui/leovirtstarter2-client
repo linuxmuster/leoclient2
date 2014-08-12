@@ -99,7 +99,7 @@ my %snapshots=();
 
 # new config
 # Where to look for remote snapshots (relative paths will be prefixed by $HOME)        
-my $snapshot_search_dir_client="/media/snapshots/vbox-snapsho";
+my $snapshot_search_dir_client="/media/leoclient2-vm";
 
 
 
