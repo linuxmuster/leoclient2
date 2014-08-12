@@ -21,6 +21,102 @@ use Sys::Hostname;
 # Haken beim starten (Rechner starten / Virtualbox starten)
 
 
+#************************************************************
+#************************************************************
+#************************************************************
+#************************************************************
+#************************************************************
+#************************************************************
+# old serverConf stuff
+
+############################################################                    
+# ram                                                                           
+############################################################                    
+my @ram_steps=("192",
+            "256",
+            "384",
+            "512",
+            "768",
+            "1024",
+            "1536",
+            "2048",
+            "3072",
+            "4096",
+            "6144",
+            "8192",
+            "12288");
+
+my $min_host_ram="256";
+my $max_guest_ram="2048";
+
+############################################################                    
+# virtualbox                                                                    
+############################################################                    
+# the BASE IMAGE, that is never changed                                         
+# where must the base image be on the client:                                   
+my $base_image_client_target="/virtual/vdi/winXP-2010.vdi";
+# where in the image directory can the base image be found:                     
+# (relative to $snapshot_file_dir below)                                        
+my $base_image_client_source="base/winXP-2010.vdi";
+
+my $base_image_server="/home/archiv/vbox-snapshots/base/winXP-2010.vdi";
+my $base_image_size="2468409856"; # as seen with 'ls -l'                           
+# maybe this is not necessary                                                   
+my $base_image_md5sum="";
+
+# the SNAPSHOTS                                                                 
+# in which directory is the snapshot that is  used as "Win XP Standard"         
+my $snapshot_default="standard";
+my $snapshot_file_dir="/virtual/Machines/winXP-2010/Snapshots";
+my $snapshot_file_name="{8c816439-1e6e-430f-9865-db7a2a96206f}.vdi";
+# Where to look for snapshots (relative paths will be prefixed by $HOME)        
+#$snapshot_search_dir="/media/SCHULE/virtualbox/_Hilfe/Snapshots/windows xp 2010";                                                                             
+#$snapshot_search_dir="/home/share/teachers/_Hilfe/virtuelle Rechner/Snapshots/windows xp 2010";                                                               
+my $snapshot_search_dir_client="/media/snapshots/vbox-snapshots";
+my $snapshot_search_dir_server="/home/snapshots/vbox-snapshots";
+
+# SERVER SHARE: most reliable/few traffic                                       
+# path to the shares on the client                                              
+my $mother_share_client="";
+# path to the shares on the mother server                                       
+my $mother_share_server="";
+
+# CHILDREN SHARES: fast/maybe offline                                           
+# where are the shares seen by the clients                                      
+my @children_shares_client=("/media/localdisk/cache",
+                         "/virtual/cache");
+# size of the cache in MB:                                                      
+my @children_shares_client_size=("3000","5000");
+
+# where must the shares be pushed on the children server                        
+my @children_shares_server=("host1:/share1",
+                         "host2:/share2",
+                         "host3:/share3");
+
+
+
+############################################################                    
+# logging                                                                       
+############################################################                    
+my $server_popularity_log_file=".log-popularity";
+
+# old server conf end
+#************************************************************
+#************************************************************
+#************************************************************
+#************************************************************
+#************************************************************
+#************************************************************
+
+# 
+my %snapshots=();
+
+
+
+
+
+
+
 # fill this hash with configs
 # vm -> abs_path
 my %vm=();
@@ -73,7 +169,7 @@ Log::Log4perl->easy_init({
                 level   => $DEBUG,
                 file    => ">>$log" } );    
 
-use leoclient2::leovirtstarter2;
+#use leoclient2::leovirtstarter2;
 use Filesys::Df;
 
 
@@ -93,7 +189,7 @@ my $testopt=GetOptions(
           );
 
 # Prüfen, ob Optionen erkannt wurden, sonst Abbruch
-&leovirtstarter2::check_options($testopt);
+&check_options($testopt);
 
 if ($help==1){
    print('
@@ -248,7 +344,7 @@ if ($vm ne ""){
 if ($clean_cache==1){
     INFO "Starting leovirtstarter2-client --clean-cache on $hostname";
     INFO "Cleaning the cache";
-    foreach my $cache (@ServerConf::children_shares_client){
+    foreach my $cache (@children_shares_client){
         INFO "Removing recursively $cache";
         if (-d $cache){
             system("rm -rf $cache || sudo rm -rf $cache");
@@ -285,11 +381,10 @@ if ($pid_string ne "" and $ignore_virtualbox==0){
 my $vbox_uuid=&get_vbox_uuid($vm);
 
 print "UUID: $vbox_uuid\n";
-exit;
 
 INFO "Starting leovirtstarter2-client on $hostname";
-INFO "UUID: $ServerConf::vbox_uuid (Max RAM: $ServerConf::max_guest_ram)";
-my @unused=@ServerConf::ram_steps;
+INFO "UUID: $vbox_uuid (Max RAM: $max_guest_ram)";
+my @unused=@ram_steps;
 # Abhängigkeiten von Paketen: 
 # libfilesys-df-perl (ubuntu 10.04)
 # libglib-perl (lenny)
@@ -395,7 +490,7 @@ my $app_window = Gtk2::Window->new('toplevel');
 my $buttons_default="Windows XP Standard";
 my $buttons_as_used="Windows XP wie vorgefunden";
 
-my @buttons=&leovirtstarter2::get_snapshots($ServerConf::snapshot_search_dir_client);
+my @buttons=&get_snapshots($snapshot_search_dir_client);
 
 @buttons=($buttons_as_used,$buttons_default,@buttons);
 
@@ -430,7 +525,7 @@ foreach my $size (@ram_sizes){
 
 
 # make sure all cache dirs exist
-foreach my $dir (@ServerConf::children_shares_client){
+foreach my $dir (@children_shares_client){
     if (not -e $dir){
             system("mkdir -p $dir || sudo mkdir -p $dir");
             system("chmod -R 777 $dir || sudo -R chmod 777 $dir");
@@ -686,15 +781,15 @@ sub get_machine_path {
 sub check_base_image {
     my ($home,$on_the_go) = @_;
     my $get_it=0;
-    my $target_dir = dirname($ServerConf::base_image_client_target);
-    my $base_image_on_the_go=$ServerConf::snapshot_search_dir_client.
+    my $target_dir = dirname($base_image_client_target);
+    my $base_image_on_the_go=$snapshot_search_dir_client.
                              "/".
-                             $ServerConf::base_image_client_source.
+                             $base_image_client_source.
                              ".zip";
-    if (-e "$ServerConf::base_image_client_target"){
-        my $size = -s $ServerConf::base_image_client_target;
-        #print "$size  $ServerConf::base_image_size\n";
-        if ($size ne $ServerConf::base_image_size){
+    if (-e "$base_image_client_target"){
+        my $size = -s $base_image_client_target;
+        #print "$size  $base_image_size\n";
+        if ($size ne $base_image_size){
             $get_it=1;
         } else {
             $app_window->show;
@@ -713,7 +808,7 @@ sub check_base_image {
         } 
     }
     if ($get_it==1){
-	&get_zipped_basefile($ServerConf::base_image_client_target);
+	&get_zipped_basefile($base_image_client_target);
     }
 }
 
@@ -721,10 +816,10 @@ sub check_base_image {
 
 sub get_zipped_basefile {
     my ($target) = @_;
-    my $target_dir = dirname($ServerConf::base_image_client_target);
-    my $base_image_on_the_go=$ServerConf::snapshot_search_dir_client.
+    my $target_dir = dirname($base_image_client_target);
+    my $base_image_on_the_go=$snapshot_search_dir_client.
                              "/".
-                             $ServerConf::base_image_client_source.
+                             $base_image_client_source.
                              ".zip";
     $pb_win_get_base_zip = Gtk2::Window->new('toplevel');
     $pb_win_get_base_zip->set_title("Entpacke Windows Basis Image");
@@ -751,9 +846,9 @@ sub get_zipped_basefile {
 
 sub unzip_base_timeout {
     my $actual_size;
-    my $unzipped_size=$ServerConf::base_image_size;
+    my $unzipped_size=$base_image_size;
     my $unzipped_size_mb=int($unzipped_size/1024/1024);
-    my $file=$ServerConf::base_image_client_target;
+    my $file=$base_image_client_target;
     my $progress_bar = shift;
     # Calculate the value of the progress bar using the
     # value range set in the adjustment object
@@ -883,12 +978,12 @@ sub start_button {
        # copy not needed
     if ($selected{'SYSTEM'} eq $buttons_as_used){
         # modify virtual machine
-        my $command_mod="vboxmanage modifyvm $ServerConf::vbox_uuid".
+        my $command_mod="vboxmanage modifyvm $vbox_uuid".
                         " --memory $selected{'RAM'}";
         INFO "Executing: $command_mod\n";
         system($command_mod);
         # nothing to get and boot it
-        my $command="VirtualBox --startvm $ServerConf::vbox_uuid &";
+        my $command="VirtualBox --startvm $vbox_uuid &";
         INFO "Executing: $command\n";
         system($command);
         INFO "Snapshot started in other window: Terminating here!";
@@ -928,8 +1023,8 @@ sub start_zipped_snaphot {
                                              \&unzip_timeout, 
                                              $progress_bar);
    
-        system("mkdir -p $ServerConf::snapshot_file_dir || sudo mkdir -p $ServerConf::snapshot_file_dir");
-        system("cd $ServerConf::snapshot_file_dir; unzip -o '$zipped_snapshot_file' &");
+        system("mkdir -p $snapshot_file_dir || sudo mkdir -p $snapshot_file_dir");
+        system("cd $snapshot_file_dir; unzip -o '$zipped_snapshot_file' &");
         
         my $unzipped_actual_size=0;
         my $unzipped_size=$leovirtstarter::snapshots{$selected{'SYSTEM'}}{'filesize_vdi'};
@@ -945,7 +1040,7 @@ sub unzip_timeout {
     my $actual_size;
     my $unzipped_size=$leovirtstarter::snapshots{$selected{'SYSTEM'}}{'filesize_vdi'};
     my $unzipped_size_mb=int($unzipped_size/1024/1024);
-    my $file=$ServerConf::snapshot_file_dir."/".$ServerConf::snapshot_file_name;
+    my $file=$snapshot_file_dir."/".$snapshot_file_name;
     my $progress_bar = shift;
     # Calculate the value of the progress bar using the
     # value range set in the adjustment object
@@ -963,11 +1058,11 @@ sub unzip_timeout {
         $pb_win_start_zip->destroy;
         # modifying virtual machine
         system("chmod 777 $file");
-        my $command_mod="vboxmanage modifyvm $ServerConf::vbox_uuid".
+        my $command_mod="vboxmanage modifyvm $vbox_uuid".
                         " --memory $selected{'RAM'}";
         INFO "Executing: $command_mod\n";
         system($command_mod);
-        my $command="VirtualBox --startvm $ServerConf::vbox_uuid &";
+        my $command="VirtualBox --startvm $vbox_uuid &";
         INFO "Executing: $command\n";
         system($command);
         INFO "Snapshot started in other window: Terminating here!";
@@ -1036,7 +1131,7 @@ sub get_zipped_snapshot {
     my ($snapshot) = @_;
     if ($snapshot eq $buttons_default){
        # This is the default snapshot, do what is configured as default/standard
-	$snapshot=$ServerConf::snapshot_default;
+	$snapshot=$snapshot_default;
         $selected{'SYSTEM'}=$snapshot;
     } elsif ($snapshot eq $buttons_as_used){
         # start as found
@@ -1061,10 +1156,10 @@ sub get_zipped_snapshot {
     INFO "Wanted in cache with size $filesize_correct:\n   $file_zipped";
     
     # is snapshot in cache already and size OK?
-    foreach my $dir (@ServerConf::children_shares_client){
-        my $file=$dir."/".$snapshot."/".$ServerConf::snapshot_file_name.".zip";
+    foreach my $dir (@children_shares_client){
+        my $file=$dir."/".$snapshot."/".$snapshot_file_name.".zip";
         my $target_dir = $dir."/".$snapshot;
-        my $target=$target_dir."/".$ServerConf::snapshot_file_name.".zip";
+        my $target=$target_dir."/".$snapshot_file_name.".zip";
         # save target
         $selected{'CACHE-ZIP'}=$target;
         INFO "CACHE-ZIP: $selected{'CACHE-ZIP'}";
@@ -1085,10 +1180,10 @@ sub get_zipped_snapshot {
 
     # copy snapshot into cache
     my $count=0;
-    foreach my $dir (@ServerConf::children_shares_client){
+    foreach my $dir (@children_shares_client){
         # go through all caches, check if there is enough space left
         my $target_dir = $dir."/".$snapshot;
-        my $target=$target_dir."/".$ServerConf::snapshot_file_name.".zip";
+        my $target=$target_dir."/".$snapshot_file_name.".zip";
         INFO "*** : $target";
         # save target
         $selected{'CACHE-ZIP'}=$target;
@@ -1099,14 +1194,14 @@ sub get_zipped_snapshot {
         my ($space_left_mb) = &get_space_left($dir);
 
         INFO "*** Cache limit:                ",
-             "$ServerConf::children_shares_client_size[$count] MB";
+             "$children_shares_client_size[$count] MB";
         INFO "*** Cache used so far:            $cache_used MB";
         INFO "*** Cache needed with new file:   $cache MB";
         INFO "*** Space left :                  $space_left_mb MB";
         INFO "*** Zip-file (incl 10\% reserve): $filesize_correct_mb MB";
 
         # check available space
-        while ($cache >= $ServerConf::children_shares_client_size[$count]
+        while ($cache >= $children_shares_client_size[$count]
                or $filesize_correct_mb >= $space_left_mb){
             INFO "*** --> cache files must be deleted";
             my @oldest_in_cache = &oldest_in_cache($dir);
@@ -1124,7 +1219,7 @@ sub get_zipped_snapshot {
                 ($space_left_mb) = &get_space_left($dir);
 
                 INFO "*** Cache limit:                ",
-                     "$ServerConf::children_shares_client_size[$count] MB";
+                     "$children_shares_client_size[$count] MB";
                 INFO "*** Cache used so far:            $cache_used MB";
                 INFO "*** Cache needed with new file:   $cache MB";
                 INFO "*** Space left :                  $space_left_mb MB";
@@ -1371,12 +1466,12 @@ sub ram_sizes {
     my @display_size=();
     my $list_count=0;
     DEBUG "Host memory size: $mem_mb";
-    foreach my $size ( @ServerConf::ram_steps ){
+    foreach my $size ( @ram_steps ){
         DEBUG "Is $size ok for $mem_mb ?";
         my $diff_size=abs((0.5*$mem_mb)-$size);
         DEBUG "$diff_size > $last_diff_size ($size MB)";        
         if ($diff_size > $last_diff_size or
-            $size >$ServerConf::max_guest_ram){
+            $size >$max_guest_ram){
             last;            
         }
         $last_diff_size=$diff_size;
@@ -1386,16 +1481,150 @@ sub ram_sizes {
     my $pre=$list_count-2;
     my $fix=$list_count-1;
     my $post=$list_count-0;
-    INFO "        RAM size: $ServerConf::ram_steps[$pre] MB (".$pre.")";
-    INFO "Perfect RAM size: $ServerConf::ram_steps[$fix] MB (: ".$fix.")";
-    INFO "        RAM size: $ServerConf::ram_steps[$post] MB (: ".$post.")";
+    INFO "        RAM size: $ram_steps[$pre] MB (".$pre.")";
+    INFO "Perfect RAM size: $ram_steps[$fix] MB (: ".$fix.")";
+    INFO "        RAM size: $ram_steps[$post] MB (: ".$post.")";
 
     @display_size=(
-               $ServerConf::ram_steps[$fix],
-               $ServerConf::ram_steps[$pre]
+               $ram_steps[$fix],
+               $ram_steps[$pre]
                   );
-    if ($ServerConf::ram_steps[$post]<=$ServerConf::max_guest_ram){
-        push @display_size, $ServerConf::ram_steps[$post];
+    if ($ram_steps[$post]<=$max_guest_ram){
+        push @display_size, $ram_steps[$post];
     }
-    return $ServerConf::ram_steps[$fix],@display_size;
+    return $ram_steps[$fix],@display_size;
 }
+
+
+
+
+
+# subs from pm:
+
+
+sub  check_options{
+   my ($parse_ergebnis) = @_;
+   if (not $parse_ergebnis==1){
+      my @list = split(/\//,$0);
+      my $scriptname = pop @list;
+      print "\nYou have made a mistake, when specifying options.\n"; 
+      print "See error message above. \n\n";
+      print "... $scriptname is terminating.\n\n";
+      exit;
+   } else {
+      print "All options  were recognized.\n";
+   }
+
+}
+
+
+
+
+sub test {
+    print "Sub test from module leovirtstarter\n";
+}
+
+
+
+
+sub show_message_dialog {
+    #THIS IS THE MAIN FEATURE OF THE APP:
+    #you tell it what to display, and how to display it
+    #$parent is the parent window, or "undef"
+    #$icon can be one of the following:	a) 'info'
+    #					b) 'warning'
+    #					c) 'error'
+    #					d) 'question'
+    #$text can be pango markup text, or just plain text, IE the message
+    #$button_type can be one of the following: 	a) 'none'
+    #						b) 'ok'
+    #						c) 'close'
+    #						d) 'cancel'
+    #						e) 'yes-no'
+    #						f) 'ok-cancel'
+
+    my ($parent,$icon,$text,$button_type) = @_;
+ 
+    my $dialog = Gtk2::MessageDialog->new_with_markup ($parent,
+					[qw/modal destroy-with-parent/],
+					$icon,
+					$button_type,
+					sprintf "$text");
+		
+    # this will typically return certain values depending on the 
+    # value of $retval.
+    # in this application, we only change the label's value accordingly
+    my $retval = $dialog->run;
+    #destroy the dialog as it comes out of the 'run' loop	
+    $dialog->destroy;
+}
+
+
+
+sub get_snapshots {
+    my ($get_dir) = @_;
+    my @snapshots=();
+    print "opening $get_dir\n";
+    opendir (DIR, $get_dir) || die $!;
+    while( (my $dirname = readdir(DIR))){
+        if ($dirname eq "." or $dirname eq ".." ){
+	    next;
+        }
+
+        print "Processing $dirname\n";
+        my $abs_path=$get_dir."/".
+                     $dirname."/".$snapshot_file_name;
+        if (not -e $abs_path){
+            # no snapshot file found/no access to snapshot file 
+            next;
+        }
+        ${snapshots}{$dirname}{'abs_path'}=$abs_path;
+        my $abs_dir=$get_dir."/".
+                    $dirname;
+        ${snapshots}{$dirname}{'abs_dir'}=$abs_dir;
+
+        # filesizes
+        my $file_vdi_size=$abs_dir."/filesize.vdi";
+        my $file_zipped_size=$abs_dir."/filesize.vdi.zipped";
+        my $filesize_vdi=`cat '$file_vdi_size'`;
+        chomp($filesize_vdi);
+        my $filesize_zipped=`cat '$file_zipped_size'`;
+        chomp($filesize_zipped);
+        ${snapshots}{$dirname}{'filesize_vdi'}=$filesize_vdi;
+        ${snapshots}{$dirname}{'filesize_zipped'}=$filesize_zipped;
+
+        if ($dirname ne $snapshot_default){
+            # jump over the default snapshot (appears automagically at second in the list)
+            push @snapshots, $dirname;
+        }
+
+        # read image.conf
+        my $file=$get_dir."/".$dirname."/image.conf";
+        if (-e $file){
+            open (FILE, $file);
+	    while (<FILE>){
+               chomp();
+               my ($key,$value) = split(/=/);
+               # convert unicode to iso
+               $value=~s/\303\244/\344/g;# ae
+               $value=~s/\303\204/\304/g;# Ae
+               $value=~s/\303\266/\366/g;# oe
+               $value=~s/\303\226/\326/g;# Oe
+               $value=~s/\303\274/\374/g;# ue
+               $value=~s/\303\234/\334/g;# Ue
+               $value=~s/\303\237/\337/g;# ss
+
+               ${snapshots}{$dirname}{$key}="$value";
+               #print "   * Key: $key  --> Value: $value\n";
+	    }
+        }
+    }
+    closedir DIR;
+    @snapshots = sort @snapshots;
+    return @snapshots;
+}
+
+
+
+
+

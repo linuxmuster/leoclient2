@@ -16,15 +16,15 @@ my $on_the_go="-";
 
 
 # Einlesen der Konfigurationsdatei
-my $conf="/etc/leovirtstarter2/leovirtstarter2.conf";
-if (not -e $conf){
-    print "ERROR: $conf not found!\n";
-    exit;
-}
-{ package Conf ; do "$conf" 
-  || die "Fehler: $conf could not be processed (syntax error?)\n";
-  print "$conf processed succesfully\n"; 
-}
+# my $conf="/etc/leovirtstarter2/leovirtstarter2.conf";
+# if (not -e $conf){
+#     print "ERROR: $conf not found!\n";
+#     exit;
+# }
+# { package Conf ; do "$conf" 
+#   || die "Fehler: $conf could not be processed (syntax error?)\n";
+#   print "$conf processed succesfully\n"; 
+# }
 
 
 # moved into the scripts
@@ -113,7 +113,7 @@ sub show_message_dialog {
 sub get_snapshots {
     my ($get_dir) = @_;
     my @snapshots=();
-    #print "opening $get_dir\n";
+    print "opening $get_dir\n";
     opendir (DIR, $get_dir) || die $!;
     while( (my $dirname = readdir(DIR))){
         if ($dirname eq "." or $dirname eq ".." ){
@@ -122,7 +122,7 @@ sub get_snapshots {
 
         print "Processing $dirname\n";
         my $abs_path=$get_dir."/".
-                     $dirname."/".$ServerConf::snapshot_file_name;
+                     $dirname."/".$snapshot_file_name;
         if (not -e $abs_path){
             # no snapshot file found/no access to snapshot file 
             next;
@@ -142,7 +142,7 @@ sub get_snapshots {
         ${snapshots}{$dirname}{'filesize_vdi'}=$filesize_vdi;
         ${snapshots}{$dirname}{'filesize_zipped'}=$filesize_zipped;
 
-        if ($dirname ne $ServerConf::snapshot_default){
+        if ($dirname ne $snapshot_default){
             # jump over the default snapshot (appears automagically at second in the list)
             push @snapshots, $dirname;
         }
