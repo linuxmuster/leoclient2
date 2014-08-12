@@ -977,28 +977,22 @@ sub start_button {
        # copy
        # copy not needed
     if ($selected{'SYSTEM'} eq $buttons_as_used){
-        # modify virtual machine
-        # nothing to get and boot it
-        #   my $command="VirtualBox --startvm $vbox_uuid &";
-        #   INFO "Executing: $command\n";
-        #   system($command);
-        #   INFO "Snapshot started in other window: Terminating here!";
-     if ($virtualbox==1){
-         my $start_vbox=$vm_path_export."/usr/bin/virtualbox &";
-         INFO "Executing: $start_vbox\n";
-         system("$start_vbox");
-         INFO "VirtualBox started in other window: Terminating here!";
-     } else {
-         my $command_mod = $vm_path_export."/usr/bin/VBoxManage modifyvm $vm".
-                           " --memory $selected{'RAM'}";
-         INFO "Executing: $command_mod\n";
-         system($command_mod);
-         my $start_vm=$vm_path_export."/usr/bin/VBoxManage startvm $vm --type gui &";
-         INFO "Executing: $start_vm\n";
-         system("$start_vm");
-         INFO "Snapshot started in other window: Terminating here!";
-     }
-     exit;
+        if ($virtualbox==1){
+             my $start_vbox=$vm_path_export."/usr/bin/virtualbox &";
+             INFO "Executing: $start_vbox\n";
+             system("$start_vbox");
+             INFO "VirtualBox started in other window: Terminating here!";
+        } else {
+             my $command_mod = $vm_path_export."/usr/bin/VBoxManage modifyvm $vm".
+                               " --memory $selected{'RAM'}";
+             INFO "Executing: $command_mod\n";
+             system($command_mod);
+             my $start_vm=$vm_path_export."/usr/bin/VBoxManage startvm $vm --type gui";
+             INFO "Executing: $start_vm\n";
+             system("$start_vm");
+             INFO "Snapshot started in other window: Terminating here!";
+        }
+        exit;
     } else {
         # get the zipped snapshot
         my $zipped_snapshot_file = &get_zipped_snapshot($selected{'SYSTEM'});
@@ -1069,15 +1063,6 @@ sub unzip_timeout {
         $pb_win_start_zip->destroy;
         # modifying virtual machine
         system("chmod 777 $file");
-#        my $command_mod="vboxmanage modifyvm $vbox_uuid".
-#                        " --memory $selected{'RAM'}";
-#        INFO "Executing: $command_mod\n";
-#        system($command_mod);
-        #my $command="VirtualBox --startvm $vbox_uuid &";
-#        my $command=$vm_path_export."/usr/bin/VBoxManage startvm $vm --type gui";
-#        INFO "Executing: $command\n";
-#        system($command);
-#        INFO "Snapshot started in other window: Terminating here!";
         if ($virtualbox==1){
             my $start_vbox=$vm_path_export."/usr/bin/virtualbox &";
             INFO "Executing: $start_vbox\n";
@@ -1088,7 +1073,7 @@ sub unzip_timeout {
                               " --memory $selected{'RAM'}";
             INFO "Executing: $command_mod\n";
             system($command_mod);
-            my $start_vm=$vm_path_export."/usr/bin/VBoxManage startvm $vm --type gui &";
+            my $start_vm=$vm_path_export."/usr/bin/VBoxManage startvm $vm --type gui";
             INFO "Executing: $start_vm\n";
             system("$start_vm");
             INFO "Snapshot started in other window: Terminating here!";
