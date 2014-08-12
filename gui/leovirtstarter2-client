@@ -306,10 +306,10 @@ if ($vm ne ""){
 
 
 
-# if ($vm_path_abs ne ""){
+if ($vm_path_abs ne ""){
 #     # start a given vm
 #     print "##### Starting Virtual machine $vm\n";
-#     $vm_path_export="export VBOX_USER_HOME=".$vm_path_abs."; ";
+    $vm_path_export="export VBOX_USER_HOME=".$vm_path_abs."; ";
 #     my $remove_shared_folder=$vm_path_export.
 #                "/usr/bin/VBoxManage sharedfolder remove $vm --name home";
 #     my $add_shared_folder=$vm_path_export.
@@ -329,14 +329,14 @@ if ($vm ne ""){
 #         system("$start_vm");
 #     }
 #     exit;
-# } else {
+} else {
 #     # just start vitualbox
 #     print "   ERROR:  None of these configuration files found:\n";
 #     print "   * $Conf::common_configuration_file\n";
 #     print "   * $on_the_go\n";
 #     system("/usr/bin/VirtualBox");
 #     exit;
-# } 
+} 
 
 
 
@@ -978,16 +978,27 @@ sub start_button {
        # copy not needed
     if ($selected{'SYSTEM'} eq $buttons_as_used){
         # modify virtual machine
-        my $command_mod="vboxmanage modifyvm $vbox_uuid".
-                        " --memory $selected{'RAM'}";
-        INFO "Executing: $command_mod\n";
-        system($command_mod);
         # nothing to get and boot it
-        my $command="VirtualBox --startvm $vbox_uuid &";
-        INFO "Executing: $command\n";
-        system($command);
-        INFO "Snapshot started in other window: Terminating here!";
-        exit;
+        #   my $command="VirtualBox --startvm $vbox_uuid &";
+        #   INFO "Executing: $command\n";
+        #   system($command);
+        #   INFO "Snapshot started in other window: Terminating here!";
+     if ($virtualbox==1){
+         my $start_vbox=$vm_path_export."/usr/bin/virtualbox &";
+         INFO "Executing: $start_vbox\n";
+         system("$start_vbox");
+         INFO "VirtualBox started in other window: Terminating here!";
+     } else {
+         my $command_mod = $vm_path_export."/usr/bin/VBoxManage modifyvm $vm".
+                           " --memory $selected{'RAM'}";
+         INFO "Executing: $command_mod\n";
+         system($command_mod);
+         my $start_vm=$vm_path_export."/usr/bin/VBoxManage startvm $vm --type gui &";
+         INFO "Executing: $start_vm\n";
+         system("$start_vm");
+         INFO "Snapshot started in other window: Terminating here!";
+     }
+     exit;
     } else {
         # get the zipped snapshot
         my $zipped_snapshot_file = &get_zipped_snapshot($selected{'SYSTEM'});
@@ -1058,14 +1069,30 @@ sub unzip_timeout {
         $pb_win_start_zip->destroy;
         # modifying virtual machine
         system("chmod 777 $file");
-        my $command_mod="vboxmanage modifyvm $vbox_uuid".
-                        " --memory $selected{'RAM'}";
-        INFO "Executing: $command_mod\n";
-        system($command_mod);
-        my $command="VirtualBox --startvm $vbox_uuid &";
-        INFO "Executing: $command\n";
-        system($command);
-        INFO "Snapshot started in other window: Terminating here!";
+#        my $command_mod="vboxmanage modifyvm $vbox_uuid".
+#                        " --memory $selected{'RAM'}";
+#        INFO "Executing: $command_mod\n";
+#        system($command_mod);
+        #my $command="VirtualBox --startvm $vbox_uuid &";
+#        my $command=$vm_path_export."/usr/bin/VBoxManage startvm $vm --type gui";
+#        INFO "Executing: $command\n";
+#        system($command);
+#        INFO "Snapshot started in other window: Terminating here!";
+        if ($virtualbox==1){
+            my $start_vbox=$vm_path_export."/usr/bin/virtualbox &";
+            INFO "Executing: $start_vbox\n";
+            system("$start_vbox");
+            INFO "VirtualBox started in other window: Terminating here!";
+        } else {
+            my $command_mod = $vm_path_export."/usr/bin/VBoxManage modifyvm $vm".
+                              " --memory $selected{'RAM'}";
+            INFO "Executing: $command_mod\n";
+            system($command_mod);
+            my $start_vm=$vm_path_export."/usr/bin/VBoxManage startvm $vm --type gui &";
+            INFO "Executing: $start_vm\n";
+            system("$start_vm");
+            INFO "Snapshot started in other window: Terminating here!";
+        }
         exit;
         return FALSE;
     }
