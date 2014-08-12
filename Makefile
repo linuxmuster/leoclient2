@@ -56,10 +56,10 @@ leoclient2-leovirtstarter-client:
 	@echo '   * Installing the client script'
 	@install -d -m0755 -oroot -groot $(BIN)
 	@install -oroot -groot --mode=0755 gui/leovirtstarter2-client $(BIN)
-	@install -oroot -groot --mode=0755 sudoers/leoclient2-set-permissions $(BIN)
+	@install -oroot -groot --mode=0700 sudoers/leoclient2-set-permissions $(BIN)
 	@install -d -m0755 -oroot -groot $(SBIN)
-	@install -oroot -groot --mode=0755 installer-scripts/leoclient2-init $(SBIN)
-	@install -oroot -groot --mode=0755 installer-scripts/leoclient2-base-snapshot-renew $(SBIN)
+	@install -oroot -groot --mode=0700 installer-scripts/leoclient2-init $(SBIN)
+	@install -oroot -groot --mode=0700 installer-scripts/leoclient2-base-snapshot-renew $(SBIN)
 	@echo '   * Installing the client configuration files'
 	#@install -d -m755 -oroot -groot $(VIRTCONF)
 	#@install -oroot -groot --mode=0644 gui/leovirtstarter2.conf $(VIRTCONF)
