@@ -67,8 +67,6 @@ my $snapshot_default="standard";
 my $snapshot_file_dir="/virtual/Machines/winXP-2010/Snapshots";
 my $snapshot_file_name="{8c816439-1e6e-430f-9865-db7a2a96206f}.vdi";
 
-# Where to look for snapshots (relative paths will be prefixed by $HOME)        
-my $snapshot_search_dir_client="/media/snapshots/vbox-snapshots";
 
 
 # CHILDREN SHARES: fast/maybe offline                                           
@@ -92,9 +90,16 @@ my $server_popularity_log_file=".log-popularity";
 #************************************************************
 #************************************************************
 
+
+
 # 
 my %snapshots=();
 
+
+
+# new config
+# Where to look for remote snapshots (relative paths will be prefixed by $HOME)        
+my $snapshot_search_dir_client="/media/snapshots/vbox-snapsho";
 
 
 
@@ -1560,6 +1565,10 @@ sub show_message_dialog {
 sub get_snapshots {
     my ($get_dir) = @_;
     my @snapshots=();
+    if (not -d $get_dir){
+        print "WARNING: Nonexisting Snapshot search dir: $get_dir\n";
+        return @snapshots;
+    }
     print "opening $get_dir\n";
     opendir (DIR, $get_dir) || die $!;
     while( (my $dirname = readdir(DIR))){
