@@ -65,7 +65,8 @@ my $base_image_size="2468409856"; # as seen with 'ls -l'
 # the SNAPSHOTS                                                                 
 # in which directory is the snapshot that is  used as "Win XP Standard"         
 my $snapshot_default="standard";
-my $snapshot_file_dir="/virtual/Machines/winXP-2010/Snapshots";
+#my $snapshot_file_dir="/virtual/Machines/winXP-2010/Snapshots";
+my $snapshot_file_dir="";
 my $snapshot_file_name="{8c816439-1e6e-430f-9865-db7a2a96206f}.vdi";
 
 
@@ -263,13 +264,13 @@ if ($info==1){
 
 if ($vm ne ""){
     # start vm
-    $vm_path_abs=$vm{$vm};
-    $search_dir_local=$vm_path_abs;
-    # remove last dir to fit to remote dirs
-    $search_dir_local=~s/\/$//g;
-    $search_dir_local=~s/\/${vm}$//g;
-    #system("leovirtstarter2-client --vm $vm");
-    #exit;
+    #$vm_path_abs=$vm{$vm};
+    #$search_dir_local=$vm_path_abs;
+    ## remove last dir to fit to remote dirs
+    #$search_dir_local=~s/\/$//g;
+    #$search_dir_local=~s/\/${vm}$//g;
+    ##system("leovirtstarter2-client --vm $vm");
+    ##exit;
 } elsif ($#vm==-1) {
     INFO "No machines found, aborting with gui Error\n";
     my $message="Es gibt keine Maschinen in $conf_machines!";
@@ -303,13 +304,18 @@ if ($vm ne ""){
         exit;
     }
     $vm=$zenity_return;
-    # Setting paths
-    $vm_path_abs=$vm{$vm};
-    $search_dir_local=$vm_path_abs;
-    # remove last dir to fit to remote dirs
-    $search_dir_local=~s/\/$//g;
-    $search_dir_local=~s/\/${vm}$//g;
 }
+
+
+
+# vm is chosen --> setting paths
+$vm_path_abs=$vm{$vm};
+$snapshot_file_dir=$vm_path_abs."/Snapshots";
+$search_dir_local=$vm_path_abs;
+# remove last dir to fit to remote dirs
+$search_dir_local=~s/\/$//g;
+$search_dir_local=~s/\/${vm}$//g;
+
 
 
 
@@ -509,10 +515,12 @@ my $buttons_as_used="Windows XP wie vorgefunden";
 #my @buttons=&get_snapshots($snapshot_search_dir_client);
 my @buttons=&get_snapshots(@snapshot_search_dirs);
 
-print Dumper(\@snapshot_search_dirs);
-print Dumper(\%snapshots);
 
-exit;
+# ??????
+#print Dumper(\@snapshot_search_dirs);
+#print Dumper(\%snapshots);
+
+#exit;
 
 @buttons=($buttons_as_used,$buttons_default,@buttons);
 
@@ -1001,18 +1009,18 @@ sub start_button {
     if ($selected{'SYSTEM'} eq $buttons_as_used){
         if ($virtualbox==1){
              my $start_vbox=$vm_path_export."/usr/bin/virtualbox";
-             INFO "Executing: $start_vbox\n";
+             INFO "$start_vbox\n";
              system("$start_vbox");
              INFO "VirtualBox started in other window: Terminating here!";
         } else {
              my $command_mod = $vm_path_export.
                                "/usr/bin/VBoxManage modifyvm $vm".
                                " --memory $selected{'RAM'}";
-             INFO "Executing: $command_mod\n";
+             INFO "$command_mod\n";
              system($command_mod);
              my $start_vm = $vm_path_export.
                             "/usr/bin/VBoxManage startvm $vm --type gui";
-             INFO "Executing: $start_vm\n";
+             INFO "$start_vm\n";
              system("$start_vm");
              INFO "Snapshot started in other window: Terminating here!";
         }
@@ -1027,8 +1035,11 @@ sub start_button {
 
 sub start_zipped_snaphot {
     my ($zipped_snapshot_file) = @_;
+    #print Dumper(\%selected);
+
     if ($zipped_snapshot_file ne "___NOSNAPSHOT___"){
-        INFO "Snapshot unzipped: \n  $zipped_snapshot_file --- $selected{'CACHE-ZIP'} ";
+        INFO "unzip $zipped_snapshot_file ";
+        INFO "to    $selected{'CACHE-ZIP'} ";
 
         $pb_win_start_zip = Gtk2::Window->new('toplevel');
         $pb_win_start_zip->set_title("Entpacke Windows: '$selected{'SYSTEM'}'");
@@ -1052,8 +1063,16 @@ sub start_zipped_snaphot {
                                              \&unzip_timeout, 
                                              $progress_bar);
    
-        system("mkdir -p $snapshot_file_dir || sudo mkdir -p $snapshot_file_dir");
-        system("cd $snapshot_file_dir; unzip -o '$zipped_snapshot_file' &");
+        my $command_prep="mkdir -p $snapshot_file_dir || ".
+                      "sudo mkdir -p $snapshot_file_dir";
+        INFO "$command_prep";
+        system("$command_prep");
+
+        my $command_unzip="cd $snapshot_file_dir; ".
+	                  "unzip -o '$zipped_snapshot_file' &";
+
+        INFO "$command_unzip";
+        system("$command_unzip");
         
         my $unzipped_actual_size=0;
         my $unzipped_size=$snapshots{$selected{'SYSTEM'}}{'filesize_vdi'};
@@ -1202,7 +1221,7 @@ sub get_zipped_snapshot {
 
 	INFO "Checking for existance in $dir:\n   $file";
 	if (-e $file){
-            INFO "Snapshot found in dir!";
+            INFO "Snapshot found: $dir";
             my $actual_size = -s $file;
             if ($actual_size==$filesize_correct){
                 INFO  "Snapshot size correct ($actual_size) --> using it:";
@@ -1295,9 +1314,10 @@ sub get_zipped_snapshot {
             $progress_bar->{timer} = Glib::Timeout->add(500, 
                                              \&getzip_timeout, 
                                              $progress_bar);
-            INFO "*** Copying $file_zipped --> $target ...";
+            INFO "* cp $file_zipped";
+            INFO "* -> $target ...";
             system("cp -v '$file_zipped' '$target' &");
-            INFO "*** ... done!";
+            INFO "* ... done!";
             return $target;
             #my $actual_size = -s $target;
             #if (defined $actual_size and $actual_size==$filesize_correct){
