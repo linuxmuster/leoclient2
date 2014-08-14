@@ -11,7 +11,7 @@ use utf8;
 use File::Basename;
 use Log::Log4perl qw(:easy);
 use Sys::Hostname;
-
+use Data::Dumper;
 
 # todo
 # read config into hash see line 84 ?????
@@ -59,7 +59,8 @@ my $base_image_client_target="/virtual/vdi/winXP-2010.vdi";
 # (relative to $snapshot_file_dir below)                                        
 my $base_image_client_source="base/winXP-2010.vdi";
 
-my $base_image_size="2468409856"; # as seen with 'ls -l'                           
+my $base_image_size="2468409856"; # as seen with 'ls -l'  
+
 
 # the SNAPSHOTS                                                                 
 # in which directory is the snapshot that is  used as "Win XP Standard"         
@@ -92,9 +93,10 @@ my $server_popularity_log_file=".log-popularity";
 
 
 
-# 
+# Contains information about snapshots
 my %snapshots=();
-my $snapshot_store_local="";
+
+my $search_dir_local="";
 
 
 ############################################################
@@ -102,7 +104,8 @@ my $snapshot_store_local="";
 my $snapshot_search_dir_client="/media/leoclient2-vm";
 
 # ??? This will be read from /etc/leoclient2/machines.conf
-my @snapshot_search_dirs=("/media/leoclient2-vm");
+my @snapshot_search_dirs=();
+my @snapshot_search_dirs_remote=("/media/leoclient2-vm");
 
 
 
@@ -257,17 +260,14 @@ if ($info==1){
 
 
 
-# --local-snapshots
-if ($local_snapshots==1){
-    # empty list of remote snapshots
-    @snapshot_search_dirs=();
-}
-
-
 
 if ($vm ne ""){
     # start vm
     $vm_path_abs=$vm{$vm};
+    $search_dir_local=$vm_path_abs;
+    # remove last dir to fit to remote dirs
+    $search_dir_local=~s/\/$//g;
+    $search_dir_local=~s/\/${vm}$//g;
     #system("leovirtstarter2-client --vm $vm");
     #exit;
 } elsif ($#vm==-1) {
@@ -279,19 +279,22 @@ if ($vm ne ""){
     # show zenity chooser
 #    my $zenity_list="/usr/bin/zenity --list --width=800 --height=400 ".
 #       "--radiolist --title='Virtuelle Maschine wählen!' ".
-#       "--column='' --column='Maschine' --column='Beschreibung' --column='Pfad' ".
+#       "--column='' --column='Maschine' ".
+#       "--column='Beschreibung' --column='Pfad' ".
 #       "TRUE 'winxp' 'Windows XP' '/var/virtual/winxp' ".
 #       "FALSE win7 'Windows 7' '/var/virtual/winxp2'";
     my $zenity_list="/usr/bin/zenity --list --width=800 --height=400 ".
        "--radiolist --title='Virtuelle Maschine wählen!' ".
-       "--column='' --column='Maschine' --column='Beschreibung' --column='Pfad' ";
+       "--column='' --column='Maschine' ".
+       "--column='Beschreibung' --column='Pfad' ";
     # add items
     foreach my $machine (@vm){
         print "  $machine --> $vm{$machine}\n";    
-        $zenity_list=$zenity_list."FALSE '$machine' '$machine' $vm{$machine} ";    
+        $zenity_list=$zenity_list.
+              "FALSE '$machine' '$machine' $vm{$machine} ";    
     }
     
-    print "$zenity_list\n";
+    #print "$zenity_list\n";
     my $zenity_return=`$zenity_list`;
     chomp($zenity_return);
     print "Zenity return String: >$zenity_return<\n";
@@ -302,10 +305,21 @@ if ($vm ne ""){
     $vm=$zenity_return;
     # Setting paths
     $vm_path_abs=$vm{$vm};
-    $snapshot_store_local=$vm_path_abs."/snapshot-store";
+    $search_dir_local=$vm_path_abs;
+    # remove last dir to fit to remote dirs
+    $search_dir_local=~s/\/$//g;
+    $search_dir_local=~s/\/${vm}$//g;
 }
 
 
+
+# --local-snapshots
+if ($local_snapshots==1){
+    # empty list of remote snapshots
+    @snapshot_search_dirs_remote=();
+}
+
+@snapshot_search_dirs=($search_dir_local,@snapshot_search_dirs_remote);
 
 
 if ($vm_path_abs ne ""){
@@ -494,6 +508,11 @@ my $buttons_as_used="Windows XP wie vorgefunden";
 
 #my @buttons=&get_snapshots($snapshot_search_dir_client);
 my @buttons=&get_snapshots(@snapshot_search_dirs);
+
+print Dumper(\@snapshot_search_dirs);
+print Dumper(\%snapshots);
+
+exit;
 
 @buttons=($buttons_as_used,$buttons_default,@buttons);
 
@@ -1037,7 +1056,7 @@ sub start_zipped_snaphot {
         system("cd $snapshot_file_dir; unzip -o '$zipped_snapshot_file' &");
         
         my $unzipped_actual_size=0;
-        my $unzipped_size=$leovirtstarter::snapshots{$selected{'SYSTEM'}}{'filesize_vdi'};
+        my $unzipped_size=$snapshots{$selected{'SYSTEM'}}{'filesize_vdi'};
     } else {
 
     }
@@ -1048,7 +1067,7 @@ sub start_zipped_snaphot {
 
 sub unzip_timeout {
     my $actual_size;
-    my $unzipped_size=$leovirtstarter::snapshots{$selected{'SYSTEM'}}{'filesize_vdi'};
+    my $unzipped_size=$snapshots{$selected{'SYSTEM'}}{'filesize_vdi'};
     my $unzipped_size_mb=int($unzipped_size/1024/1024);
     my $file=$snapshot_file_dir."/".$snapshot_file_name;
     my $progress_bar = shift;
@@ -1104,7 +1123,7 @@ sub unzip_timeout {
 
 sub getzip_timeout {
     my $actual_size;
-    my $zipped_size=$leovirtstarter::snapshots{$selected{'SYSTEM'}}{'filesize_zipped'};
+    my $zipped_size=$snapshots{$selected{'SYSTEM'}}{'filesize_zipped'};
     my $zipped_size_mb=int($zipped_size/1024/1024);
 
     my $target = $selected{'CACHE-ZIP'};
@@ -1155,14 +1174,14 @@ sub get_zipped_snapshot {
         #my $started=&start_zipped_snaphot($selected{'CACHE-ZIP'});
         #my $started=&start_zipped_snaphot("___NOSNAPSHOT___");
         #return "___NOSNAPSHOT___";  
-    } elsif (not defined $leovirtstarter::snapshots{$snapshot}{'abs_path'}){
+    } elsif (not defined $snapshots{$snapshot}{'abs_path'}){
         
     }
 
     # zipped snapshot must be fetched
     # generate paths
-    my $file=$leovirtstarter::snapshots{$snapshot}{'abs_path'};
-    my $dir =$leovirtstarter::snapshots{$snapshot}{'abs_dir'};
+    my $file=$snapshots{$snapshot}{'abs_path'};
+    my $dir =$snapshots{$snapshot}{'abs_dir'};
     my $file_zipped=$file.".zip";
     my $filesize_file_zipped = $dir."/filesize.vdi.zipped";
 
@@ -1354,37 +1373,37 @@ sub create_radiobuttons {
         my $host_check=0; # default: no check
         my $room_string="";
         my $room_check=0; # default: no check
-        if (exists $leovirtstarter::snapshots{$button}{'name'}){
+        if (exists $snapshots{$button}{'name'}){
  	    INFO "   * Name:       ",
-                 "$leovirtstarter::snapshots{$button}{'name'}";
-            $displayname=$leovirtstarter::snapshots{$button}{'name'};
+                 "$snapshots{$button}{'name'}";
+            $displayname=$snapshots{$button}{'name'};
         } else {
             $displayname=$button;
         }
-        if (exists $leovirtstarter::snapshots{$button}{'maintainer'}){
+        if (exists $snapshots{$button}{'maintainer'}){
  	    INFO "   * Maintainer: ",
-                 "$leovirtstarter::snapshots{$button}{'maintainer'}";
+                 "$snapshots{$button}{'maintainer'}";
             $displayname=$displayname.
-                " (".$leovirtstarter::snapshots{$button}{'maintainer'}.")";
+                " (".$snapshots{$button}{'maintainer'}.")";
         }
-        if (exists $leovirtstarter::snapshots{$button}{'host'}){
-            $host_string=$leovirtstarter::snapshots{$button}{'host'};
+        if (exists $snapshots{$button}{'host'}){
+            $host_string=$snapshots{$button}{'host'};
             $host_check=1; # check for hosts later
  	    INFO "   * Hosts allowed:";
             my @hosts = split(/,/,$host_string);
             foreach my $host (@hosts){
     	        INFO "      * $host";
-                $leovirtstarter::snapshots{$button}{'hosts'}{$host}="OK";
+                $snapshots{$button}{'hosts'}{$host}="OK";
             }
         }
-        if (exists $leovirtstarter::snapshots{$button}{'room'}){
-            $room_string=$leovirtstarter::snapshots{$button}{'room'};
+        if (exists $snapshots{$button}{'room'}){
+            $room_string=$snapshots{$button}{'room'};
             $room_check=1; # check for rooms later
             my @rooms = split(/,/,$room_string);
     	        INFO "   * Rooms allowed";
             foreach my $room (@rooms){
     	        INFO "      * $room";
-                $leovirtstarter::snapshots{$button}{'rooms'}{$room}="OK";
+                $snapshots{$button}{'rooms'}{$room}="OK";
             }
         }
 
@@ -1396,9 +1415,9 @@ sub create_radiobuttons {
         my $host_check_ok=1; # default: display
 
         if ($room_check==1){
-          if (exists $leovirtstarter::snapshots{$button}{'rooms'}{$host_room}){
+          if (exists $snapshots{$button}{'rooms'}{$host_room}){
 	      INFO "Room $host_room is ",
-                   "$leovirtstarter::snapshots{$button}{'rooms'}{$host_room}";
+                   "$snapshots{$button}{'rooms'}{$host_room}";
           } else {
               INFO "Room >$host_room< not found as allowed room";
               $room_check_ok=0; 
@@ -1410,12 +1429,12 @@ sub create_radiobuttons {
           # when synchronizing has failed
 	  my $alternate_linbo_hostname=$hostname;
           $alternate_linbo_hostname=~s/-w$//g;
-          if (exists $leovirtstarter::snapshots{$button}{'hosts'}{$hostname}
-                  or $leovirtstarter::snapshots{$button}{'hosts'}{$alternate_linbo_hostname}){
+          if (exists $snapshots{$button}{'hosts'}{$hostname}
+                  or $snapshots{$button}{'hosts'}{$alternate_linbo_hostname}){
 	      INFO "Host $hostname is ",
-                   "$leovirtstarter::snapshots{$button}{'hosts'}{$hostname}";
+                   "$snapshots{$button}{'hosts'}{$hostname}";
 	      INFO "Linbo Host $alternate_linbo_hostname is ",
-                   "$leovirtstarter::snapshots{$button}{'hosts'}{$alternate_linbo_hostname}";
+                   "$snapshots{$button}{'hosts'}{$alternate_linbo_hostname}";
           } else {
               INFO "Host >$hostname< not found as allowed host";
               INFO "Linbo Host >$alternate_linbo_hostname< not found as allowed host";
@@ -1583,7 +1602,7 @@ sub get_snapshots {
     my @dirs = @_;
     foreach my $dir (@dirs){
         # append vm name
-        my $get_dir=$dir."/".$vm;
+        my $get_dir=$dir."/".$vm."/snapshot-store";
 
         if (not -d $get_dir){
             print "WARNING: Nonexisting Snapshot search dir: $get_dir\n";
