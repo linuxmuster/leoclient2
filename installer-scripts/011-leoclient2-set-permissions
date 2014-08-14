@@ -1,0 +1,26 @@
+#!/bin/bash
+# Script created by Rainer Rössler (rainer-at-linuxmuster.net)
+# License: Free Software (License GPLv3)
+
+# set permissions of leoclient2 machine for a certain user
+
+CONFPATH="/etc/leoclient2/machines"
+MACHINES="`/bin/ls $CONFPATH`"
+#echo $MACHINES
+
+for MACHINENAME in $MACHINES 
+do
+  
+  VMPATH="`/bin/cat $CONFPATH/$MACHINENAME`"
+  #echo $VMPATH
+  
+  chmod -R 777 $VMPATH
+  chmod -R 755 $VMPATH/defaults
+  chmod -R 755 $VMPATH/snapshot-store/base
+  chmod 755 $VMPATH/*.vdi
+  
+done
+
+# Das Script wird nicht mit einem "exit 0" beendet, da sonst
+# das Hauptscript /usr/sbin/linuxmuster-pam-mount, aus dem heraus
+# es aufgerufen wird, damit beendet würde.
