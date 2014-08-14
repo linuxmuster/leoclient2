@@ -1,3 +1,4 @@
+etc/leoclient2/machines
 etc/leoclient2/machines.conf
 etc/sudoers.d/leoclient2
 usr/bin/leovirtstarter2-client

@@ -56,12 +56,12 @@ leoclient2-leovirtstarter-client:
 	@install -oroot -groot --mode=0700 installer-scripts/leoclient2-init $(SBIN)
 	@install -oroot -groot --mode=0700 installer-scripts/leoclient2-base-snapshot-renew $(SBIN)
 	@echo '   * Installing the client configuration files'
-	#@install -d -m755 -oroot -groot $(VIRTCONF)
-	#@install -oroot -groot --mode=0644 gui/leovirtstarter2.conf $(VIRTCONF)
+	@install -d -oroot -groot --mode=0755 $(LEOCLIENTCONF)/machines
+	@install -oroot -groot --mode=0644 conf/machines.conf  $(LEOCLIENTCONF)
+
 	@echo '   * Installing sudoers stuff'
 	@install -d -m0644 -oroot -groot $(ETC)
 	@install -oroot -groot --mode=0440 sudoers/leoclient2 $(ETC)
-
 	@echo '   * Installing unity dash entry'
 	@install -d -m0755 -oroot -groot $(DESKTOP)
 	@install -oroot -groot --mode=0644 gui/leovirtstarter2-client.desktop $(DESKTOP)
@@ -101,6 +101,5 @@ leoclient2-vm-printer:
 	@install -oroot -groot --mode=0755 printer/run-vm-printer2-spooler $(BIN)
 	@install -d -m755 -oroot -groot $(LEOCLIENTCONF)
 	@install -oroot -groot --mode=0644 printer/leoclient-vm-printer2.conf  $(LEOCLIENTCONF)
-	@install -oroot -groot --mode=0644 conf/machines.conf  $(LEOCLIENTCONF)
 
 
