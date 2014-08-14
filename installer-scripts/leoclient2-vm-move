@@ -1,0 +1,188 @@
+#!/bin/bash
+# Script created by Rainer Rössler (roesslerrr-at-web.de)
+# License: Free Software (License GPLv3)
+
+# Information
+echo
+echo "Im folgenden können Sie eine virtuelle Maschine in ihr System"
+echo "importieren oder im System an einen anderen Ort verschieben."
+
+YESNO="X"
+until [ `echo $YESNO` == "nZ" ] 
+do
+  echo
+  echo "Soll der Vorgang abgebrochen werden?"
+  echo "(j/n - Bestätigen mit der Enter-Taste): "
+  read YESNO
+  YESNO=`echo $YESNO"Z"`
+  echo
+  
+  if [ `echo $YESNO` == "jZ" ] 
+  then
+    echo
+    echo "ABBRUCH!"
+    echo 
+    exit 0
+  fi
+done
+
+# Interaktive Eingabe von MASCHINENNAME
+echo
+echo "Geben Sie den Namen der virtuellen Maschine ein"
+echo "(Keine Leerzeichen - bestätigen mit der Enter-Taste):"
+read MACHINENAME
+#echo $MACHINENAME
+if [ "`echo $MACHINENAME | grep ' '`" != "" ]
+then 
+ echo
+ echo "Es ist ein Leerzeichen enthalten. ABBRUCH!"
+ echo
+ exit 0
+fi
+
+# vordefinierter Pfad für VM
+VMPATH="/var/virtual"
+#echo $VMPATH
+
+# Abfrage wo die VM angelegt werden soll
+YESNO="x"
+until [ `echo $YESNO` == "j" ] 
+do
+  echo
+  echo "Ist die virtuelle Maschine im Verzeichnis $VMPATH/$MACHINENAME gespeichert?"
+  read -p "(j/n - Bestätigen mit der Enter-Taste): " YESNO
+  
+  if [ `echo $YESNO` == "n" ] 
+  then
+    echo
+    echo "Geben Sie den Pfad für die virtuelle Maschine an:"
+    echo "(Keine Leerzeichen - bestätigen mit der Enter-Taste):"
+    read VMPATH
+    
+    if [ "`echo $VMPATH | grep ' '`" != "" ]
+    then 
+     echo
+     echo "Es ist ein Leerzeichen enthalten. ABBRUCH!"
+     echo
+     exit 0
+    fi
+        
+    if [ `echo $VMPATH | cut -b 1` != "/" ]
+    then
+      VMPATH=`echo "/"$VMPATH`
+    fi 
+  fi
+
+done
+
+echo 
+
+if [ -d $VMPATH/$MACHINENAME/Snapshots ]
+then
+  if [ -f $VMPATH/$MACHINENAME/VirtualBox.xml ]
+  then
+    if [ -f $VMPATH/$MACHINENAME/$MACHINENAME.vbox ]
+    then
+       cd ~
+#      if [ -f /etc/leoclient2/machines/$MACHINENAME.conf ]
+#      then
+#        cd ~
+#      else
+#        echo "Die Konfigurationsdatei $MACHINENAME.conf gibt es nicht. ABBRUCH!"
+#        exit 0
+#      fi
+    else
+      echo "Die Konfigurationsdatei $MACHINENAME.vbox gibt es nicht. ABBRUCH!"
+      exit 0
+    fi
+  else
+    echo "Die Konfigurationsdatei VirtualBox.xml gibt es nicht. ABBRUCH!"
+    exit 0
+  fi
+else
+  echo "Diese Maschine gibt es nicht. ABBRUCH!"
+  exit 0
+fi
+echo
+
+
+# Zielverzeichnis abfragen
+
+# vordefinierter Pfad für VM
+VMPATHNEW="/var/virtual"
+#echo $VMPATHNEW
+
+# Abfrage wo die VM angelegt werden soll
+YESNO="x"
+until [ `echo $YESNO` == "j" ] 
+do
+  echo
+  echo "Soll die virtuelle Maschine in das Verzeichnis $VMPATHNEW/$MACHINENAME verschoben werden?"
+  read -p "(j/n - Bestätigen mit der Enter-Taste): " YESNO
+  
+  if [ `echo $YESNO` == "n" ] 
+  then
+    echo
+    echo "Geben Sie den gewünschten Pfad für die virtuelle Maschine an:"
+    echo "(Keine Leerzeichen - bestätigen mit der Enter-Taste):"
+    read VMPATHNEW
+    
+    if [ "`echo $VMPATHNEW | grep ' '`" != "" ]
+    then 
+     echo
+     echo "Es ist ein Leerzeichen enthalten. ABBRUCH!"
+     echo
+     exit 0
+    fi
+        
+    if [ `echo $VMPATHNEW | cut -b 1` != "/" ]
+    then
+      VMPATHNEW=`echo "/"$VMPATHNEW`
+    fi 
+  fi
+
+done
+
+
+if [ -f $VMPATHNEW/$MACHINENAME ]
+then
+  mv $VMPATHNEW/$MACHINENAME $VMPATHNEW/$MACHINENAME-datei
+fi
+
+if [ -d $VMPATHNEW/$MACHINENAME ]
+then
+ echo
+ echo "Diese Maschine gibt es schon. ABBRUCH!"
+ echo
+ exit 0
+else 
+ mkdir -p $VMPATHNEW/$MACHINENAME
+ chmod 777 $VMPATHNEW/$MACHINENAME
+fi
+
+if [ -f /etc/leoclient2/machines/$MACHINENAME.conf ]
+then
+ echo
+ echo "Die Konfigurationsdatei für diese Maschine gibt es schon. ABBRUCH!"
+ exit 0
+fi
+
+# Konfigurationsdatei VirtualBox.xml anpassen
+cat $VMPATH/$MACHINENAME/VirtualBox.xml | sed -e "s#$VMPATH#$VMPATHNEW#g" > $VMPATHNEW/$MACHINENAME/VirtualBox.xml-temp
+mv $VMPATH/$MACHINENAME/VirtualBox.xml-temp $VMPATH/$MACHINENAME/VirtualBox.xml
+chmod 777 $VMPATH/$MACHINENAME/VirtualBox.xml
+
+# Maschine verschieben
+mv $VMPATH/$MACHINENAME $VMPATHNEW/$MACHINENAME
+
+# Konfigurationsdatei für die virtuelle Maschie erstellen
+if [ -d /etc/leoclient2/machines ]
+then
+  cd ~
+else 
+  mkdir -p /etc/leoclient2/machines
+fi
+
+echo $VMPATHNEW/$MACHINENAME > /etc/leoclient2/machines/$MACHINENAME.conf
+
+exit 0

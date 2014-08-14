@@ -91,15 +91,12 @@ echo "Eine Netzwerkkarte ist nicht aktiviert, da ein Zugriff auf das"
 echo "persönliche Heimatverzeichnis auf dem Server und zum lokalen" 
 echo "Verzeichnis /media für Wechseldatenträger über Laufwerksfreigaben"
 echo "möglich ist."
-echo
 echo "Alle Einstellungen können auf der anschließend startenden Oberfläche"
 echo "von VirtualBox auch individuell eingestellt werden. "
-echo 
 echo "Wenn die Einstellungen wunschgemäß sind, wird VirtualBox"
 echo "gestartet und das Betriebssystem muss auf der"
 echo "eingerichteten virtuellen Maschine installiert werden."
 echo "(Änderungen können später noch eingepflegt werden.)"
-echo
 echo "Ist dies abgeschlossen, müssen Sie die virtuelle Maschine"
 echo "heruntergefahren und VirtualBox beenden. "
 echo "Erst danach wird dieses Script abgeschlossen."
@@ -107,7 +104,6 @@ echo "Erst danach wird dieses Script abgeschlossen."
 YESNO="X"
 until [ `echo $YESNO` == "jZ" ] 
 do
-  echo
   echo "Soll die virtuelle Maschine jetzt erzeugt und VirtualBox gestartet werden?"
   echo "(j/n - Bestätigen mit der Enter-Taste): "
   read YESNO
@@ -219,6 +215,10 @@ fi
 
 echo $VMPATH/$MACHINENAME > /etc/leoclient2/machines/$MACHINENAME.conf
 
+# Verzeichnis in dem die VM liegen muss in Verzeichnis der 
+# Maschine ablegen als MACHINENAME.conf
+cp /etc/leoclient2/machines/$MACHINENAME.conf $VMPATH/$MACHINENAME/
+
 # Standard-Konfiguration sichern in Unterverzeichnis defaults
 if [ -d $VMPATH/$MACHINENAME/defaults ]
 then
@@ -247,14 +247,16 @@ chmod -R 755 $VMPATH/$MACHINENAME/defaults
 chmod 755 $VMPATH/$MACHINENAME/$MACHINENAME.vdi
 
 echo
+echo
 echo "Die Konfiguationsdateien und der Snapshot wurden gesichert."
 echo "Die Rechte der Dateien wurden angepasst." 
-
-echo
 echo "Die virtuelle Maschine kann nun mit dem Snapshotstarter benutzt werden."
 echo 
 echo "Wenn Sie die Basis für die virtuelle Maschine und den Snapshot neu"
 echo "erzeugen wollen, starten Sie das Script 'leoclient2-base-snapshot-renew'."
+echo
+echo "Wenn Sie die vollständige virtuelle Maschine in ein anderes Verzeichnis"
+echo "umziehen wollen, starten Sie das Script 'leoclient2-vm-move'."
 echo
 
 exit 0
