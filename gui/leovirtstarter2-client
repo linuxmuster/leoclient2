@@ -251,24 +251,12 @@ if ($vm ne ""){
     $vm_path_abs=$vm{$vm};
     #system("leovirtstarter2-client --vm $vm");
     #exit;
+} elsif ($#vm==-1) {
+    INFO "No machines found, aborting with gui Error\n";
+    my $message="Es gibt keine Maschinen in $conf_machines!";
+    system("/usr/bin/zenity --warning --text='$message'");
+    exit;
 } else {
-#    my $vm_window = Gtk2::Window->new('toplevel');
-#    my @buttons = @vm;
-#    # create programm window: vm_window
-#    # $vm_window definded before check base image which shows it
-#    $vm_window->set_resizable(TRUE);
-#    #$vm_window->signal_connect(destroy => \&destroy_progress);
-#    $vm_window->signal_connect('delete_event' => sub { Gtk2->main_quit; });
-#    $vm_window->set_title("Maschine waehlen");
-#    $vm_window->set_border_width(0);
-#    # Fenstergroesse
-#    $vm_window->set_size_request( 800, 600 );
-#    # zentrieren
-#    $vm_window->set_position('center_always');
-#    my $vm = Gtk2::VBox->new(FALSE, 5);
-#    $vm->set_border_width(0);
-#    $vm_window->add($vm);
-#    $vm->show;
     # show zenity chooser
 #    my $zenity_list="/usr/bin/zenity --list --width=800 --height=400 ".
 #       "--radiolist --title='Virtuelle Maschine wählen!' ".
