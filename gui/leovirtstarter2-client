@@ -130,7 +130,10 @@ my $vm_path_export="";
 
 # which filepath is used for the shared folder
 my $home = $ENV{'HOME'};
-my $shared_home_abs=$home;
+# ????? was ist besser ?????
+# vm-printer/spooler/splitter
+#my $shared_home_abs=$home;
+my $shared_home_abs="~/Home_auf_Server";
 
 # get hostname
 my $hostname=hostname();
@@ -1008,21 +1011,30 @@ sub start_button {
        # copy not needed
     if ($selected{'SYSTEM'} eq $buttons_as_used){
         if ($virtualbox==1){
-             my $start_vbox=$vm_path_export."/usr/bin/virtualbox";
-             INFO "$start_vbox\n";
-             system("$start_vbox");
-             INFO "VirtualBox started in other window: Terminating here!";
+            my $start_vbox=$vm_path_export."/usr/bin/virtualbox";
+            INFO "$start_vbox\n";
+            system("$start_vbox");
+            INFO "VirtualBox started in other window: Terminating here!";
         } else {
-             my $command_mod = $vm_path_export.
-                               "/usr/bin/VBoxManage modifyvm $vm".
-                               " --memory $selected{'RAM'}";
-             INFO "$command_mod\n";
-             system($command_mod);
-             my $start_vm = $vm_path_export.
-                            "/usr/bin/VBoxManage startvm $vm --type gui";
-             INFO "$start_vm\n";
-             system("$start_vm");
-             INFO "Snapshot started in other window: Terminating here!";
+            my $remove_shared_folder=$vm_path_export.
+               "/usr/bin/VBoxManage sharedfolder remove $vm --name home";
+            INFO "$remove_shared_folder";
+            system($remove_shared_folder);
+            my $add_shared_folder=$vm_path_export.
+               "/usr/bin/VBoxManage sharedfolder add $vm ".
+               "--name home --hostpath $shared_home_abs";
+            INFO "$add_shared_folder";
+            system($add_shared_folder);
+            my $command_mod = $vm_path_export.
+                              "/usr/bin/VBoxManage modifyvm $vm".
+                              " --memory $selected{'RAM'}";
+            INFO "$command_mod";
+            system($command_mod);
+            my $start_vm = $vm_path_export.
+                           "/usr/bin/VBoxManage startvm $vm --type gui";
+            INFO "$start_vm";
+            system("$start_vm");
+            INFO "Snapshot started in other window: Terminating here!";
         }
         exit;
     } else {
@@ -1112,11 +1124,22 @@ sub unzip_timeout {
             system("$start_vbox");
             INFO "VirtualBox started in other window: Terminating here!";
         } else {
-            my $command_mod = $vm_path_export."/usr/bin/VBoxManage modifyvm $vm".
+            my $remove_shared_folder=$vm_path_export.
+                "/usr/bin/VBoxManage sharedfolder remove $vm --name home";
+            INFO "$remove_shared_folder";
+            system($remove_shared_folder);
+            my $add_shared_folder=$vm_path_export.
+               "/usr/bin/VBoxManage sharedfolder add $vm ".
+               "--name home --hostpath $shared_home_abs";
+            INFO "$add_shared_folder";
+            system($add_shared_folder);
+            my $command_mod = $vm_path_export.
+                              "/usr/bin/VBoxManage modifyvm $vm".
                               " --memory $selected{'RAM'}";
             INFO "Executing: $command_mod\n";
             system($command_mod);
-            my $start_vm=$vm_path_export."/usr/bin/VBoxManage startvm $vm --type gui";
+            my $start_vm=$vm_path_export.
+                         "/usr/bin/VBoxManage startvm $vm --type gui";
             INFO "Executing: $start_vm\n";
             system("$start_vm");
             INFO "Snapshot started in other window: Terminating here!";
