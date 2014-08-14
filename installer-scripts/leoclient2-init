@@ -231,18 +231,18 @@ cp $VMPATH/$MACHINENAME/VirtualBox.xml $VMPATH/$MACHINENAME/defaults
 cp $VMPATH/$MACHINENAME/xpti.dat $VMPATH/$MACHINENAME/defaults 
 cp $VMPATH/$MACHINENAME/$MACHINENAME.vbox $VMPATH/$MACHINENAME/defaults 
 
-if [ -d $VMPATH/$MACHINENAME/snapshot-store/base ]
+if [ -d $VMPATH/$MACHINENAME/snapshot-store/standard ]
 then
   cd ~
 else 
-  mkdir -p $VMPATH/$MACHINENAME/snapshot-store/base
+  mkdir -p $VMPATH/$MACHINENAME/snapshot-store/standard
 fi
 cd $VMPATH/$MACHINENAME/Snapshots
 zip -9 snapshot.zip *
-mv snapshot.zip $VMPATH/$MACHINENAME/snapshot-store/base/
+mv snapshot.zip $VMPATH/$MACHINENAME/snapshot-store/standard/
 
 chmod -R 777 $VMPATH/$MACHINENAME
-chmod -R 755 $VMPATH/$MACHINENAME/snapshot-store/base
+chmod -R 755 $VMPATH/$MACHINENAME/snapshot-store/standard
 chmod -R 755 $VMPATH/$MACHINENAME/defaults
 chmod 755 $VMPATH/$MACHINENAME/$MACHINENAME.vdi
 
