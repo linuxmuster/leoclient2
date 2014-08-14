@@ -94,12 +94,13 @@ my $server_popularity_log_file=".log-popularity";
 
 # 
 my %snapshots=();
-
+my $snapshot_store_local="";
 
 
 # new config
 # Where to look for remote snapshots (relative paths will be prefixed by $HOME)        
 my $snapshot_search_dir_client="/media/leoclient2-vm";
+my @snapshot_search_dirs_server=();
 
 
 
@@ -283,6 +284,7 @@ if ($vm ne ""){
         exit;
     }
     $vm=$zenity_return;
+    # Setting paths
     $vm_path_abs=$vm{$vm};
 }
 
@@ -1557,7 +1559,10 @@ sub show_message_dialog {
 
 
 sub get_snapshots {
-    my ($get_dir) = @_;
+    my ($dir) = @_;
+    # append vm name
+    my $get_dir=$dir."/".$vm;
+
     my @snapshots=();
     if (not -d $get_dir){
         print "WARNING: Nonexisting Snapshot search dir: $get_dir\n";
