@@ -10,8 +10,6 @@ MENU=$(DESTDIR)/usr/share/menu
 # configs
 LEOCLIENTCONF=$(DESTDIR)/etc/leoclient2
 VIRTCONF=$(DESTDIR)/etc/leovirtstarter2
-# Perl modules
-PERLMOD=$(DESTDIR)/usr/share/perl5/leoclient2
 BIN=$(DESTDIR)/usr/bin
 SBIN=$(DESTDIR)/usr/sbin
 DESKTOP=$(DESTDIR)/usr/share/applications
@@ -33,9 +31,6 @@ help:
 	@echo ' '
 	@echo '   make leoclient2-leovirtstarter-server'
 	@echo '      install preparation script on server'
-	@echo ' '
-	@echo '   make leoclient2-leovirtstarter-common'
-	@echo '      install common files for leovirtstarter-client and leovirtstarter-server '
 	@echo ' '
 	@echo '   make leoclient2-vm printer'
 	@echo '      install pdf-file splitter and spooler'
@@ -83,14 +78,6 @@ leoclient2-leovirtstarter-server:
 	@install -d -m755 -oroot -groot $(VIRTCONF)
 	@install -oroot -groot --mode=0644 gui/leovirtstarter2-server.conf  $(VIRTCONF)
 
-
-leoclient2-leovirtstarter-common:
-	@echo '   * Installing the common configuration file'
-	@install -d -m755 -oroot -groot $(VIRTCONF)
-	@install -oroot -groot --mode=0644 gui/leovirtstarter2.conf  $(VIRTCONF)
-	@echo '   * Installing the common module'
-	@install -d -m755 -oroot -groot $(PERLMOD)
-	@install -oroot -groot --mode=0644 gui/leovirtstarter2.pm $(PERLMOD)
 
 
 

@@ -1,3 +1,9 @@
+leoclient2 (0.0.8-1) trusty-testing; urgency=medium
+
+  * New Release with included conf and pm
+
+ -- Ruediger Beck <bz@j1009p16.bszleo.de>  Thu, 14 Aug 2014 12:10:33 +0200
+
 leoclient2 (0.0.7-1) trusty-testing; urgency=medium
 
   * New Release with option --info and --virtulbox
