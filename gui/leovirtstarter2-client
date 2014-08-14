@@ -218,11 +218,13 @@ opendir CONF, $conf_machines;
 foreach my $machine (readdir CONF){
     if ($machine eq "."){next};
     if ($machine eq ".."){next};
-    my $path=&get_machine_path($machine);
-    $machine=~s/.conf$//g;
-    $vm{$machine}=$path;
-    $vm_uuid{$machine}=$path;
-    push @vm, $machine;
+    if ($machine=~m/.conf$/){
+        my $path=&get_machine_path($machine);
+        $machine=~s/.conf$//g;
+        $vm{$machine}=$path;
+        $vm_uuid{$machine}=$path;
+        push @vm, $machine;
+    }
 }
 closedir CONF;
 @vm = sort @vm;
@@ -275,7 +277,11 @@ if ($vm ne ""){
     print "$zenity_list\n";
     my $zenity_return=`$zenity_list`;
     chomp($zenity_return);
-    print "ZEN: >$zenity_return<\n";
+    print "Zenity return String: >$zenity_return<\n";
+    if ($zenity_return eq ""){
+        #  canceled
+        exit;
+    }
     $vm=$zenity_return;
     $vm_path_abs=$vm{$vm};
 }
