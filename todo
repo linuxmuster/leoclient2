@@ -1,1 +1,42 @@
 - if VirtualBox.xml is not writeable, call sodoers script
+
+
+Netzwer-Config:
+
+> Angehängt die network.conf-Datei, die auf der /virtual-Partition liegt.
+> Kurze Erklärung:
+> f0425p08;1;bridge;08de80b1580d;auto
+> 1. Feld: Hostname
+> 2. Feld: Welche Netzwerkkarte in VortualBox soll benutzte werden, es
+> gibt 4, also mögliche Wert: 1-4
+> 3. Feld: Wie soll die Netzwerkkarte verbunden werden (VirtualBox kennt:
+> none|null|nat|bridged|intnet|hostonly|generic|natnetwork )
+> 4. Feld: Die MAC-Adresse, die die virtuelle Netzwerkkarte erhalten soll
+> (für den DHCP-Server)
+> 5. Feld: Mit welcher Netzwerkkarte/welchem Netzwerkname soll verbinden
+> werden. Netzwerkkarte: eth0, eth1, ... - Netzwerkname: "EinName" - oder
+> "auto". Bei "auto" soll jeweils mit der Karte verbunden werden, die
+> nicht im päd. Netz hängt.
+>
+> Außerdem die VBoxManage-Befehle, wie man das einträgt:
+> Für "f0425p08;1;bridge;08de80b1580d;auto" muss man wegen "auto" zunächst
+> herausfinden mit welchem eth das päd. Netz verbunden ist - ich nehme an
+> es wäre eth1, dann ergibt sich folgender Befehl:
+> # VBoxManage modifyvm winXP --nic1 bridged --bridgeadapter1 eth0
+> --macaddress2 08de80b1580d
+>
+> Für "f0425p08;2;nat;08de80b15811;default" ergibt sich:
+> # VBoxManage modifyvm winXP --nic2 nat --natnet2 default --macaddress2
+> 08de80b15811
+>
+> Übrigens funktioniert leoclient2-vm-printer nicht (sucht nach
+> Konfigurationsdatei ohne der 2 im Namen, aber auch mit der koorigierten
+> 2 hat es nicht funktioniert. Ich hab jetzt leoclient-vm-printer (1)
+> installiert - der funktioniert.
+>
+> Außerdem muss das leoclient2-set-permissions-Script beim Anmelden mit
+> root-Rechten laufen. Ich habe daher das Script angepasst und als
+> 001-leoclient-set-permissions in das Verzeichnis installer-scripts
+> abgelegt. Es muss beim Installieren in die Verzeichnisse
+> /etc/linuxmuster-client/post-mount und
+> /etc/linuxmuster-client/pre-umount kopiert werden.
