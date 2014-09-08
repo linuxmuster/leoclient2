@@ -1,5 +1,10 @@
 - if VirtualBox.xml is not writeable, call sodoers script
 
+machines.conf
+
+make default work
+
+
 
 Netzwer-Config:
 
@@ -36,7 +41,7 @@ Netzwer-Config:
 > 2 hat es nicht funktioniert. Ich hab jetzt leoclient-vm-printer (1)
 > installiert - der funktioniert.
 
-Pfad ist angepasst, aber nicht getestestet
+Pfad ist angepasst, aber noch nicht getestestet
 
 >
 > Außerdem muss das leoclient2-set-permissions-Script beim Anmelden mit
