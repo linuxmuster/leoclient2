@@ -29,10 +29,15 @@ Netzwer-Config:
 > # VBoxManage modifyvm winXP --nic2 nat --natnet2 default --macaddress2
 > 08de80b15811
 >
+
+
 > Übrigens funktioniert leoclient2-vm-printer nicht (sucht nach
 > Konfigurationsdatei ohne der 2 im Namen, aber auch mit der koorigierten
 > 2 hat es nicht funktioniert. Ich hab jetzt leoclient-vm-printer (1)
 > installiert - der funktioniert.
+
+Pfad ist angepasst, aber nicht getestestet
+
 >
 > Außerdem muss das leoclient2-set-permissions-Script beim Anmelden mit
 > root-Rechten laufen. Ich habe daher das Script angepasst und als
