@@ -26,6 +26,10 @@ Netzwer-Config:
 > none|null|nat|bridged|intnet|hostonly|generic|natnetwork )
 > 4. Feld: Die MAC-Adresse, die die virtuelle Netzwerkkarte erhalten soll
 > (für den DHCP-Server)
+
+Wieso kann diese MAC nicht generiert werden? 
+z.B. ersetze erste Stelle mit a
+
 > 5. Feld: Mit welcher Netzwerkkarte/welchem Netzwerkname soll verbinden
 > werden. Netzwerkkarte: eth0, eth1, ... - Netzwerkname: "EinName" - oder
 > "auto". Bei "auto" soll jeweils mit der Karte verbunden werden, die
@@ -33,10 +37,16 @@ Netzwer-Config:
 >
 > Außerdem die VBoxManage-Befehle, wie man das einträgt:
 > Für "f0425p08;1;bridge;08de80b1580d;auto" muss man wegen "auto" zunächst
-> herausfinden mit welchem eth das päd. Netz verbunden ist - ich nehme an
+> herausfinden mit welchem eth das päd. Netz verbunden ist
+
+Wie findet man das raus?
+ 
+> - ich nehme an
 > es wäre eth1, dann ergibt sich folgender Befehl:
 > # VBoxManage modifyvm winXP --nic1 bridged --bridgeadapter1 eth0
 > --macaddress2 08de80b1580d
+? bridge oder bridged?
+
 >
 > Für "f0425p08;2;nat;08de80b15811;default" ergibt sich:
 > # VBoxManage modifyvm winXP --nic2 nat --natnet2 default --macaddress2
