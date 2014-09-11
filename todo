@@ -1,3 +1,11 @@
+- warum tut 
+  sudo leoclient2-set-permissions 
+  nicht mehr passwortlos?
+- wozu der link /usr/bin/leovirtstarter-client
+- Gibts eine network.conf
+- Drucken: ist ausdruck-winxp.pdf im windows eingestellt/änderbar
+- run-vm-printer2-spooler/splitter wird nicht gestartet
+
 - if VirtualBox.xml is not writeable, call sodoers script
 
 machines.conf
