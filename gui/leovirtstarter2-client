@@ -1271,6 +1271,11 @@ sub get_zipped_snapshot {
 
     INFO "Wanted in cache with size $filesize_correct:\n   $file_zipped";
     
+    if($#cache_dirs==-1){
+        INFO "ERROR: No cache configured in /etc/leoclient/machines.conf";
+        print "ERROR: No cache configured in /etc/leoclient/machines.conf\n";
+    }
+
     # is snapshot in cache already and size OK?
     foreach my $dir (@cache_dirs){
         my $file=$dir."/".$snapshot."/".$snapshot_file_name.".zip";
