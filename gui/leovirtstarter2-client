@@ -253,6 +253,8 @@ while (<CONFFILE>){
        # ??????? do something with the data
    } elsif ($option eq "CACHE"){
        my ($path,$size)=split(/::/,$data);
+       # add a dir cache
+       $path=$path."/cache";
        #print "PATH: >$path<\n";
        #print "SIZE: >$size<\n";
        push @cache_dirs, $path;

@@ -1,10 +1,14 @@
 - warum tut 
   sudo leoclient2-set-permissions 
   nicht mehr passwortlos?
-  Ersetzt durch 011...
+  Zusätzlich 011... ab Paket 0.1.1-2
 - wozu der link /usr/bin/leovirtstarter-client
+- 
 - Gibts eine network.conf
+
 - Drucken: ist ausdruck-winxp.pdf im windows eingestellt/änderbar
+  mehrere Dateien konfiguruerbar machen, alle unter hochzählen in den spooler
+
 - run-vm-printer2-spooler/splitter wird nicht gestartet
 
 - if VirtualBox.xml is not writeable, call sodoers script
@@ -45,7 +49,7 @@ Wie findet man das raus?
 > - ich nehme an
 > es wäre eth1, dann ergibt sich folgender Befehl:
 > # VBoxManage modifyvm winXP --nic1 bridged --bridgeadapter1 eth0
-> --macaddress2 08de80b1580d
+> --macaddress1 08de80b1580d
 ? bridge oder bridged?
 
 >
