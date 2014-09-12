@@ -54,29 +54,23 @@ my $max_guest_ram="2048";
 ############################################################                    
 # the BASE IMAGE, that is never changed                                         
 # where must the base image be on the client:                                   
-my $base_image_client_target="/virtual/vdi/winXP-2010.vdi";
+#my $base_image_target="/virtual/vdi/winXP-2010.vdi";
 # where in the image directory can the base image be found:                     
 # (relative to $snapshot_file_dir below)                                        
-my $base_image_client_source="base/winXP-2010.vdi";
+#my $base_image_source="base/winXP-2010.vdi";
 
+#in Snapshot-store/base
 my $base_image_size="2468409856"; # as seen with 'ls -l'  
+
+# the base image
 
 
 # the SNAPSHOTS                                                                 
-# in which directory is the snapshot that is  used as "Win XP Standard"         
-my $snapshot_default="standard";
 #my $snapshot_file_dir="/virtual/Machines/winXP-2010/Snapshots";
-my $snapshot_file_dir="";
 my $snapshot_file_name="{8c816439-1e6e-430f-9865-db7a2a96206f}.vdi";
 
 
 
-# CHILDREN SHARES: fast/maybe offline                                           
-# where are the shares seen by the clients                                      
-my @children_shares_client=("/media/localdisk/cache",
-                         "/virtual/cache");
-# size of the cache in MB:                                                      
-my @children_shares_client_size=("3000","5000");
 
 
 ############################################################                    
@@ -108,6 +102,22 @@ my $snapshot_search_dir_client="/media/leoclient2-vm";
 my @snapshot_search_dirs=();
 my @snapshot_search_dirs_remote=("/media/leoclient2-vm");
 
+# Base Image
+my $base_image_source="";
+my $base_image_target="";
+
+# Caches
+# where are the caches on the clients                                      
+my @cache_dirs=();
+# size of the caches in MB:
+my @cache_dirs_size=();
+
+# Snapshots
+# in which directory is the snapshot that is  used as the
+# second entry
+my $snapshot_default="standard";
+my $snapshot_file_dir="";
+
 
 
 
@@ -122,6 +132,7 @@ my $vm_path_abs="";
 # config dir
 my $conf="/etc/leoclient2";
 my $conf_machines=$conf."/machines";
+my $conf_file=$conf."/machines.conf";
 
 my @vm=();
 
@@ -223,14 +234,42 @@ Non-Server use:
    exit;
 }
 
+# read config file /etc/leoclient2/machines.conf
+open (CONFFILE, $conf_file);
+while (<CONFFILE>){
+   s/^ //g; # Leerzeichen am Zeilenangfang entfernen
+   if(/^\#/){ # # am Anfang bedeutet Kommentarzeile
+       next;
+   }
+   if($_ eq ""){ # # am Anfang bedeutet Kommentarzeile
+       next;
+   }
+   chomp();
+   print "machines.conf LINE:   $_\n";
+   my ($option,$data)=split(/=/);
+   #print "Option: $option\n";
+   if($option eq "DEFAULT"){
+       #print "$data\n";
+       # ??????? do something with the data
+   } elsif ($option eq "CACHE"){
+       my ($path,$size)=split(/::/,$data);
+       #print "PATH: >$path<\n";
+       #print "SIZE: >$size<\n";
+       push @cache_dirs, $path;
+       push @cache_dirs_size, $size;
+   }
+}
+close CONFFILE;
 
-# read config
+
+
+# read config dir /etc/leoclient2/machines
 if (not -d $conf_machines){
     print "\nERROR: Configuration directory $conf_machines does not exist\n\n";
     exit;
 } 
-opendir CONF, $conf_machines;
-foreach my $machine (readdir CONF){
+opendir CONFDIR, $conf_machines;
+foreach my $machine (readdir CONFDIR){
     if ($machine eq "."){next};
     if ($machine eq ".."){next};
     if ($machine=~m/.conf$/){
@@ -241,7 +280,7 @@ foreach my $machine (readdir CONF){
         push @vm, $machine;
     }
 }
-closedir CONF;
+closedir CONFDIR;
 @vm = sort @vm;
 
 
@@ -263,6 +302,13 @@ if ($info==1){
 }
 
 
+# List caches hide later, show only with --info ?????? 
+my $cache_count=0;
+foreach my $dir (@cache_dirs){
+    print "Cache dir: $dir\n";
+    print "     Size: $cache_dirs_size[$cache_count] MB\n";
+    $cache_count++;
+}
 
 
 if ($vm ne ""){
@@ -318,9 +364,17 @@ $search_dir_local=$vm_path_abs;
 # remove last dir to fit to remote dirs
 $search_dir_local=~s/\/$//g;
 $search_dir_local=~s/\/${vm}$//g;
-
-
-
+foreach my $dir (@snapshot_search_dirs_remote){
+    $base_image_source = $dir."/$vm/snapshot-store/base/".$vm.".vdi";
+    print "CHECK: $base_image_source\n";
+    if (-e $base_image_source){
+        last;
+    }
+}
+$base_image_target=$vm_path_abs."/".$vm.".vdi";
+print "base_image_source: $base_image_source\n";
+print "base_image_target: $base_image_target\n";
+# exit;
 
 # --local-snapshots
 if ($local_snapshots==1){
@@ -369,7 +423,7 @@ if ($vm_path_abs ne ""){
 if ($clean_cache==1){
     INFO "Starting leovirtstarter2-client --clean-cache on $hostname";
     INFO "Cleaning the cache";
-    foreach my $cache (@children_shares_client){
+    foreach my $cache (@cache_dirs){
         INFO "Removing recursively $cache";
         if (-d $cache){
             system("rm -rf $cache || sudo rm -rf $cache");
@@ -508,6 +562,7 @@ my $copying_done=0;
 # wenns schon kopiert, dann fragen ob man abbrechen will, oder neue kopie starten
 
 
+
 my $app_window = Gtk2::Window->new('toplevel');
 
 
@@ -557,8 +612,9 @@ foreach my $size (@ram_sizes){
 }
 
 
+
 # make sure all cache dirs exist
-foreach my $dir (@children_shares_client){
+foreach my $dir (@cache_dirs){
     if (not -e $dir){
             system("mkdir -p $dir || sudo mkdir -p $dir");
             system("chmod -R 777 $dir || sudo -R chmod 777 $dir");
@@ -814,13 +870,13 @@ sub get_machine_path {
 sub check_base_image {
     my ($home,$on_the_go) = @_;
     my $get_it=0;
-    my $target_dir = dirname($base_image_client_target);
+    my $target_dir = dirname($base_image_target);
     my $base_image_on_the_go=$snapshot_search_dir_client.
                              "/".
-                             $base_image_client_source.
+                             $base_image_source.
                              ".zip";
-    if (-e "$base_image_client_target"){
-        my $size = -s $base_image_client_target;
+    if (-e "$base_image_target"){
+        my $size = -s $base_image_target;
         #print "$size  $base_image_size\n";
         if ($size ne $base_image_size){
             $get_it=1;
@@ -841,7 +897,7 @@ sub check_base_image {
         } 
     }
     if ($get_it==1){
-	&get_zipped_basefile($base_image_client_target);
+	&get_zipped_basefile($base_image_target);
     }
 }
 
@@ -849,10 +905,10 @@ sub check_base_image {
 
 sub get_zipped_basefile {
     my ($target) = @_;
-    my $target_dir = dirname($base_image_client_target);
+    my $target_dir = dirname($base_image_target);
     my $base_image_on_the_go=$snapshot_search_dir_client.
                              "/".
-                             $base_image_client_source.
+                             $base_image_source.
                              ".zip";
     $pb_win_get_base_zip = Gtk2::Window->new('toplevel');
     $pb_win_get_base_zip->set_title("Entpacke Windows Basis Image");
@@ -881,7 +937,7 @@ sub unzip_base_timeout {
     my $actual_size;
     my $unzipped_size=$base_image_size;
     my $unzipped_size_mb=int($unzipped_size/1024/1024);
-    my $file=$base_image_client_target;
+    my $file=$base_image_target;
     my $progress_bar = shift;
     # Calculate the value of the progress bar using the
     # value range set in the adjustment object
@@ -1233,8 +1289,13 @@ sub get_zipped_snapshot {
 
     INFO "Wanted in cache with size $filesize_correct:\n   $file_zipped";
     
+    if($#cache_dirs==-1){
+        INFO "ERROR: No cache configured in /etc/leoclient/machines.conf";
+        print "ERROR: No cache configured in /etc/leoclient/machines.conf\n";
+    }
+
     # is snapshot in cache already and size OK?
-    foreach my $dir (@children_shares_client){
+    foreach my $dir (@cache_dirs){
         my $file=$dir."/".$snapshot."/".$snapshot_file_name.".zip";
         my $target_dir = $dir."/".$snapshot;
         my $target=$target_dir."/".$snapshot_file_name.".zip";
@@ -1258,7 +1319,7 @@ sub get_zipped_snapshot {
 
     # copy snapshot into cache
     my $count=0;
-    foreach my $dir (@children_shares_client){
+    foreach my $dir (@cache_dirs){
         # go through all caches, check if there is enough space left
         my $target_dir = $dir."/".$snapshot;
         my $target=$target_dir."/".$snapshot_file_name.".zip";
@@ -1272,14 +1333,14 @@ sub get_zipped_snapshot {
         my ($space_left_mb) = &get_space_left($dir);
 
         INFO "*** Cache limit:                ",
-             "$children_shares_client_size[$count] MB";
+             "$cache_dirs_size[$count] MB";
         INFO "*** Cache used so far:            $cache_used MB";
         INFO "*** Cache needed with new file:   $cache MB";
         INFO "*** Space left :                  $space_left_mb MB";
         INFO "*** Zip-file (incl 10\% reserve): $filesize_correct_mb MB";
 
         # check available space
-        while ($cache >= $children_shares_client_size[$count]
+        while ($cache >= $cache_dirs_size[$count]
                or $filesize_correct_mb >= $space_left_mb){
             INFO "*** --> cache files must be deleted";
             my @oldest_in_cache = &oldest_in_cache($dir);
@@ -1297,7 +1358,7 @@ sub get_zipped_snapshot {
                 ($space_left_mb) = &get_space_left($dir);
 
                 INFO "*** Cache limit:                ",
-                     "$children_shares_client_size[$count] MB";
+                     "$cache_dirs_size[$count] MB";
                 INFO "*** Cache used so far:            $cache_used MB";
                 INFO "*** Cache needed with new file:   $cache MB";
                 INFO "*** Space left :                  $space_left_mb MB";
@@ -1704,6 +1765,7 @@ sub get_snapshots {
                     ${snapshots}{$dirname}{$key}="$value";
                     #print "   * Key: $key  --> Value: $value\n";
 	        }
+                close FILE;
             }
         }
         closedir DIR;
