@@ -1,6 +1,8 @@
 etc/leoclient2/machines
 etc/leoclient2/machines.conf
 etc/sudoers.d/leoclient2
+etc/linuxmuster-client/post-mount.d/011-leoclient2-set-permissions
+etc/linuxmuster-client/pre-umount.d/011-leoclient2-set-permissions
 usr/bin/leovirtstarter2-client
 usr/bin/leoclient2-set-permissions
 usr/share/applications/leovirtstarter2-client.desktop

@@ -1,3 +1,9 @@
+leoclient2 (0.1.1-2) trusty-testing; urgency=medium
+
+  * New Release
+
+ -- Ruediger Beck <bz@j1009p16.bszleo.de>  Fri, 12 Sep 2014 18:08:33 +0200
+
 leoclient2 (0.1.0-1) trusty-testing; urgency=medium
 
   * New Release. Starts leoclient version 1 snapshots 
