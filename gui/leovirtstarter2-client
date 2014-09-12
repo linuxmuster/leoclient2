@@ -54,19 +54,19 @@ my $max_guest_ram="2048";
 ############################################################                    
 # the BASE IMAGE, that is never changed                                         
 # where must the base image be on the client:                                   
-my $base_image_client_target="/virtual/vdi/winXP-2010.vdi";
+#my $base_image_target="/virtual/vdi/winXP-2010.vdi";
 # where in the image directory can the base image be found:                     
 # (relative to $snapshot_file_dir below)                                        
-my $base_image_client_source="base/winXP-2010.vdi";
+#my $base_image_source="base/winXP-2010.vdi";
 
+#in Snapshot-store/base
 my $base_image_size="2468409856"; # as seen with 'ls -l'  
+
+# the base image
 
 
 # the SNAPSHOTS                                                                 
-# in which directory is the snapshot that is  used as "Win XP Standard"         
-my $snapshot_default="standard";
 #my $snapshot_file_dir="/virtual/Machines/winXP-2010/Snapshots";
-my $snapshot_file_dir="";
 my $snapshot_file_name="{8c816439-1e6e-430f-9865-db7a2a96206f}.vdi";
 
 
@@ -102,11 +102,21 @@ my $snapshot_search_dir_client="/media/leoclient2-vm";
 my @snapshot_search_dirs=();
 my @snapshot_search_dirs_remote=("/media/leoclient2-vm");
 
+# Base Image
+my $base_image_source="";
+my $base_image_target="";
+
 # Caches
 # where are the caches on the clients                                      
 my @cache_dirs=();
 # size of the caches in MB:
 my @cache_dirs_size=();
+
+# Snapshots
+# in which directory is the snapshot that is  used as the
+# second entry
+my $snapshot_default="standard";
+my $snapshot_file_dir="";
 
 
 
@@ -354,9 +364,17 @@ $search_dir_local=$vm_path_abs;
 # remove last dir to fit to remote dirs
 $search_dir_local=~s/\/$//g;
 $search_dir_local=~s/\/${vm}$//g;
-
-
-
+foreach my $dir (@snapshot_search_dirs_remote){
+    $base_image_source = $dir."/$vm/snapshot-store/base/".$vm.".vdi";
+    print "CHECK: $base_image_source\n";
+    if (-e $base_image_source){
+        last;
+    }
+}
+$base_image_target=$vm_path_abs."/".$vm.".vdi";
+print "base_image_source: $base_image_source\n";
+print "base_image_target: $base_image_target\n";
+# exit;
 
 # --local-snapshots
 if ($local_snapshots==1){
@@ -852,13 +870,13 @@ sub get_machine_path {
 sub check_base_image {
     my ($home,$on_the_go) = @_;
     my $get_it=0;
-    my $target_dir = dirname($base_image_client_target);
+    my $target_dir = dirname($base_image_target);
     my $base_image_on_the_go=$snapshot_search_dir_client.
                              "/".
-                             $base_image_client_source.
+                             $base_image_source.
                              ".zip";
-    if (-e "$base_image_client_target"){
-        my $size = -s $base_image_client_target;
+    if (-e "$base_image_target"){
+        my $size = -s $base_image_target;
         #print "$size  $base_image_size\n";
         if ($size ne $base_image_size){
             $get_it=1;
@@ -879,7 +897,7 @@ sub check_base_image {
         } 
     }
     if ($get_it==1){
-	&get_zipped_basefile($base_image_client_target);
+	&get_zipped_basefile($base_image_target);
     }
 }
 
@@ -887,10 +905,10 @@ sub check_base_image {
 
 sub get_zipped_basefile {
     my ($target) = @_;
-    my $target_dir = dirname($base_image_client_target);
+    my $target_dir = dirname($base_image_target);
     my $base_image_on_the_go=$snapshot_search_dir_client.
                              "/".
-                             $base_image_client_source.
+                             $base_image_source.
                              ".zip";
     $pb_win_get_base_zip = Gtk2::Window->new('toplevel');
     $pb_win_get_base_zip->set_title("Entpacke Windows Basis Image");
@@ -919,7 +937,7 @@ sub unzip_base_timeout {
     my $actual_size;
     my $unzipped_size=$base_image_size;
     my $unzipped_size_mb=int($unzipped_size/1024/1024);
-    my $file=$base_image_client_target;
+    my $file=$base_image_target;
     my $progress_bar = shift;
     # Calculate the value of the progress bar using the
     # value range set in the adjustment object
