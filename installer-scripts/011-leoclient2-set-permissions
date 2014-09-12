@@ -16,7 +16,7 @@ do
   
   chmod -R 777 $VMPATH
   chmod -R 755 $VMPATH/defaults
-  chmod -R 755 $VMPATH/snapshot-store/base
+  chmod -R 755 $VMPATH/snapshot-store/standard
   chmod 755 $VMPATH/*.vdi
   
 done
