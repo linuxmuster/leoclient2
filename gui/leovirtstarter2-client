@@ -12,6 +12,7 @@ use File::Basename;
 use Log::Log4perl qw(:easy);
 use Sys::Hostname;
 use Data::Dumper;
+use IO::Interface::Simple;
 
 # todo
 # read config into hash see line 84 ?????
@@ -69,11 +70,14 @@ my $base_image_size="2468409856"; # as seen with 'ls -l'
 #my $snapshot_file_dir="/virtual/Machines/winXP-2010/Snapshots";
 my $snapshot_file_name="{8c816439-1e6e-430f-9865-db7a2a96206f}.vdi";
 
+# calculate path to network.conf
+my $network_conf="";
+# is a network.conf used? 0=not used, 1=used, patch network settings for vm
+my $network_patch=0;
+my $network_vbox_command="";
 
 
-
-
-############################################################                    
+#####################################2#######################                    
 # logging                                                                       
 ############################################################                    
 my $server_popularity_log_file=".log-popularity";
@@ -96,18 +100,19 @@ my $search_dir_local="";
 
 ############################################################
 # new config
-my $snapshot_search_dir_client="/media/leoclient2-vm";
+
 
 # ??? This will be read from /etc/leoclient2/machines.conf
 my @snapshot_search_dirs=();
 my @snapshot_search_dirs_remote=("/media/leoclient2-vm");
+# this is double
+my $snapshot_search_dir_client="/media/leoclient2-vm";
 
-# Base Image
+# Base Image is calculated
 my $base_image_source="";
 my $base_image_target="";
 
-# Caches
-# where are the caches on the clients                                      
+# Caches on the clients are configured in machines.conf:
 my @cache_dirs=();
 # size of the caches in MB:
 my @cache_dirs_size=();
@@ -374,9 +379,13 @@ foreach my $dir (@snapshot_search_dirs_remote){
     }
 }
 $base_image_target=$vm_path_abs."/".$vm.".vdi";
+$network_conf=$vm_path_abs."/network.conf";
 print "base_image_source: $base_image_source\n";
 print "base_image_target: $base_image_target\n";
-# exit;
+print "network.conf:      $network_conf\n";
+
+#
+#exit;
 
 # --local-snapshots
 if ($local_snapshots==1){
@@ -387,6 +396,7 @@ if ($local_snapshots==1){
 @snapshot_search_dirs=($search_dir_local,@snapshot_search_dirs_remote);
 
 
+# set path
 if ($vm_path_abs ne ""){
 #     # start a given vm
 #     print "##### Starting Virtual machine $vm\n";
@@ -418,6 +428,83 @@ if ($vm_path_abs ne ""){
 #     system("/usr/bin/VirtualBox");
 #     exit;
 } 
+
+if (-f $network_conf){
+    # read config file network.conf
+    $network_patch=1;
+    print "Checking if network of $hostname must be patched\n";
+    open (NETCONF, $network_conf);
+    while (<NETCONF>){
+        s/^ //g; # Leerzeichen am Zeilenangfang entfernen
+        if(/^\#/){ # # am Anfang bedeutet Kommentarzeile
+            next;
+        }
+        if($_ eq ""){ # # am Anfang bedeutet Kommentarzeile
+            next;
+        }
+        chomp();
+        print "network.conf LINE:   $_\n";
+        my ($p_host,$p_virt_nic,$p_net_type,$p_mac,$p_nic_name)=split(/;/);
+        if ($hostname eq $p_host){
+        print "Patching Network: $p_host\n";
+        print "  Virtual NIC:    $p_virt_nic\n";
+        print "  Network type:   $p_net_type\n";
+        print "  MAC :           $p_mac\n";
+        print "  Interface:      $p_nic_name\n";
+        my $p_option="";
+        if ($p_net_type eq "nat"){
+            $p_option="--natnet";
+        } elsif ($p_net_type eq "bridge"){
+            $p_option="--bridgeadapter";
+        }
+        if ($p_nic_name eq "auto"){
+            my @unconfigured_ifs=();
+            my @interfaces = IO::Interface::Simple->interfaces;
+            for my $if (@interfaces) {
+                if ($if->is_loopback){
+                    print "   * $if is loopback\n";
+                    next;
+                }
+                my $running=$if->is_running;
+                if (defined $if->address and 
+                    defined $if->netmask 
+                    and $running==1
+                   ){
+                    # keep unchanged
+                    print "   * $if is running (IP: ",$if->address,")\n";
+                    
+                } else {
+                    # interface is not in use
+                    print "   * $if is NOT in use\n";
+                    push @unconfigured_ifs, $if;
+                }
+            }
+            # sort unconfigured ifs
+	    @unconfigured_ifs = sort  @unconfigured_ifs;
+            if (defined $unconfigured_ifs[0]){
+                # use the first unconfigured interface
+                $p_nic_name=$unconfigured_ifs[0];
+	    } else {
+                print "\nERROR: No unconfigured interface found\n\n";
+                exit;
+            }
+        }
+        $network_vbox_command="/usr/bin/vboxmanage ".
+                              "modifyvm $vm ".
+                              "--nic${p_virt_nic} $p_net_type ".
+                              "$p_option${p_virt_nic} $p_nic_name ".
+                              "--macaddress$p_virt_nic $p_mac";
+        print "$network_vbox_command\n";
+        }
+    }
+    close NETCONF;
+} else {
+    INFO "$network_conf not found.\n";
+    print "INFO: network.conf not fount at:\n ";
+    print "  $network_conf\n ";
+}
+
+print "patch network:     $network_patch\n";
 
 
 
