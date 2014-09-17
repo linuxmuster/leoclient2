@@ -102,17 +102,18 @@ my $search_dir_local="";
 # new config
 
 
-# ??? This will be read from /etc/leoclient2/machines.conf
+# This will be read from /etc/leoclient2/machines.conf
 my @snapshot_search_dirs=();
-my @snapshot_search_dirs_remote=("/media/leoclient2-vm");
-# this is double
-my $snapshot_search_dir_client="/media/leoclient2-vm";
+my @snapshot_search_dirs_remote=();
+# this is double ??? should be removed
+my $snapshot_search_dir_client="";
 
 # Base Image is calculated
 my $base_image_source="";
 my $base_image_target="";
 
-# Caches on the clients are configured in machines.conf:
+# Caches on the clients
+my $cache_conf_path="";
 my @cache_dirs=();
 # size of the caches in MB:
 my @cache_dirs_size=();
@@ -256,14 +257,16 @@ while (<CONFFILE>){
    if($option eq "DEFAULT"){
        #print "$data\n";
        # ??????? do something with the data
-   } elsif ($option eq "CACHE"){
-       my ($path,$size)=split(/::/,$data);
-       # add a dir cache
-       $path=$path."/cache";
-       #print "PATH: >$path<\n";
-       #print "SIZE: >$size<\n";
-       push @cache_dirs, $path;
-       push @cache_dirs_size, $size;
+#   } elsif ($option eq "CACHE"){
+#       my ($path,$size)=split(/::/,$data);
+#       # add a dir cache
+#       $path=$path."/cache";
+#       #print "PATH: >$path<\n";
+#       #print "SIZE: >$size<\n";
+#       push @cache_dirs, $path;
+#       push @cache_dirs_size, $size;
+   } elsif ($option eq "SERVERDIR"){
+       push @snapshot_search_dirs_remote, $data;
    }
 }
 close CONFFILE;
@@ -309,12 +312,19 @@ if ($info==1){
 }
 
 
-# List caches hide later, show only with --info ?????? 
+# List caches (hide later, show only with --info ??????) 
 my $cache_count=0;
 foreach my $dir (@cache_dirs){
     print "Cache dir: $dir\n";
     print "     Size: $cache_dirs_size[$cache_count] MB\n";
     $cache_count++;
+}
+
+
+# List serverdirs (hide later, show only with --info ??????) 
+foreach my $dir (@snapshot_search_dirs_remote){
+    print "  * Serverdir : $dir\n";
+    $snapshot_search_dir_client=$dir;
 }
 
 

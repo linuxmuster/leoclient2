@@ -1,10 +1,24 @@
+machines.conf in server.conf umbenennen???
+server.conf wird nicht gebraucht, wnn man keinen Server hat
+default.conf einführen, ähnlich wie cache.conf ???
+
+- statt CACHE=... eine Datei cache.conf
+
+- cache obligatorisch oder freiwillig
+  wenn kein cahe, dann in den snapshot-store
+
+- 
+
 - warum tut 
   sudo leoclient2-set-permissions 
   nicht mehr passwortlos?
   Zusätzlich 011... ab Paket 0.1.1-2
 - wozu der link /usr/bin/leovirtstarter-client
 - 
-- Gibts eine network.conf
+- network.conf
+  2 optionen fuer auto:
+  auto-used-nic
+  auto-unused-nic
 
 - Drucken: ist ausdruck-winxp.pdf im windows eingestellt/änderbar
   mehrere Dateien konfiguruerbar machen, alle unter hochzählen in den spooler
