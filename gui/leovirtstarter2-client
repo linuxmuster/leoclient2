@@ -113,9 +113,11 @@ my $base_image_source="";
 my $base_image_target="";
 
 # Caches on the clients
+# path to cache.conf is calculated:
 my $cache_conf_path="";
+# path to the caches from cache.conf:
 my @cache_dirs=();
-# size of the caches in MB:
+# size of the caches in MB from cache.conf:
 my @cache_dirs_size=();
 
 # Snapshots
@@ -247,10 +249,10 @@ while (<CONFFILE>){
    if(/^\#/){ # # am Anfang bedeutet Kommentarzeile
        next;
    }
-   if($_ eq ""){ # # am Anfang bedeutet Kommentarzeile
+   chomp();
+   if($_ eq ""){
        next;
    }
-   chomp();
    print "machines.conf LINE:   $_\n";
    my ($option,$data)=split(/=/);
    #print "Option: $option\n";
@@ -266,10 +268,42 @@ while (<CONFFILE>){
 #       push @cache_dirs, $path;
 #       push @cache_dirs_size, $size;
    } elsif ($option eq "SERVERDIR"){
+       print "  SERVERDIR: $data\n";
        push @snapshot_search_dirs_remote, $data;
    }
 }
 close CONFFILE;
+
+# Set variables based on serverdirs
+# cache.conf must be in first serverdir (????? Look in all server dirs) 
+$cache_conf_path=$snapshot_search_dirs_remote[0]."/cache.conf";
+
+
+# read config file /etc/leoclient2/machines.conf
+open (CACHECONFFILE, $cache_conf_path);
+while (<CACHECONFFILE>){
+   s/^ //g; # Leerzeichen am Zeilenangfang entfernen
+   if(/^\#/){ # # am Anfang bedeutet Kommentarzeile
+       next;
+   }
+   chomp();
+   if($_ eq ""){
+       next;
+   }
+   print "cache.conf LINE: $_\n";
+   my ($cache_path,$cache_size,$range,$parameter)=split(/::/);
+   if($range eq "ALLHOSTS"){
+       # add a cache dir
+       $cache_path=$cache_path."/cache";
+       print "  CACHE_PATH:      $cache_path\n";
+       print "  CACHE_SIZE:      $cache_size\n";
+       print "  CACHE_RANGE:     $range\n";
+       print "  CACHE_PARAMETER: $parameter\n";
+       push @cache_dirs, $cache_path;
+       push @cache_dirs_size, $cache_size;
+   } 
+}
+close CACHECONFFILE;
 
 
 
@@ -312,19 +346,18 @@ if ($info==1){
 }
 
 
+# List serverdirs (hide later, show only with --info ??????) 
+foreach my $dir (@snapshot_search_dirs_remote){
+    print "Serverdir : $dir\n";
+    $snapshot_search_dir_client=$dir;
+}
+
 # List caches (hide later, show only with --info ??????) 
 my $cache_count=0;
 foreach my $dir (@cache_dirs){
     print "Cache dir: $dir\n";
     print "     Size: $cache_dirs_size[$cache_count] MB\n";
     $cache_count++;
-}
-
-
-# List serverdirs (hide later, show only with --info ??????) 
-foreach my $dir (@snapshot_search_dirs_remote){
-    print "  * Serverdir : $dir\n";
-    $snapshot_search_dir_client=$dir;
 }
 
 
@@ -449,10 +482,10 @@ if (-f $network_conf){
         if(/^\#/){ # # am Anfang bedeutet Kommentarzeile
             next;
         }
-        if($_ eq ""){ # # am Anfang bedeutet Kommentarzeile
+        chomp();
+        if($_ eq ""){
             next;
         }
-        chomp();
         print "network.conf LINE:   $_\n";
         my ($p_host,$p_virt_nic,$p_net_type,$p_mac,$p_nic_name)=split(/;/);
         if ($hostname eq $p_host){
@@ -1389,8 +1422,8 @@ sub get_zipped_snapshot {
     INFO "Wanted in cache with size $filesize_correct:\n   $file_zipped";
     
     if($#cache_dirs==-1){
-        INFO "ERROR: No cache configured in /etc/leoclient/machines.conf";
-        print "ERROR: No cache configured in /etc/leoclient/machines.conf\n";
+        INFO "ERROR: No cache configured in $cache_conf_path";
+        print "ERROR: No cache configured in $cache_conf_path\n";
     }
 
     # is snapshot in cache already and size OK?
