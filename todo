@@ -1,24 +1,23 @@
-machines.conf in server.conf umbenennen???
-server.conf wird nicht gebraucht, wnn man keinen Server hat
-default.conf einführen, ähnlich wie cache.conf ???
+Problem:
+eth0 ist kein valides 
+export VBOX_USER_HOME=/virtual/leoclient2-vm/winXP; /usr/bin/vboxmanage modifyvm winXP --nic2 nat --natnet2 eth0 --macaddress2 00000000000f
+
+
+machines.conf in server.conf umbenennen: Ja
+server.conf wird nicht gebraucht, wenn man keinen Server hat
+
+default.conf einführen, ähnlich wie cache.conf 
 
 - statt CACHE=... eine Datei cache.conf
 
 - cache obligatorisch oder freiwillig
-  wenn kein cahe, dann in den snapshot-store
-
-- 
+  IDEE: wenn kein cahe, dann in den snapshot-store
 
 - warum tut 
   sudo leoclient2-set-permissions 
   nicht mehr passwortlos?
   Zusätzlich 011... ab Paket 0.1.1-2
 - wozu der link /usr/bin/leovirtstarter-client
-- 
-- network.conf
-  2 optionen fuer auto:
-  auto-used-nic
-  auto-unused-nic
 
 - Drucken: ist ausdruck-winxp.pdf im windows eingestellt/änderbar
   mehrere Dateien konfiguruerbar machen, alle unter hochzählen in den spooler
@@ -27,9 +26,6 @@ default.conf einführen, ähnlich wie cache.conf ???
 
 - if VirtualBox.xml is not writeable, call sodoers script
 
-machines.conf
-
-make default work
 
 
 

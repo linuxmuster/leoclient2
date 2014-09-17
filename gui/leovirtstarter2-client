@@ -474,7 +474,6 @@ if ($vm_path_abs ne ""){
 
 if (-f $network_conf){
     # read config file network.conf
-    $network_patch=1;
     print "Checking if network of $hostname must be patched\n";
     open (NETCONF, $network_conf);
     while (<NETCONF>){
@@ -489,55 +488,62 @@ if (-f $network_conf){
         print "network.conf LINE:   $_\n";
         my ($p_host,$p_virt_nic,$p_net_type,$p_mac,$p_nic_name)=split(/;/);
         if ($hostname eq $p_host){
-        print "Patching Network: $p_host\n";
-        print "  Virtual NIC:    $p_virt_nic\n";
-        print "  Network type:   $p_net_type\n";
-        print "  MAC :           $p_mac\n";
-        print "  Interface:      $p_nic_name\n";
-        my $p_option="";
-        if ($p_net_type eq "nat"){
-            $p_option="--natnet";
-        } elsif ($p_net_type eq "bridge"){
-            $p_option="--bridgeadapter";
-        }
-        if ($p_nic_name eq "auto"){
-            my @unconfigured_ifs=();
-            my @interfaces = IO::Interface::Simple->interfaces;
-            for my $if (@interfaces) {
-                if ($if->is_loopback){
-                    print "   * $if is loopback\n";
-                    next;
-                }
-                my $running=$if->is_running;
-                if (defined $if->address and 
-                    defined $if->netmask 
-                    and $running==1
-                   ){
-                    # keep unchanged
-                    print "   * $if is running (IP: ",$if->address,")\n";
-                    
-                } else {
-                    # interface is not in use
-                    print "   * $if is NOT in use\n";
-                    push @unconfigured_ifs, $if;
-                }
+            $network_patch=1;
+            print "Patching Network: $p_host\n";
+            print "  Virtual NIC:    $p_virt_nic\n";
+            print "  Network type:   $p_net_type\n";
+            print "  MAC :           $p_mac\n";
+            print "  Interface:      $p_nic_name\n";
+            my $p_option="";
+            if ($p_net_type eq "nat"){
+                $p_option="--natnet";
+            } elsif ($p_net_type eq "bridge"){
+                $p_option="--bridgeadapter";
             }
-            # sort unconfigured ifs
-	    @unconfigured_ifs = sort  @unconfigured_ifs;
-            if (defined $unconfigured_ifs[0]){
-                # use the first unconfigured interface
-                $p_nic_name=$unconfigured_ifs[0];
-	    } else {
-                print "\nERROR: No unconfigured interface found\n\n";
-                exit;
+            if ($p_nic_name eq "auto-used-nic" or
+                $p_nic_name eq "auto-unused-nic"){
+                my @unconfigured_ifs=();
+                my @interfaces = IO::Interface::Simple->interfaces;
+                for my $if (@interfaces) {
+                    if ($if->is_loopback){
+                        print "   * $if is loopback\n";
+                        next;
+                    }
+                    my $running=$if->is_running;
+                    if (defined $if->address and 
+                        defined $if->netmask 
+                        and $running==1
+                       ){
+                        # keep unchanged
+                        print "   * $if is running (IP: ",$if->address,")\n";
+                        if ($p_nic_name eq "auto-used-nic"){
+                            $p_nic_name=$if;
+		        }
+                    } else {
+                        # interface is not in use
+                        print "   * $if is NOT in use\n";
+                        push @unconfigured_ifs, $if;
+                    }
+                }
+                if ($p_nic_name eq "auto-unused-nic"){
+                    # sort unconfigured ifs
+	            @unconfigured_ifs = sort  @unconfigured_ifs;
+                    if (defined $unconfigured_ifs[0]){
+                        # use the first unconfigured interface
+                        $p_nic_name=$unconfigured_ifs[0];
+	            } else {
+                        print "\nERROR: No unconfigured interface found\n\n";
+                        exit;
+                    }
+	        }
             }
-        }
-        $network_vbox_command="/usr/bin/vboxmanage ".
-                              "modifyvm $vm ".
-                              "--nic${p_virt_nic} $p_net_type ".
-                              "$p_option${p_virt_nic} $p_nic_name ".
-                              "--macaddress$p_virt_nic $p_mac";
-        print "$network_vbox_command\n";
+            $network_vbox_command=$vm_path_export.
+                                  "/usr/bin/vboxmanage ".
+                                  "modifyvm $vm ".
+                                  "--nic${p_virt_nic} $p_net_type ".
+                                  "$p_option${p_virt_nic} $p_nic_name ".
+                                  "--macaddress$p_virt_nic $p_mac";
+            print "$network_vbox_command\n";
         }
     }
     close NETCONF;
@@ -548,8 +554,6 @@ if (-f $network_conf){
 }
 
 print "patch network:     $network_patch\n";
-
-
 
 
 if ($clean_cache==1){
@@ -1218,6 +1222,10 @@ sub start_button {
                               " --memory $selected{'RAM'}";
             INFO "$command_mod";
             system($command_mod);
+            if ($network_vbox_command ne ""){
+                INFO "$network_vbox_command";
+                system($network_vbox_command);
+            }
             my $start_vm = $vm_path_export.
                            "/usr/bin/VBoxManage startvm $vm --type gui";
             INFO "$start_vm";
@@ -1326,6 +1334,10 @@ sub unzip_timeout {
                               " --memory $selected{'RAM'}";
             INFO "Executing: $command_mod\n";
             system($command_mod);
+            if ($network_vbox_command ne ""){
+                INFO "$network_vbox_command";
+                system($network_vbox_command);
+            }
             my $start_vm=$vm_path_export.
                          "/usr/bin/VBoxManage startvm $vm --type gui";
             INFO "Executing: $start_vm\n";
