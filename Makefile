@@ -59,7 +59,7 @@ leoclient2-leovirtstarter-client:
 	@install -oroot -groot --mode=0700 installer-scripts/leoclient2-base-snapshot-renew $(SBIN)
 	@echo '   * Installing the client configuration files'
 	@install -d -oroot -groot --mode=0755 $(LEOCLIENTCONF)/machines
-	@install -oroot -groot --mode=0644 conf/machines.conf  $(LEOCLIENTCONF)
+	@install -oroot -groot --mode=0644 conf/servers.conf  $(LEOCLIENTCONF)
 	@echo '   * Installing sudoers stuff'
 	@install -d -m0644 -oroot -groot $(ETC)
 	@install -oroot -groot --mode=0440 sudoers/leoclient2 $(ETC)

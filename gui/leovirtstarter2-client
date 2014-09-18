@@ -70,8 +70,9 @@ my $base_image_size="2468409856"; # as seen with 'ls -l'
 #my $snapshot_file_dir="/virtual/Machines/winXP-2010/Snapshots";
 my $snapshot_file_name="{8c816439-1e6e-430f-9865-db7a2a96206f}.vdi";
 
+##### network.conf ##### Network settings on the clients
 # calculate path to network.conf
-my $network_conf="";
+my $conf_network="";
 # is a network.conf used? 0=not used, 1=used, patch network settings for vm
 my $network_patch=0;
 my $network_vbox_command="";
@@ -102,7 +103,7 @@ my $search_dir_local="";
 # new config
 
 
-# This will be read from /etc/leoclient2/machines.conf
+# This will be read from /etc/leoclient2/servers.conf
 my @snapshot_search_dirs=();
 my @snapshot_search_dirs_remote=();
 # this is double ??? should be removed
@@ -112,13 +113,18 @@ my $snapshot_search_dir_client="";
 my $base_image_source="";
 my $base_image_target="";
 
-# Caches on the clients
-# path to cache.conf is calculated:
-my $cache_conf_path="";
-# path to the caches from cache.conf:
+##### caches.conf ##### Caches on the clients
+# path to caches.conf is calculated:
+my $conf_caches="";
+# path to the caches from caches.conf:
 my @cache_dirs=();
-# size of the caches in MB from cache.conf:
+# size of the caches in MB from caches.conf:
 my @cache_dirs_size=();
+
+##### defaults.conf ##### Server settings on the clients
+my $conf_defaults="";
+
+
 
 # Snapshots
 # in which directory is the snapshot that is  used as the
@@ -137,10 +143,10 @@ my %vm=();
 my %vm_uuid=();
 my $vm_path_abs="";
 
-# config dir
+##### servers.conf ##### Server settings on the clients
 my $conf="/etc/leoclient2";
 my $conf_machines=$conf."/machines";
-my $conf_file=$conf."/machines.conf";
+my $conf_servers=$conf."/servers.conf";
 
 my @vm=();
 
@@ -242,8 +248,10 @@ Non-Server use:
    exit;
 }
 
-# read config file /etc/leoclient2/machines.conf
-open (CONFFILE, $conf_file);
+# read config file /etc/leoclient2/servers.conf
+print "Reading servers.conf in: $conf_servers\n";
+if (-f $conf_servers){
+open (CONFFILE, $conf_servers);
 while (<CONFFILE>){
    s/^ //g; # Leerzeichen am Zeilenangfang entfernen
    if(/^\#/){ # # am Anfang bedeutet Kommentarzeile
@@ -253,7 +261,7 @@ while (<CONFFILE>){
    if($_ eq ""){
        next;
    }
-   print "machines.conf LINE:   $_\n";
+   print "servers.conf LINE:   $_\n";
    my ($option,$data)=split(/=/);
    #print "Option: $option\n";
    if($option eq "DEFAULT"){
@@ -273,15 +281,20 @@ while (<CONFFILE>){
    }
 }
 close CONFFILE;
-
+} else {
+    print "  * WARNING: nonexisting $conf_servers\n";
+}
 # Set variables based on serverdirs
-# cache.conf must be in first serverdir (????? Look in all server dirs) 
-$cache_conf_path=$snapshot_search_dirs_remote[0]."/cache.conf";
+# caches.conf must be in first serverdir (????? Look in all server dirs)
+if (defined $snapshot_search_dirs_remote[0]){ 
+    $conf_caches=$snapshot_search_dirs_remote[0]."/caches.conf";
+}
 
 
-# read config file /etc/leoclient2/machines.conf
-print "Reading cache.conf in: $cache_conf_path\n";
-open (CACHECONFFILE, $cache_conf_path);
+# read config file /etc/leoclient2/servers.conf
+print "Reading caches.conf in: $conf_caches\n";
+if (-f $conf_caches){
+open (CACHECONFFILE, $conf_caches);
 while (<CACHECONFFILE>){
    s/^ //g; # Leerzeichen am Zeilenangfang entfernen
    if(/^\#/){ # # am Anfang bedeutet Kommentarzeile
@@ -291,7 +304,7 @@ while (<CACHECONFFILE>){
    if($_ eq ""){
        next;
    }
-   print "cache.conf LINE: $_\n";
+   print "caches.conf LINE: $_\n";
    my ($cache_path,$cache_size,$range,$parameter)=split(/::/);
    if($range eq "ALLHOSTS"){
        # add a cache dir
@@ -305,7 +318,9 @@ while (<CACHECONFFILE>){
    } 
 }
 close CACHECONFFILE;
-
+} else {
+    print "  * WARNING: nonexisting $conf_caches\n";
+}
 
 
 # read config dir /etc/leoclient2/machines
@@ -423,10 +438,10 @@ foreach my $dir (@snapshot_search_dirs_remote){
     }
 }
 $base_image_target=$vm_path_abs."/".$vm.".vdi";
-$network_conf=$vm_path_abs."/network.conf";
+$conf_network=$vm_path_abs."/network.conf";
 print "base_image_source: $base_image_source\n";
 print "base_image_target: $base_image_target\n";
-print "network.conf:      $network_conf\n";
+print "network.conf:      $conf_network\n";
 
 #
 #exit;
@@ -473,10 +488,10 @@ if ($vm_path_abs ne ""){
 #     exit;
 } 
 
-if (-f $network_conf){
+if (-f $conf_network){
     # read config file network.conf
     print "Checking if network of $hostname must be patched\n";
-    open (NETCONF, $network_conf);
+    open (NETCONF, $conf_network);
     while (<NETCONF>){
         s/^ //g; # Leerzeichen am Zeilenangfang entfernen
         if(/^\#/){ # # am Anfang bedeutet Kommentarzeile
@@ -538,8 +553,6 @@ if (-f $network_conf){
                     }
 	        }
             }
-            print "p_net_type $p_net_type\n";
-            print "\$p_option\${p_virt_nic} $p_option${p_virt_nic}\n";
             $network_vbox_command=$vm_path_export.
                                   "/usr/bin/vboxmanage ".
                                   "modifyvm $vm ".
@@ -551,9 +564,9 @@ if (-f $network_conf){
     }
     close NETCONF;
 } else {
-    INFO "$network_conf not found.\n";
+    INFO "$conf_network not found.\n";
     print "INFO: network.conf not fount at:\n ";
-    print "  $network_conf\n ";
+    print "  $conf_network\n ";
 }
 
 print "patch network:     $network_patch\n";
@@ -1437,8 +1450,8 @@ sub get_zipped_snapshot {
     INFO "Wanted in cache with size $filesize_correct:\n   $file_zipped";
     
     if($#cache_dirs==-1){
-        INFO "ERROR: No cache configured in $cache_conf_path";
-        print "ERROR: No cache configured in $cache_conf_path\n";
+        INFO "ERROR: No cache configured in $conf_caches";
+        print "ERROR: No cache configured in $conf_caches\n";
     }
 
     # is snapshot in cache already and size OK?
