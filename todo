@@ -3,12 +3,13 @@ eth0 ist kein valides
 export VBOX_USER_HOME=/virtual/leoclient2-vm/winXP; /usr/bin/vboxmanage modifyvm winXP --nic2 nat --natnet2 eth0 --macaddress2 00000000000f
 
 
-machines.conf in server.conf umbenennen: Ja
-server.conf wird nicht gebraucht, wenn man keinen Server hat
+Beim bridgen: evtl. adaptertyp festlegen/Welcher/Wie
+Am BSZ: --nictype<1-N> Am79C973
+Evtl. Option vorsehen in network.conf
+
 
 default.conf einführen, ähnlich wie cache.conf 
-
-- statt CACHE=... eine Datei cache.conf
+  - Variable conf_defaults existiert schon
 
 - cache obligatorisch oder freiwillig
   IDEE: wenn kein cahe, dann in den snapshot-store
@@ -25,6 +26,7 @@ default.conf einführen, ähnlich wie cache.conf
 - run-vm-printer2-spooler/splitter wird nicht gestartet
 
 - if VirtualBox.xml is not writeable, call sodoers script
+
 
 
 
