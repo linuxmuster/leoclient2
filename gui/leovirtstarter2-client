@@ -280,6 +280,7 @@ $cache_conf_path=$snapshot_search_dirs_remote[0]."/cache.conf";
 
 
 # read config file /etc/leoclient2/machines.conf
+print "Reading cache.conf in: $cache_conf_path\n";
 open (CACHECONFFILE, $cache_conf_path);
 while (<CACHECONFFILE>){
    s/^ //g; # Leerzeichen am Zeilenangfang entfernen
@@ -497,7 +498,7 @@ if (-f $network_conf){
             my $p_option="";
             if ($p_net_type eq "nat"){
                 $p_option="--natnet";
-            } elsif ($p_net_type eq "bridge"){
+            } elsif ($p_net_type eq "bridged"){
                 $p_option="--bridgeadapter";
             }
             if ($p_nic_name eq "auto-used-nic" or
@@ -537,6 +538,8 @@ if (-f $network_conf){
                     }
 	        }
             }
+            print "p_net_type $p_net_type\n";
+            print "\$p_option\${p_virt_nic} $p_option${p_virt_nic}\n";
             $network_vbox_command=$vm_path_export.
                                   "/usr/bin/vboxmanage ".
                                   "modifyvm $vm ".
