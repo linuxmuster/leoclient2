@@ -506,16 +506,18 @@ if (-f $conf_network){
         my $interface="";
         if ($hostname eq $p_host){
             $network_patch=1;
-            print "Patching Network: $p_host\n";
-            print "  Virtual NIC:    $p_virt_nic\n";
-            print "  Network type:   $p_net_type\n";
-            print "  MAC :           $p_mac\n";
-            print "  Interface(Option):      $p_nic_name\n";
+            print "network.conf:\n";
+            print "  Host:          $p_host\n";
+            print "  Virtual NIC:   $p_virt_nic\n";
+            print "  Network type:  $p_net_type\n";
+            print "  MAC :          $p_mac\n";
+            print "  Interface:     $p_nic_name\n";
             my $p_option="";
             if ($p_nic_name eq "auto-used-nic" or
                 $p_nic_name eq "auto-unused-nic"){
                 my @unconfigured_ifs=();
                 my @interfaces = IO::Interface::Simple->interfaces;
+                print "Probing network devices:\n";
                 for my $if (@interfaces) {
                     if ($if->is_loopback){
                         print "   * $if is loopback\n";
@@ -552,12 +554,12 @@ if (-f $conf_network){
             # NAT
             if ($p_net_type eq "nat"){
                 $p_option="--natnet";
+                # Option behind --natnet must be a network:
                 $interface="192.168.1.0/24";
             } elsif ($p_net_type eq "bridged"){
                 $p_option="--bridgeadapter";
             }
 
-            print "  Interface(vboxmanage):   $interface\n";
             $network_vbox_command=$vm_path_export.
                                   "/usr/bin/vboxmanage ".
                                   "modifyvm $vm ".
@@ -565,6 +567,8 @@ if (-f $conf_network){
                                   "$p_option${p_virt_nic} $interface ".
                                   "--macaddress$p_virt_nic $p_mac ".
                                   "--cableconnected${p_virt_nic} on ";
+            print "Created network command(Patch: $network_patch ,",
+                  " executed later):\n";
             print "$network_vbox_command\n";
         }
     }
@@ -575,7 +579,6 @@ if (-f $conf_network){
     print "  $conf_network\n ";
 }
 
-print "patch network:     $network_patch\n";
 
 
 if ($clean_cache==1){
@@ -992,7 +995,7 @@ Gtk2->main;
 
 sub reset_vm_network {
     #
-    for my $num (0..4){
+    for my $num (1..4){
         my $command=$vm_path_export.
                     "/usr/bin/vboxmanage ".
                     "modifyvm $vm ".

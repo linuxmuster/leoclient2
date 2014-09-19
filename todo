@@ -1,7 +1,13 @@
 Problem:
-eth0 ist kein valides 
-export VBOX_USER_HOME=/virtual/leoclient2-vm/winXP; /usr/bin/vboxmanage modifyvm winXP --nic2 nat --natnet2 eth0 --macaddress2 00000000000f
 
+CPU-Begrenzung ist evtl. manchmal niedrig
+ - soll das auf einen Festgelegten Wert gepached weden?
+
+Ort für Network.conf:
+ in der machine --> alle snapshots dieselbe network.conf (schlecht)
+ im snapshot    --> je nach snapshot andere network.conf möglich
+                    aber oft redundanz
+Oder beide auswerten
 
 Beim bridgen: evtl. adaptertyp festlegen/Welcher/Wie
 Am BSZ: --nictype<1-N> Am79C973
