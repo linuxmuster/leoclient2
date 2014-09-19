@@ -503,19 +503,15 @@ if (-f $conf_network){
         }
         print "network.conf LINE:   $_\n";
         my ($p_host,$p_virt_nic,$p_net_type,$p_mac,$p_nic_name)=split(/;/);
+        my $interface="";
         if ($hostname eq $p_host){
             $network_patch=1;
             print "Patching Network: $p_host\n";
             print "  Virtual NIC:    $p_virt_nic\n";
             print "  Network type:   $p_net_type\n";
             print "  MAC :           $p_mac\n";
-            print "  Interface:      $p_nic_name\n";
+            print "  Interface(Option):      $p_nic_name\n";
             my $p_option="";
-            if ($p_net_type eq "nat"){
-                $p_option="--natnet";
-            } elsif ($p_net_type eq "bridged"){
-                $p_option="--bridgeadapter";
-            }
             if ($p_nic_name eq "auto-used-nic" or
                 $p_nic_name eq "auto-unused-nic"){
                 my @unconfigured_ifs=();
@@ -533,7 +529,7 @@ if (-f $conf_network){
                         # keep unchanged
                         print "   * $if is running (IP: ",$if->address,")\n";
                         if ($p_nic_name eq "auto-used-nic"){
-                            $p_nic_name=$if;
+                            $interface=$if;
 		        }
                     } else {
                         # interface is not in use
@@ -546,19 +542,29 @@ if (-f $conf_network){
 	            @unconfigured_ifs = sort  @unconfigured_ifs;
                     if (defined $unconfigured_ifs[0]){
                         # use the first unconfigured interface
-                        $p_nic_name=$unconfigured_ifs[0];
+                        $interface=$unconfigured_ifs[0];
 	            } else {
                         print "\nERROR: No unconfigured interface found\n\n";
                         exit;
                     }
 	        }
             }
+            # NAT
+            if ($p_net_type eq "nat"){
+                $p_option="--natnet";
+                $interface="192.168.1.0/24";
+            } elsif ($p_net_type eq "bridged"){
+                $p_option="--bridgeadapter";
+            }
+
+            print "  Interface(vboxmanage):   $interface\n";
             $network_vbox_command=$vm_path_export.
                                   "/usr/bin/vboxmanage ".
                                   "modifyvm $vm ".
                                   "--nic${p_virt_nic} $p_net_type ".
-                                  "$p_option${p_virt_nic} $p_nic_name ".
-                                  "--macaddress$p_virt_nic $p_mac";
+                                  "$p_option${p_virt_nic} $interface ".
+                                  "--macaddress$p_virt_nic $p_mac ".
+                                  "--cableconnected${p_virt_nic} on ";
             print "$network_vbox_command\n";
         }
     }
@@ -983,6 +989,21 @@ Gtk2->main;
 # subs
 ############################################################
 
+
+sub reset_vm_network {
+    #
+    for my $num (0..4){
+        my $command=$vm_path_export.
+                    "/usr/bin/vboxmanage ".
+                    "modifyvm $vm ".
+                    "--nic${num} null --nic${num} none ";
+        print "$command\n";
+        system($command);
+    }
+}
+
+
+
 sub get_vbox_uuid {
     my ($vm) = @_;
     my $path=$vm{$vm};
@@ -1238,7 +1259,8 @@ sub start_button {
                               " --memory $selected{'RAM'}";
             INFO "$command_mod";
             system($command_mod);
-            if ($network_vbox_command ne ""){
+            if ($network_patch ==1){
+                &reset_vm_network();
                 INFO "$network_vbox_command";
                 system($network_vbox_command);
             }
@@ -1350,7 +1372,7 @@ sub unzip_timeout {
                               " --memory $selected{'RAM'}";
             INFO "Executing: $command_mod\n";
             system($command_mod);
-            if ($network_vbox_command ne ""){
+            if ($network_patch==1){
                 INFO "$network_vbox_command";
                 system($network_vbox_command);
             }
