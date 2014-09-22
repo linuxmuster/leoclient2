@@ -75,6 +75,7 @@ my $snapshot_file_name="{8c816439-1e6e-430f-9865-db7a2a96206f}.vdi";
 my $conf_network="";
 # is a network.conf used? 0=not used, 1=used, patch network settings for vm
 my $network_patch=0;
+my $lock_network=0; # In case an Error occurs do NOT configure the network
 my $network_vbox_command="";
 
 
@@ -567,7 +568,8 @@ if (-f $conf_network){
                         }
 	            } else {
                         print "\nERROR: No unconfigured interface found\n\n";
-                        exit;
+                        INFO "ERROR: No unconfigured interface found";
+                        $lock_network=1;
                     }
 	        }
             }
@@ -1296,9 +1298,14 @@ sub start_button {
             system($command_mod);
             if ($network_patch ==1){
                 &reset_vm_network();
-                INFO "$network_vbox_command";
-                print "$network_vbox_command\n";
-                system($network_vbox_command);
+                if ($lock_network==0){
+                    INFO "$network_vbox_command";
+                    print "$network_vbox_command\n";
+                    system($network_vbox_command);
+                } else {
+                    INFO "Network locked";
+                    print "Network locked\n";
+		}
             }
             my $start_vm = $vm_path_export.
                            "/usr/bin/VBoxManage startvm $vm --type gui";
