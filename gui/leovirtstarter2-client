@@ -1036,7 +1036,7 @@ sub automac {
 
 
 sub reset_vm_network {
-    #
+    # disabling all virtual NIC
     for my $num (1..4){
         my $command=$vm_path_export.
                     "/usr/bin/vboxmanage ".
@@ -1130,7 +1130,7 @@ sub get_zipped_basefile {
                              $base_image_source.
                              ".zip";
     $pb_win_get_base_zip = Gtk2::Window->new('toplevel');
-    $pb_win_get_base_zip->set_title("Entpacke Windows Basis Image");
+    $pb_win_get_base_zip->set_title("Unpacking VM base image");
     $pb_win_get_base_zip->set_border_width(20);
     # Fenstergroesse
     $pb_win_get_base_zip->set_size_request( 900, 70 );
@@ -1173,7 +1173,7 @@ sub unzip_base_timeout {
         return FALSE;
     }
     # Set the new value
-    $progress_bar->set_text("Entpacke ... $actual_size von $unzipped_size_mb MB");
+    $progress_bar->set_text("Unpacking ... $actual_size of $unzipped_size_mb MB");
     # make it 10% faster
     $new_val=1.1*$new_val;
     if ($new_val>=1){
@@ -1245,7 +1245,7 @@ sub progress_timeout {
 	    my $new_val = $progress_bar->get_fraction() + 0.01;
 		
             if ($new_val > 1.0){
-                $progress_bar->set_text('Entpacke  ...');
+                $progress_bar->set_text('Unpacking  ...');
                 $new_val = 0.0;
             }
 	    # Set the new value 
@@ -1305,8 +1305,8 @@ sub start_button {
                               " --memory $selected{'RAM'}";
             INFO "$command_mod";
             system($command_mod);
+            &reset_vm_network();
             if ($network_patch ==1){
-                &reset_vm_network();
                 if ($lock_network==0){
                     INFO "$network_vbox_command";
                     print "$network_vbox_command\n";
@@ -1340,7 +1340,7 @@ sub start_zipped_snaphot {
         INFO "to    $selected{'CACHE-ZIP'} ";
 
         $pb_win_start_zip = Gtk2::Window->new('toplevel');
-        $pb_win_start_zip->set_title("Entpacke Windows: '$selected{'SYSTEM'}'");
+        $pb_win_start_zip->set_title("Unpacking VM: '$selected{'SYSTEM'}'");
         $pb_win_start_zip->set_border_width(20);
         # Fenstergroesse
         $pb_win_start_zip->set_size_request( 700, 70 );
@@ -1424,9 +1424,16 @@ sub unzip_timeout {
                               " --memory $selected{'RAM'}";
             INFO "Executing: $command_mod\n";
             system($command_mod);
+            &reset_vm_network();
             if ($network_patch==1){
-                INFO "$network_vbox_command";
-                system($network_vbox_command);
+                if ($lock_network==0){
+                    INFO "$network_vbox_command";
+                    print "$network_vbox_command\n";
+                    system($network_vbox_command);
+                } else {
+                    INFO "Network locked";
+                    print "Network locked\n";
+		}
             }
             my $start_vm=$vm_path_export.
                          "/usr/bin/VBoxManage startvm $vm --type gui";
@@ -1438,7 +1445,7 @@ sub unzip_timeout {
         return FALSE;
     }
     # Set the new value
-    $progress_bar->set_text("Entpacke ... $actual_size von $unzipped_size_mb MB");
+    $progress_bar->set_text("Unpacking ... $actual_size of $unzipped_size_mb MB");
     # make it 10% faster
     $new_val=1.1*$new_val;
     if ($new_val>=1){
