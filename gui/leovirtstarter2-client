@@ -507,6 +507,8 @@ if (-f $conf_network){
         my $interface="";
         my $old_mac="";
         my $macaddress="";
+        my $macaddress_used="";
+        my $macaddress_unused="";
         if ($hostname eq $p_host){
             $network_patch=1;
             print "Values in network.conf:\n";
@@ -540,17 +542,19 @@ if (-f $conf_network){
                         print "     * MAC: $hwaddr\n";
                         if ($p_nic_name eq "auto-used-nic"){
                             $interface=$if;
-                            if ($p_mac eq "automac"){
-                                $macaddress=&automac($hwaddr);
-                            } else {
-                                $macaddress=$p_mac;
-                            }
 		        }
+                        if ($p_mac eq "automac-used" or
+                            $p_mac eq "automac-used"){
+                            $macaddress_used=&automac($hwaddr);
+                        } else {
+                            $macaddress=$p_mac;
+                        }
                     } else {
                         # interface is not in use
                         print "   * $if is NOT in use\n";
+                        print "     * MAC: $hwaddr\n";
                         push @unconfigured_ifs, $if;
-                        push @unconfigured_hwaddr, $if;
+                        push @unconfigured_hwaddr, $hwaddr;
                     }
                 }
                 # get the first unused NIC
@@ -561,8 +565,9 @@ if (-f $conf_network){
                         # use the first unconfigured interface
                         $interface=$unconfigured_ifs[0];
                         $hwaddr=$unconfigured_hwaddr[0];
-                        if ($p_mac eq "automac"){
-                            $macaddress=&automac($hwaddr);
+                        if ($p_mac eq "automac-used" or
+                            $p_mac eq "automac-unused"){
+                            $macaddress_unused=&automac($hwaddr);
                         } else {
                             $macaddress=$p_mac;
                         }
@@ -581,7 +586,11 @@ if (-f $conf_network){
             } elsif ($p_net_type eq "bridged"){
                 $p_option="--bridgeadapter";
             }
-
+            if ($p_mac eq "automac-used"){
+                $macaddress = $macaddress_used;
+            } elsif ($p_mac eq "automac-unused"){
+                $macaddress = $macaddress_unused;
+            }
             $network_vbox_command=$vm_path_export.
                                   "/usr/bin/vboxmanage ".
                                   "modifyvm $vm ".

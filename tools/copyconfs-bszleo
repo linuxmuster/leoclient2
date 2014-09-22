@@ -1,0 +1,5 @@
+#!/bin/bash
+
+sudo cp ../conf/servers.conf /etc/leoclient2
+sudo cp ../conf/network.conf /virtual/leoclient2-vm/winXP/network.conf
+sudo cp ../conf/caches.conf /media/leoclient2-vm/caches.conf
