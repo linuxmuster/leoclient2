@@ -1,0 +1,56 @@
+# Field 1: linux hostname as seen with # hostname
+# Field 2: network device 1-4
+# Field 3: virtualbox networking mode as in: 
+#          none|null|nat|bridged|intnet|hostonly|generic|natnetwork
+# Field 4: MAC-Adress of virtual network device
+# Field 5: 
+
+### Vitual machine can use network via NAT
+### nat on used NIC
+#j1009p16;2;nat;0000000000ff;auto-used-nic
+
+### Vitual machine can use network via bridge
+### bridge on used NIC, fixed mac
+#j1009p16;1;bridged;0000000000aa;auto-used-nic
+
+## Second NIC with generated MAC (needs second NIC)
+### bridge on unused NIC, automatically generate mac (begin with 08)
+l0020p01;1;bridged;automac-used;auto-unused-nic
+l0020p02;1;bridged;automac-used;auto-unused-nic
+l0020p03;1;bridged;automac-used;auto-unused-nic
+l0020p04;1;bridged;automac-used;auto-unused-nic
+l0020p05;1;bridged;automac-used;auto-unused-nic
+l0020p06;1;bridged;automac-used;auto-unused-nic
+l0020p07;1;bridged;automac-used;auto-unused-nic
+l0020p08;1;bridged;automac-used;auto-unused-nic
+l0020p09;1;bridged;automac-used;auto-unused-nic
+l0020p10;1;bridged;automac-used;auto-unused-nic
+l0020p11;1;bridged;automac-used;auto-unused-nic
+l0020p12;1;bridged;automac-used;auto-unused-nic
+l0020p13;1;bridged;automac-used;auto-unused-nic
+l0020p14;1;bridged;automac-used;auto-unused-nic
+l0020p15;1;bridged;automac-used;auto-unused-nic
+l0020p16;1;bridged;automac-used;auto-unused-nic
+
+l0030p01;1;bridged;automac-used;auto-unused-nic
+l0030p02;1;bridged;automac-used;auto-unused-nic
+l0030p03;1;bridged;automac-used;auto-unused-nic
+l0030p04;1;bridged;automac-used;auto-unused-nic
+l0030p05;1;bridged;automac-used;auto-unused-nic
+l0030p06;1;bridged;automac-used;auto-unused-nic
+l0030p07;1;bridged;automac-used;auto-unused-nic
+l0030p08;1;bridged;automac-used;auto-unused-nic
+l0030p09;1;bridged;automac-used;auto-unused-nic
+l0030p10;1;bridged;automac-used;auto-unused-nic
+l0030p11;1;bridged;automac-used;auto-unused-nic
+l0030p12;1;bridged;automac-used;auto-unused-nic
+l0030p13;1;bridged;automac-used;auto-unused-nic
+l0030p14;1;bridged;automac-used;auto-unused-nic
+l0030p15;1;bridged;automac-used;auto-unused-nic
+l0030p16;1;bridged;automac-used;auto-unused-nic
+
+
+## Second NIC with fixed MAC
+### bridge on unused NIC (needs second NIC)
+#j1009p16;3;bridged;0000000000bb;auto-unused-nic
+

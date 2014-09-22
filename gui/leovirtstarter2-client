@@ -72,7 +72,7 @@ my $snapshot_file_name="{8c816439-1e6e-430f-9865-db7a2a96206f}.vdi";
 
 ##### network.conf ##### Network settings on the clients
 # calculate path to network.conf
-my $conf_network="";
+my $conf_network_vm="";
 # is a network.conf used? 0=not used, 1=used, patch network settings for vm
 my $network_patch=0;
 my $lock_network=0; # In case an Error occurs do NOT configure the network
@@ -439,10 +439,10 @@ foreach my $dir (@snapshot_search_dirs_remote){
     }
 }
 $base_image_target=$vm_path_abs."/".$vm.".vdi";
-$conf_network=$vm_path_abs."/network.conf";
-print "base_image_source: $base_image_source\n";
-print "base_image_target: $base_image_target\n";
-print "network.conf:      $conf_network\n";
+$conf_network_vm=$vm_path_abs."/network.conf";
+print "base_image_source:   $base_image_source\n";
+print "base_image_target:   $base_image_target\n";
+print "network.conf der VM: $conf_network_vm\n";
 
 #
 #exit;
@@ -489,126 +489,7 @@ if ($vm_path_abs ne ""){
 #     exit;
 } 
 
-if (-f $conf_network){
-    # read config file network.conf
-    print "Checking if network of $hostname must be patched\n";
-    open (NETCONF, $conf_network);
-    while (<NETCONF>){
-        s/^ //g; # Leerzeichen am Zeilenangfang entfernen
-        if(/^\#/){ # # am Anfang bedeutet Kommentarzeile
-            next;
-        }
-        chomp();
-        if($_ eq ""){
-            next;
-        }
-        print "network.conf LINE:   $_\n";
-        my ($p_host,$p_virt_nic,$p_net_type,$p_mac,$p_nic_name)=split(/;/);
-        my $interface="";
-        my $old_mac="";
-        my $macaddress="";
-        my $macaddress_used="";
-        my $macaddress_unused="";
-        if ($hostname eq $p_host){
-            $network_patch=1;
-            print "Values in network.conf:\n";
-            print "  Host:          $p_host\n";
-            print "  Virtual NIC:   $p_virt_nic\n";
-            print "  Network type:  $p_net_type\n";
-            print "  MAC :          $p_mac\n";
-            print "  Interface:     $p_nic_name\n";
-            my $p_option="";
-            my $hwaddr="";
-            if ($p_nic_name eq "auto-used-nic" or
-                $p_nic_name eq "auto-unused-nic"){
-                my @unconfigured_ifs=();
-                my @unconfigured_hwaddr=();
-                my @interfaces = IO::Interface::Simple->interfaces;
-                print "Probing network devices:\n";
-                for my $if (@interfaces) {
-                    $hwaddr=$if->hwaddr;
-                    if ($if->is_loopback){
-                        print "   * $if is loopback\n";
-                        next;
-                    }
-                    my $running=$if->is_running;
-                    if (defined $if->address and 
-                        defined $if->netmask and 
-                        defined $if->hwaddr and
-                        $running==1
-                       ){
-                        # keep unchanged
-                        print "   * $if is running (IP: ",$if->address,")\n";
-                        print "     * MAC: $hwaddr\n";
-                        if ($p_nic_name eq "auto-used-nic"){
-                            $interface=$if;
-		        }
-                        if ($p_mac eq "automac-used" or
-                            $p_mac eq "automac-used"){
-                            $macaddress_used=&automac($hwaddr);
-                        } else {
-                            $macaddress=$p_mac;
-                        }
-                    } else {
-                        # interface is not in use
-                        print "   * $if is NOT in use\n";
-                        print "     * MAC: $hwaddr\n";
-                        push @unconfigured_ifs, $if;
-                        push @unconfigured_hwaddr, $hwaddr;
-                    }
-                }
-                # get the first unused NIC
-                if ($p_nic_name eq "auto-unused-nic"){
-                    # sort unconfigured ifs
-	            @unconfigured_ifs = sort  @unconfigured_ifs;
-                    if (defined $unconfigured_ifs[0]){
-                        # use the first unconfigured interface
-                        $interface=$unconfigured_ifs[0];
-                        $hwaddr=$unconfigured_hwaddr[0];
-                        if ($p_mac eq "automac-used" or
-                            $p_mac eq "automac-unused"){
-                            $macaddress_unused=&automac($hwaddr);
-                        } else {
-                            $macaddress=$p_mac;
-                        }
-	            } else {
-                        print "\nERROR: No unconfigured interface found\n\n";
-                        INFO "ERROR: No unconfigured interface found";
-                        $lock_network=1;
-                    }
-	        }
-            }
-            # NAT
-            if ($p_net_type eq "nat"){
-                $p_option="--natnet";
-                # Option behind --natnet must be a network:
-                $interface="192.168.1.0/24";
-            } elsif ($p_net_type eq "bridged"){
-                $p_option="--bridgeadapter";
-            }
-            if ($p_mac eq "automac-used"){
-                $macaddress = $macaddress_used;
-            } elsif ($p_mac eq "automac-unused"){
-                $macaddress = $macaddress_unused;
-            }
-            $network_vbox_command=$vm_path_export.
-                                  "/usr/bin/vboxmanage ".
-                                  "modifyvm $vm ".
-                                  "--nic${p_virt_nic} $p_net_type ".
-                                  "$p_option${p_virt_nic} $interface ".
-                                  "--macaddress$p_virt_nic $macaddress ".
-                                  "--cableconnected${p_virt_nic} on ";
-            print "Created network command(Patch: $network_patch ,",
-                  " executed later):\n";
-            print "$network_vbox_command\n";
-        }
-    }
-    close NETCONF;
-} else {
-    INFO "$conf_network not found.\n";
-    print "INFO: network.conf not fount at:\n ";
-    print "  $conf_network\n ";
-}
+
 
 
 
@@ -1022,6 +903,144 @@ Gtk2->main;
 ############################################################
 # subs
 ############################################################
+sub read_network_conf {
+    my ($snapshot_dir)=@_;
+    my $file="";
+    my $conf_network_snapshot=$snapshot_search_dirs_remote[0]."/".
+         $vm."/snapshot-store/".$snapshot_dir."/network.conf";
+    if (-e $conf_network_snapshot){
+        # snapshot specific network.conf
+        $file = $conf_network_snapshot;
+        print "network.conf found: $file\n";
+    } elsif (-e $conf_network_vm){
+        # VM specific network.conf
+        $file = $conf_network_vm;
+        print "network.conf found: $file\n";
+    } else {
+        # no network conf found
+        print "network.conf:\n";
+        print "   * No file $conf_network_snapshot\n";
+        print "   * No file $conf_network_vm\n";
+        return;
+    } 
+    
+    # read config file network.conf
+    print "Checking if network of $hostname must be patched\n";
+    open (NETCONF, $file);
+    while (<NETCONF>){
+        s/^ //g; # Leerzeichen am Zeilenangfang entfernen
+        if(/^\#/){ # # am Anfang bedeutet Kommentarzeile
+            next;
+        }
+        chomp();
+        if($_ eq ""){
+            next;
+        }
+        print "network.conf LINE:   $_\n";
+        my ($p_host,$p_virt_nic,$p_net_type,$p_mac,$p_nic_name)=split(/;/);
+        my $interface="";
+        my $old_mac="";
+        my $macaddress="";
+        my $macaddress_used="";
+        my $macaddress_unused="";
+        if ($hostname eq $p_host){
+            $network_patch=1;
+            print "Values in network.conf:\n";
+            print "  Host:          $p_host\n";
+            print "  Virtual NIC:   $p_virt_nic\n";
+            print "  Network type:  $p_net_type\n";
+            print "  MAC :          $p_mac\n";
+            print "  Interface:     $p_nic_name\n";
+            my $p_option="";
+            my $hwaddr="";
+            if ($p_nic_name eq "auto-used-nic" or
+                $p_nic_name eq "auto-unused-nic"){
+                my @unconfigured_ifs=();
+                my @unconfigured_hwaddr=();
+                my @interfaces = IO::Interface::Simple->interfaces;
+                print "Probing network devices:\n";
+                for my $if (@interfaces) {
+                    $hwaddr=$if->hwaddr;
+                    if ($if->is_loopback){
+                        print "   * $if is loopback\n";
+                        next;
+                    }
+                    my $running=$if->is_running;
+                    if (defined $if->address and 
+                        defined $if->netmask and 
+                        defined $if->hwaddr and
+                        $running==1
+                       ){
+                        # keep unchanged
+                        print "   * $if is running (IP: ",$if->address,")\n";
+                        print "     * MAC: $hwaddr\n";
+                        if ($p_nic_name eq "auto-used-nic"){
+                            $interface=$if;
+		        }
+                        if ($p_mac eq "automac-used" or
+                            $p_mac eq "automac-used"){
+                            $macaddress_used=&automac($hwaddr);
+                        } else {
+                            $macaddress=$p_mac;
+                        }
+                    } else {
+                        # interface is not in use
+                        print "   * $if is NOT in use\n";
+                        print "     * MAC: $hwaddr\n";
+                        push @unconfigured_ifs, $if;
+                        push @unconfigured_hwaddr, $hwaddr;
+                    }
+                }
+                # get the first unused NIC
+                if ($p_nic_name eq "auto-unused-nic"){
+                    # sort unconfigured ifs
+	            @unconfigured_ifs = sort  @unconfigured_ifs;
+                    if (defined $unconfigured_ifs[0]){
+                        # use the first unconfigured interface
+                        $interface=$unconfigured_ifs[0];
+                        $hwaddr=$unconfigured_hwaddr[0];
+                        if ($p_mac eq "automac-used" or
+                            $p_mac eq "automac-unused"){
+                            $macaddress_unused=&automac($hwaddr);
+                        } else {
+                            $macaddress=$p_mac;
+                        }
+	            } else {
+                        print "\nERROR: No unconfigured interface found\n\n";
+                        INFO "ERROR: No unconfigured interface found";
+                        $lock_network=1;
+                    }
+	        }
+            }
+            # NAT
+            if ($p_net_type eq "nat"){
+                $p_option="--natnet";
+                # Option behind --natnet must be a network:
+                $interface="192.168.1.0/24";
+            } elsif ($p_net_type eq "bridged"){
+                $p_option="--bridgeadapter";
+            }
+            if ($p_mac eq "automac-used"){
+                $macaddress = $macaddress_used;
+            } elsif ($p_mac eq "automac-unused"){
+                $macaddress = $macaddress_unused;
+            }
+            $network_vbox_command=$vm_path_export.
+                                  "/usr/bin/vboxmanage ".
+                                  "modifyvm $vm ".
+                                  "--nic${p_virt_nic} $p_net_type ".
+                                  "$p_option${p_virt_nic} $interface ".
+                                  "--macaddress$p_virt_nic $macaddress ".
+                                  "--cableconnected${p_virt_nic} on ";
+            print "Created network command(Patch: $network_patch ,",
+                  " executed later):\n";
+            print "$network_vbox_command\n";
+        }
+    }
+    close NETCONF;
+}
+
+
 
 sub automac {
     # calculate a new mac from old
@@ -1305,6 +1324,7 @@ sub start_button {
                               " --memory $selected{'RAM'}";
             INFO "$command_mod";
             system($command_mod);
+            &read_network_conf($selected{'SYSTEM'});
             &reset_vm_network();
             if ($network_patch ==1){
                 if ($lock_network==0){
@@ -1424,6 +1444,7 @@ sub unzip_timeout {
                               " --memory $selected{'RAM'}";
             INFO "Executing: $command_mod\n";
             system($command_mod);
+            &read_network_conf($selected{'SYSTEM'});
             &reset_vm_network();
             if ($network_patch==1){
                 if ($lock_network==0){
