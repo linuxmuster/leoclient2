@@ -504,47 +504,67 @@ if (-f $conf_network){
         print "network.conf LINE:   $_\n";
         my ($p_host,$p_virt_nic,$p_net_type,$p_mac,$p_nic_name)=split(/;/);
         my $interface="";
+        my $old_mac="";
+        my $macaddress="";
         if ($hostname eq $p_host){
             $network_patch=1;
-            print "network.conf:\n";
+            print "Values in network.conf:\n";
             print "  Host:          $p_host\n";
             print "  Virtual NIC:   $p_virt_nic\n";
             print "  Network type:  $p_net_type\n";
             print "  MAC :          $p_mac\n";
             print "  Interface:     $p_nic_name\n";
             my $p_option="";
+            my $hwaddr="";
             if ($p_nic_name eq "auto-used-nic" or
                 $p_nic_name eq "auto-unused-nic"){
                 my @unconfigured_ifs=();
+                my @unconfigured_hwaddr=();
                 my @interfaces = IO::Interface::Simple->interfaces;
                 print "Probing network devices:\n";
                 for my $if (@interfaces) {
+                    $hwaddr=$if->hwaddr;
                     if ($if->is_loopback){
                         print "   * $if is loopback\n";
                         next;
                     }
                     my $running=$if->is_running;
                     if (defined $if->address and 
-                        defined $if->netmask 
-                        and $running==1
+                        defined $if->netmask and 
+                        defined $if->hwaddr and
+                        $running==1
                        ){
                         # keep unchanged
                         print "   * $if is running (IP: ",$if->address,")\n";
+                        print "     * MAC: $hwaddr\n";
                         if ($p_nic_name eq "auto-used-nic"){
                             $interface=$if;
+                            if ($p_mac eq "automac"){
+                                $macaddress=&automac($hwaddr);
+                            } else {
+                                $macaddress=$p_mac;
+                            }
 		        }
                     } else {
                         # interface is not in use
                         print "   * $if is NOT in use\n";
                         push @unconfigured_ifs, $if;
+                        push @unconfigured_hwaddr, $if;
                     }
                 }
+                # get the first unused NIC
                 if ($p_nic_name eq "auto-unused-nic"){
                     # sort unconfigured ifs
 	            @unconfigured_ifs = sort  @unconfigured_ifs;
                     if (defined $unconfigured_ifs[0]){
                         # use the first unconfigured interface
                         $interface=$unconfigured_ifs[0];
+                        $hwaddr=$unconfigured_hwaddr[0];
+                        if ($p_mac eq "automac"){
+                            $macaddress=&automac($hwaddr);
+                        } else {
+                            $macaddress=$p_mac;
+                        }
 	            } else {
                         print "\nERROR: No unconfigured interface found\n\n";
                         exit;
@@ -565,7 +585,7 @@ if (-f $conf_network){
                                   "modifyvm $vm ".
                                   "--nic${p_virt_nic} $p_net_type ".
                                   "$p_option${p_virt_nic} $interface ".
-                                  "--macaddress$p_virt_nic $p_mac ".
+                                  "--macaddress$p_virt_nic $macaddress ".
                                   "--cableconnected${p_virt_nic} on ";
             print "Created network command(Patch: $network_patch ,",
                   " executed later):\n";
@@ -992,6 +1012,17 @@ Gtk2->main;
 # subs
 ############################################################
 
+sub automac {
+    # calculate a new mac from old
+    my ($mac_old) = @_;
+    # remove :'s
+    $mac_old=~s/://g;
+    # Replace first 2 bytes with 08
+    my $mac_new = "08".substr($mac_old, 2, 10);
+    print "Replacing MAC: $mac_old -> $mac_new\n";
+    return $mac_new;
+}
+
 
 sub reset_vm_network {
     #
@@ -1001,6 +1032,7 @@ sub reset_vm_network {
                     "modifyvm $vm ".
                     "--nic${num} null --nic${num} none ";
         print "$command\n";
+        INFO "$command";
         system($command);
     }
 }
@@ -1265,6 +1297,7 @@ sub start_button {
             if ($network_patch ==1){
                 &reset_vm_network();
                 INFO "$network_vbox_command";
+                print "$network_vbox_command\n";
                 system($network_vbox_command);
             }
             my $start_vm = $vm_path_export.
