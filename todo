@@ -1,3 +1,9 @@
+4 Netzwerkbefehle vorsehen (je virtuelles NIC 1 Befehl)
+-> Befehlsliste default: alle deaktivieren
+-> Befehlsliste verändert: in Liste ersetzen
+
+
+
 Problem:
 
 CPU-Begrenzung ist evtl. manchmal niedrig
