@@ -75,8 +75,12 @@ my $snapshot_file_name="{8c816439-1e6e-430f-9865-db7a2a96206f}.vdi";
 my $conf_network_vm="";
 # is a network.conf used? 0=not used, 1=used, patch network settings for vm
 my $network_patch=0;
-my $lock_network=0; # In case an Error occurs do NOT configure the network
-my $network_vbox_command="";
+
+# array index 0 -> NIC1 
+# array index 1 -> NIC2 
+# array index 2 -> NIC3 
+# array index 3 -> NIC4 
+my @network_vbox_commands=();
 
 
 #####################################2#######################                    
@@ -443,6 +447,16 @@ $conf_network_vm=$vm_path_abs."/network.conf";
 print "base_image_source:   $base_image_source\n";
 print "base_image_target:   $base_image_target\n";
 print "network.conf der VM: $conf_network_vm\n";
+
+@network_vbox_commands=(
+   "/usr/bin/vboxmanage modifyvm $vm --nic1 null --nic1 none",
+   "/usr/bin/vboxmanage modifyvm $vm --nic2 null --nic2 none",
+   "/usr/bin/vboxmanage modifyvm $vm --nic3 null --nic3 none",
+   "/usr/bin/vboxmanage modifyvm $vm --nic4 null --nic4 none",
+);
+
+
+
 
 #
 #exit;
@@ -1008,7 +1022,6 @@ sub read_network_conf {
 	            } else {
                         print "\nERROR: No unconfigured interface found\n\n";
                         INFO "ERROR: No unconfigured interface found";
-                        $lock_network=1;
                     }
 	        }
             }
@@ -1025,7 +1038,8 @@ sub read_network_conf {
             } elsif ($p_mac eq "automac-unused"){
                 $macaddress = $macaddress_unused;
             }
-            $network_vbox_command=$vm_path_export.
+            my $index=$p_virt_nic-1;
+            $network_vbox_commands[$index]=$vm_path_export.
                                   "/usr/bin/vboxmanage ".
                                   "modifyvm $vm ".
                                   "--nic${p_virt_nic} $p_net_type ".
@@ -1034,7 +1048,7 @@ sub read_network_conf {
                                   "--cableconnected${p_virt_nic} on ";
             print "Created network command(Patch: $network_patch ,",
                   " executed later):\n";
-            print "$network_vbox_command\n";
+            print "$network_vbox_commands[$index]\n";
         }
     }
     close NETCONF;
@@ -1054,14 +1068,10 @@ sub automac {
 }
 
 
-sub reset_vm_network {
-    # disabling all virtual NIC
-    for my $num (1..4){
-        my $command=$vm_path_export.
-                    "/usr/bin/vboxmanage ".
-                    "modifyvm $vm ".
-                    "--nic${num} null --nic${num} none ";
-        print "$command\n";
+sub set_vm_network {
+    # going through the 4 commands
+    for my $num (0..3){
+        my $command=$vm_path_export.$network_vbox_commands[$num];
         INFO "$command";
         system($command);
     }
@@ -1325,17 +1335,7 @@ sub start_button {
             INFO "$command_mod";
             system($command_mod);
             &read_network_conf($selected{'SYSTEM'});
-            &reset_vm_network();
-            if ($network_patch ==1){
-                if ($lock_network==0){
-                    INFO "$network_vbox_command";
-                    print "$network_vbox_command\n";
-                    system($network_vbox_command);
-                } else {
-                    INFO "Network locked";
-                    print "Network locked\n";
-		}
-            }
+            &set_vm_network();
             my $start_vm = $vm_path_export.
                            "/usr/bin/VBoxManage startvm $vm --type gui";
             INFO "$start_vm";
@@ -1445,17 +1445,7 @@ sub unzip_timeout {
             INFO "Executing: $command_mod\n";
             system($command_mod);
             &read_network_conf($selected{'SYSTEM'});
-            &reset_vm_network();
-            if ($network_patch==1){
-                if ($lock_network==0){
-                    INFO "$network_vbox_command";
-                    print "$network_vbox_command\n";
-                    system($network_vbox_command);
-                } else {
-                    INFO "Network locked";
-                    print "Network locked\n";
-		}
-            }
+            &set_vm_network();
             my $start_vm=$vm_path_export.
                          "/usr/bin/VBoxManage startvm $vm --type gui";
             INFO "Executing: $start_vm\n";
