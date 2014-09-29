@@ -50,6 +50,9 @@ my @ram_steps=("192",
 my $min_host_ram="256";
 my $max_guest_ram="2048";
 
+my $snapshot_file_name="";
+
+
 ############################################################                    
 # virtualbox                                                                    
 ############################################################                    
@@ -61,14 +64,14 @@ my $max_guest_ram="2048";
 #my $base_image_source="base/winXP-2010.vdi";
 
 #in Snapshot-store/base
-my $base_image_size="2468409856"; # as seen with 'ls -l'  
-
+#my $base_image_size="2468409856"; # winXP as seen with 'ls -l'  
+my $base_image_size="33554432"; # tinycore
+#my $base_image_size="";
 # the base image
 
 
 # the SNAPSHOTS                                                                 
 #my $snapshot_file_dir="/virtual/Machines/winXP-2010/Snapshots";
-my $snapshot_file_name="{8c816439-1e6e-430f-9865-db7a2a96206f}.vdi";
 
 ##### network.conf ##### Network settings on the clients
 # calculate path to network.conf
@@ -441,10 +444,13 @@ foreach my $dir (@snapshot_search_dirs_remote){
 }
 $base_image_target=$vm_path_abs."/".$vm.".vdi";
 $conf_network_vm=$vm_path_abs."/network.conf";
+$snapshot_file_name="{$vbox_uuid}.vdi";
 print "Setting paths for $vm\n";
 print "  * base_image_source:   $base_image_source\n";
 print "  * base_image_target:   $base_image_target\n";
 print "  * network.conf der VM: $conf_network_vm\n";
+print "  * Snapshot file name:  $snapshot_file_name\n";
+
 
 @network_vbox_commands=(
    "/usr/bin/vboxmanage modifyvm $vm --nic1 null --nic1 none",
@@ -649,8 +655,8 @@ my $app_window = Gtk2::Window->new('toplevel');
 
 
 # The following lists might be created automatically
-my $buttons_default="Windows XP Standard";
-my $buttons_as_used="Windows XP wie vorgefunden";
+my $buttons_default="$vm Standard";
+my $buttons_as_used="$vm wie vorgefunden";
 
 #my @buttons=&get_snapshots($snapshot_search_dir_client);
 my @buttons=&get_snapshots(@snapshot_search_dirs);
@@ -678,12 +684,15 @@ my $pb_win_start_zip;
 # Checks 
 ############################################################
 
+# ???? disabled ?????
+#&check_base_image($home,$on_the_go);
 
-&check_base_image($home,$on_the_go);
+$app_window->show;
+
 
 my ($ram_buttons_default, @ram_sizes)=&ram_sizes();
 
-#print "\n---$ram_buttons_default---\n\n";
+print "\n---$ram_buttons_default---\n\n";
 
 my %ram_mapping=();
 my @ram_buttons=();
@@ -715,7 +724,7 @@ INFO "Starting leovirtstarter2-client GUI on $hostname";
 $app_window->set_resizable(TRUE);
 $app_window->signal_connect(destroy => \&destroy_progress);
 $app_window->signal_connect('delete_event' => sub { Gtk2->main_quit; });
-$app_window->set_title("Virtuelles Windows starten");
+$app_window->set_title("$vm starten");
 $app_window->set_border_width(0);
 # Fenstergroesse
 $app_window->set_size_request( 800, 600 );
@@ -1126,11 +1135,11 @@ sub check_base_image {
                              ".zip";
     if (-e "$base_image_target"){
         my $size = -s $base_image_target;
-        #print "$size  $base_image_size\n";
+        print "$size  $base_image_size\n";
         if ($size ne $base_image_size){
             $get_it=1;
         } else {
-            $app_window->show;
+            #$app_window->show;
         }
     } else {
         $get_it=1;
@@ -1147,6 +1156,8 @@ sub check_base_image {
     }
     if ($get_it==1){
 	&get_zipped_basefile($base_image_target);
+    } else {
+
     }
 }
 
@@ -1199,7 +1210,8 @@ sub unzip_base_timeout {
         $progress_bar->set_fraction($new_val);
         $progress_bar->set_text('Fertig!');
         $pb_win_get_base_zip->destroy;
-        $app_window->show;
+# this is run by program main ????
+#        $app_window->show;
         return FALSE;
     }
     # Set the new value
@@ -1230,7 +1242,7 @@ sub starter_vbox {
     $frame->set_shadow_type ('out');
     #method of Gtk2::Container
     $frame->set_border_width(2);
-    $frame->set_label("  Wählen Sie das virtuelle Windows aus:  ");
+    $frame->set_label("  Wählen Sie das virtuelle $vm aus:  ");
     $sw = Gtk2::ScrolledWindow->new (undef, undef);
     $sw->set_shadow_type ('etched-out');
     $sw->set_policy ('never', 'automatic');
@@ -1636,7 +1648,7 @@ sub get_zipped_snapshot {
             system("mkdir -p '$target_dir'");
             # window erstellen
             $pb_win_get_zip = Gtk2::Window->new('toplevel'); 
-            $pb_win_get_zip->set_title("Hole gezipptes Windows: '$selected{'SYSTEM'}'");
+            $pb_win_get_zip->set_title("Hole gezipptes $vm: '$selected{'SYSTEM'}'");
             $pb_win_get_zip->set_border_width(20);
             # Fenstergroesse
             $pb_win_get_zip->set_size_request( 700, 70 );

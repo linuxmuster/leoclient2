@@ -1,7 +1,7 @@
-4 Netzwerkbefehle vorsehen (je virtuelles NIC 1 Befehl)
--> Befehlsliste default: alle deaktivieren
--> Befehlsliste verändert: in Liste ersetzen
-
+check_base_image disabled
+  - woher bekommt man base-image filesize?
+    -> SERVERDIR: cp und unzip
+    -> Lokal: Hinweis, die Partition zu syncen
 
 
 Problem:
