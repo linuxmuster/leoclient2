@@ -1,3 +1,6 @@
+displayauflösung und skalierung einstellbar machen
+
+
 check_base_image disabled
   - woher bekommt man base-image filesize?
     -> SERVERDIR: cp und unzip
