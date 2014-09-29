@@ -288,7 +288,7 @@ if (defined $snapshot_search_dirs_remote[0]){
 
 
 # read config file /etc/leoclient2/servers.conf
-print "Reading caches.conf in: $conf_caches\n";
+print "  * Reading caches.conf in: $conf_caches\n";
 if (-f $conf_caches){
 open (CACHECONFFILE, $conf_caches);
 while (<CACHECONFFILE>){
@@ -315,7 +315,7 @@ while (<CACHECONFFILE>){
 }
 close CACHECONFFILE;
 } else {
-    print "  * WARNING: nonexisting $conf_caches\n";
+    print "    * WARNING: nonexisting $conf_caches\n";
 }
 
 
@@ -400,6 +400,7 @@ if ($vm ne ""){
        "--column='' --column='Maschine' ".
        "--column='Beschreibung' --column='Pfad' ";
     # add items
+    print "Virtual machines (VM):\n";
     foreach my $machine (@vm){
         print "  $machine --> $vm{$machine}\n";    
         $zenity_list=$zenity_list.
@@ -409,7 +410,7 @@ if ($vm ne ""){
     #print "$zenity_list\n";
     my $zenity_return=`$zenity_list`;
     chomp($zenity_return);
-    print "Zenity return String: >$zenity_return<\n";
+    print "Selected VM: $zenity_return\n";
     if ($zenity_return eq ""){
         #  canceled
         exit;
@@ -440,9 +441,10 @@ foreach my $dir (@snapshot_search_dirs_remote){
 }
 $base_image_target=$vm_path_abs."/".$vm.".vdi";
 $conf_network_vm=$vm_path_abs."/network.conf";
-print "base_image_source:   $base_image_source\n";
-print "base_image_target:   $base_image_target\n";
-print "network.conf der VM: $conf_network_vm\n";
+print "Setting paths for $vm\n";
+print "  * base_image_source:   $base_image_source\n";
+print "  * base_image_target:   $base_image_target\n";
+print "  * network.conf der VM: $conf_network_vm\n";
 
 @network_vbox_commands=(
    "/usr/bin/vboxmanage modifyvm $vm --nic1 null --nic1 none",
@@ -529,7 +531,7 @@ if ($clean_log==1){
 # Abbruch, falls virtualbox schon läuft
 my $pid_string=`pgrep -f /usr/lib/virtualbox/VirtualBox`;
 chomp($pid_string);
-print "PID: <$pid_string>\n";
+#print "PID: <$pid_string>\n";
 if ($pid_string ne "" and $ignore_virtualbox==0){
     print "VirtualBox is running already\n";
     my $message="<b>Oracle VM VirtualBox</b> läuft schon!\n\n".
@@ -913,20 +915,26 @@ Gtk2->main;
 sub read_network_conf {
     my ($snapshot_dir)=@_;
     my $file="";
-    my $conf_network_snapshot=$snapshot_search_dirs_remote[0]."/".
-         $vm."/snapshot-store/".$snapshot_dir."/network.conf";
-    if (-e $conf_network_snapshot){
-        # snapshot specific network.conf
-        $file = $conf_network_snapshot;
-        print "network.conf found: $file\n";
-    } elsif (-e $conf_network_vm){
+    print "Reading network.conf:\n";
+
+    if (defined $snapshot_search_dirs_remote[0]){
+        my $conf_network_snapshot=$snapshot_search_dirs_remote[0]."/".
+             $vm."/snapshot-store/".$snapshot_dir."/network.conf";
+        if (-e $conf_network_snapshot){
+            # snapshot specific network.conf
+            $file = $conf_network_snapshot;
+            print "network.conf found: $file\n";
+        } else {
+            print "   * No file $conf_network_snapshot\n";
+        }
+    }
+
+    if (-e $conf_network_vm){
         # VM specific network.conf
         $file = $conf_network_vm;
         print "network.conf found: $file\n";
     } else {
         # no network conf found
-        print "network.conf:\n";
-        print "   * No file $conf_network_snapshot\n";
         print "   * No file $conf_network_vm\n";
         return;
     } 
@@ -1963,13 +1971,13 @@ sub get_snapshots {
             print "WARNING: Nonexisting Snapshot search dir: $get_dir\n";
             return @snapshots;
         }
-        print "opening $get_dir\n";
+        print "Searching for  Snapshots in: $get_dir\n";
         opendir (DIR, $get_dir) || die $!;
         while( (my $dirname = readdir(DIR))){
             if ($dirname eq "." or $dirname eq ".." ){
 	        next;
             }
-            print "Processing $dirname\n";
+            print "  * Processing snapshot: $dirname\n";
             my $abs_path=$get_dir."/".
                          $dirname."/".$snapshot_file_name;
             if (not -e $abs_path){
