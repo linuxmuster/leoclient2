@@ -102,6 +102,7 @@ my $server_popularity_log_file=".log-popularity";
 my %snapshots=();
 
 my $search_dir_local="";
+my $standard_snapshot_local_zipped="";
 
 
 ############################################################
@@ -268,19 +269,7 @@ while (<CONFFILE>){
    }
    print "servers.conf LINE:   $_\n";
    my ($option,$data)=split(/=/);
-   #print "Option: $option\n";
-   if($option eq "DEFAULT"){
-       #print "$data\n";
-       # ??????? do something with the data
-#   } elsif ($option eq "CACHE"){
-#       my ($path,$size)=split(/::/,$data);
-#       # add a dir cache
-#       $path=$path."/cache";
-#       #print "PATH: >$path<\n";
-#       #print "SIZE: >$size<\n";
-#       push @cache_dirs, $path;
-#       push @cache_dirs_size, $size;
-   } elsif ($option eq "SERVERDIR"){
+   if ($option eq "SERVERDIR"){
        print "  SERVERDIR: $data\n";
        push @snapshot_search_dirs_remote, $data;
    }
@@ -293,6 +282,8 @@ close CONFFILE;
 # caches.conf must be in first serverdir (????? Look in all server dirs)
 if (defined $snapshot_search_dirs_remote[0]){ 
     $conf_caches=$snapshot_search_dirs_remote[0]."/caches.conf";
+} else {
+    # default cahe
 }
 
 
@@ -428,13 +419,18 @@ if ($vm ne ""){
 
 
 
-# vm is chosen --> setting paths
+# vm is chosen --> setting paths for VM
+my $vbox_uuid=&get_vbox_uuid($vm);
+#print "UUID: $vbox_uuid\n";
 $vm_path_abs=$vm{$vm};
 $snapshot_file_dir=$vm_path_abs."/Snapshots";
 $search_dir_local=$vm_path_abs;
 # remove last dir to fit to remote dirs
 $search_dir_local=~s/\/$//g;
 $search_dir_local=~s/\/${vm}$//g;
+# Where is the zipped standard snaphot
+$standard_snapshot_local_zipped=
+     $vm_path_abs."/snapshot-store/standard/{".$vbox_uuid."}.vdi.zip";
 foreach my $dir (@snapshot_search_dirs_remote){
     $base_image_source = $dir."/$vm/snapshot-store/base/".$vm.".vdi";
     print "CHECK: $base_image_source\n";
@@ -544,9 +540,6 @@ if ($pid_string ne "" and $ignore_virtualbox==0){
 }
 
 
-my $vbox_uuid=&get_vbox_uuid($vm);
-
-print "UUID: $vbox_uuid\n";
 
 INFO "Starting leovirtstarter2-client on $hostname";
 INFO "UUID: $vbox_uuid (Max RAM: $max_guest_ram)";
@@ -1346,6 +1339,7 @@ sub start_button {
     } else {
         # get the zipped snapshot
         my $zipped_snapshot_file = &get_zipped_snapshot($selected{'SYSTEM'});
+        #print "Snapshot file is local at $zipped_snapshot_file\n";
     }
 }
 
@@ -1542,8 +1536,13 @@ sub get_zipped_snapshot {
     INFO "Wanted in cache with size $filesize_correct:\n   $file_zipped";
     
     if($#cache_dirs==-1){
-        INFO "ERROR: No cache configured in $conf_caches";
-        print "ERROR: No cache configured in $conf_caches\n";
+        INFO "WARNING: No cache configured in $conf_caches";
+        print "WARNING: No cache configured in $conf_caches",
+              "$search_dir_local \n";
+        INFO "Local snapshot is in:  $standard_snapshot_local_zipped";
+        print "Local snapshot is in:  $standard_snapshot_local_zipped\n";
+        my $started=&start_zipped_snaphot($standard_snapshot_local_zipped);
+        return $started;
     }
 
     # is snapshot in cache already and size OK?
