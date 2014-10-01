@@ -16,6 +16,8 @@ vor dem starten einer remoten machine:
 
 aus image.conf sollte access.conf ausgegliedert werden (host, room)
 
+displayauflösung und skalierung einstellbar machen
+
 
 check_base_image disabled
   - woher bekommt man base-image filesize?
