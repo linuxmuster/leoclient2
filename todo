@@ -1,3 +1,22 @@
+lokale maschinen (vm) verbergen, wenn sie nicht gestartet werden dürfen
+oder sind die IMMER zugreifbar?
+WEITER: funktionen read_access_vm und access_vm
+nutzen um access.conf auszulesen/anzuwenden
+
+Option -i sollte noch den Zugriff angeben
+
+vor dem starten einer remoten machine:
+   - rsync nach lokal (ohne basis image und snapshots)
+   - dann basis-image mit gui fortschritt zeigen
+   - wohin soll kopiert werden?
+     (lokale maschinen abklappern, wo gibts platz
+      image.conf: LOCALPATH)
+
+
+
+aus image.conf sollte access.conf ausgegliedert werden (host, room)
+
+
 check_base_image disabled
   - woher bekommt man base-image filesize?
     -> SERVERDIR: cp und unzip

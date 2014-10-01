@@ -149,6 +149,8 @@ my $snapshot_file_dir="";
 # fill this hash with configs
 # vm -> abs_path
 my %vm=();
+my %vm_remote=();
+my %vm_local=();
 my %vm_uuid=();
 my $vm_path_abs="";
 
@@ -157,7 +159,12 @@ my $conf="/etc/leoclient2";
 my $conf_machines=$conf."/machines";
 my $conf_servers=$conf."/servers.conf";
 
+
 my @vm=();
+# local machines
+my @vm_local=();
+# machines in SERVERDIR, if allowed from local machine
+my @vm_remote=();
 
 # shell export variable for the machine
 my $vm_path_export="";
@@ -322,7 +329,7 @@ close CACHECONFFILE;
 }
 
 
-# read config dir /etc/leoclient2/machines
+# read LOCAL vm's from config dir /etc/leoclient2/machines
 if (not -d $conf_machines){
     print "\nERROR: Configuration directory $conf_machines does not exist\n\n";
     exit;
@@ -334,23 +341,71 @@ foreach my $machine (readdir CONFDIR){
     if ($machine=~m/.conf$/){
         my $path=&get_machine_path($machine);
         $machine=~s/.conf$//g;
-        $vm{$machine}=$path;
+        $vm_local{$machine}=$path;
         $vm_uuid{$machine}=$path;
-        push @vm, $machine;
+        # check if machine is accessible
+        &read_access_vm($path);
+        if (1==&access_vm($hostname,$host_room)){
+            push @vm_local, $machine;
+        }
     }
 }
 closedir CONFDIR;
-@vm = sort @vm;
+
+# read REMOTE vm's from SERVERDIR (excude local machines)
+foreach my $serverdir (@snapshot_search_dirs_remote){
+    print "Looking for remote machines in: $serverdir\n";
+    opendir SERVERDIR, $serverdir;
+    foreach my $machine (readdir SERVERDIR){
+        if ($machine eq "."){next};
+        if ($machine eq ".."){next};
+        if (not -d $serverdir."/".$machine){next};
+        if (exists $vm_local{$machine}){
+            # use the local machine, ignore the remote
+            print "   * Local:  $machine\n";
+        } else {
+            print "   * Remote: $machine\n";
+            # check if machine is accessible
+            my $path=$serverdir."/".$machine;
+            $vm_remote{$machine}=$path;
+            &read_access_vm($path);
+            if (1==&access_vm($hostname,$host_room)){
+                push @vm_remote, $machine;
+            }
+        }
+
+    }
+    closedir SERVERDIR;
+}
+
+
+
+@vm_local = sort @vm_local;
+@vm_remote = sort @vm_remote;
+@vm = (@vm_local,@vm_remote);
+%vm = (%vm_local, %vm_remote);
 
 
 if ($info==1){
     # list machines alphabetically
-    print "\nMachines listed in ${conf_machines}:\n";
+    print "\nLocal VM's listed in ${conf_machines}:\n";
         printf " %-9s| %-35s| %-19s\n",
                "Name","Snapshot-file UUID","Path";
     print "----------+------------------------------------+",
           "----------------------------\n";
-    foreach my $machine (@vm){
+    foreach my $machine (@vm_local){
+        my $vbox_uuid=&get_vbox_uuid($machine);
+        printf " %-9s|%-36s|%-20s\n",
+               $machine,$vbox_uuid,$vm{$machine};
+    }
+    print "----------+-----------------------------------------+",
+          "-----------------------\n";
+    print "\nRemote machines in SERVERDIR:\n";
+        printf " %-9s| %-35s| %-19s\n",
+               "Name","Snapshot-file UUID","Path";
+    print "----------+------------------------------------+",
+          "----------------------------\n";
+    foreach my $machine (@vm_remote){
         my $vbox_uuid=&get_vbox_uuid($machine);
         printf " %-9s|%-36s|%-20s\n",
                $machine,$vbox_uuid,$vm{$machine};
@@ -921,6 +976,20 @@ Gtk2->main;
 ############################################################
 # subs
 ############################################################
+sub read_access_vm {
+
+}
+
+sub access_vm {
+    # return 1: show vm
+    # return 0: hide vm
+
+    my ($host,$room) = @_;
+    print "Host: $host    Room: $room\n";
+
+    return 1;
+}
+
 sub read_network_conf {
     my ($snapshot_dir)=@_;
     my $file="";
