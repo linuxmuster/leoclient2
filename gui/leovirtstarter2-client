@@ -178,6 +178,7 @@ my $shared_home_abs="~/Home_auf_Server";
 
 # get hostname
 my $hostname=hostname();
+chomp($hostname);
 
 # get group(=room) of host (not user)
 my $host_group="";
@@ -186,8 +187,7 @@ my @host_entry= getpwuid($host_uid);
 my $host_gid=$host_entry[3];
 my ($host_room) = getgrgid($host_gid);
 
-#my $hostname=`hostname`;
-chomp($hostname);
+
 my $on_the_go="";
 # Option --vm
 my $vm="";
@@ -360,6 +360,20 @@ foreach my $serverdir (@snapshot_search_dirs_remote){
         if ($machine eq "."){next};
         if ($machine eq ".."){next};
         if (not -d $serverdir."/".$machine){next};
+        # List only if the base image *.vdi can be seen
+        if (not -e $serverdir."/".$machine."/".$machine.".vdi"){next};
+        # dirty workaround ?????
+        if ($machine eq "win7" and (
+               $hostname eq "j1009p16" or
+               $hostname eq "f0422p01" or
+               $hostname eq "molly02"
+               )){
+            # go on
+        } else {
+            next;
+        }
+        # dirty workaround ?????
+
         if (exists $vm_local{$machine}){
             # use the local machine, ignore the remote
             print "   * Local:  $machine\n";

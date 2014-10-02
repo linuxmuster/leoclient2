@@ -1,3 +1,9 @@
+leoclient2 (0.2.2-1) trusty-unstable; urgency=medium
+
+  * New Relase with lots of extensions
+
+ -- Ruediger Beck <bz@j1009p16.bszleo.de>  Thu, 02 Oct 2014 16:36:52 +0200
+
 leoclient2 (0.1.1-3) trusty-testing; urgency=medium
 
   * New Relase 
