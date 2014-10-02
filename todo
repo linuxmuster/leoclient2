@@ -1,7 +1,14 @@
+
+
+
 lokale maschinen (vm) verbergen, wenn sie nicht gestartet werden dürfen
 oder sind die IMMER zugreifbar?
 WEITER: funktionen read_access_vm und access_vm
 nutzen um access.conf auszulesen/anzuwenden
+
+Welche Bedingung mus gelten, dass verborgen wird:
+wenn die win7/win7.vdi existiert, dann auflisten
+
 
 Option -i sollte noch den Zugriff angeben
 
