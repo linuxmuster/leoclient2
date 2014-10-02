@@ -990,6 +990,17 @@ Gtk2->main;
 ############################################################
 # subs
 ############################################################
+
+sub reset_vm_to_defaults {
+    my $source_dir = $vm_path_abs."/defaults/*";
+    my $target_dir = $vm_path_abs;
+    my $command = "cp $source_dir $target_dir";
+    print "$command\n";
+    system($command);
+}
+
+
+
 sub read_access_vm {
 
 }
@@ -1032,6 +1043,7 @@ sub read_network_conf {
     }
 
     if ($file eq ""){
+        # no network.conf found
         return;
     }
 
@@ -1421,6 +1433,8 @@ sub start_button {
             system("$start_vbox");
             INFO "VirtualBox started in other window: Terminating here!";
         } else {
+            &reset_vm_to_defaults();
+            #sleep 10;
             my $remove_shared_folder=$vm_path_export.
                "/usr/bin/VBoxManage sharedfolder remove $vm --name home";
             INFO "$remove_shared_folder";
@@ -1532,6 +1546,9 @@ sub unzip_timeout {
             system("$start_vbox");
             INFO "VirtualBox started in other window: Terminating here!";
         } else {
+            &reset_vm_to_defaults();
+            #sleep 10;
+
             my $remove_shared_folder=$vm_path_export.
                 "/usr/bin/VBoxManage sharedfolder remove $vm --name home";
             INFO "$remove_shared_folder";
