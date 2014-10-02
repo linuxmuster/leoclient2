@@ -26,6 +26,7 @@ until [ `echo $YESNO` == "j" ]
 do
   echo
   echo "Soll die virtuelle Maschine im Verzeichnis $VMPATH/$MACHINENAME angelegt werden?"
+  echo "(Nach Eingabe von n kann ein anderer Pfad angegeben werden.)"
   read -p "(j/n - Bestätigen mit der Enter-Taste): " YESNO
   
   if [ `echo $YESNO` == "n" ] 
