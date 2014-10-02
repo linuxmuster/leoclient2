@@ -1,4 +1,4 @@
-
+dirty fix wegen hosts entfernen und durch host_access.conf ersetzen
 
 
 lokale maschinen (vm) verbergen, wenn sie nicht gestartet werden dürfen

@@ -1009,27 +1009,32 @@ sub read_network_conf {
     my $file="";
     print "Reading network.conf:\n";
 
+    if (-e $conf_network_vm){
+        # VM specific network.conf
+        $file = $conf_network_vm;
+        print "network.conf for VM found: $file\n";
+    } else {
+        # no network conf found
+        print "   * No file $conf_network_vm\n";
+        #return;
+    } 
+
     if (defined $snapshot_search_dirs_remote[0]){
         my $conf_network_snapshot=$snapshot_search_dirs_remote[0]."/".
              $vm."/snapshot-store/".$snapshot_dir."/network.conf";
         if (-e $conf_network_snapshot){
             # snapshot specific network.conf
             $file = $conf_network_snapshot;
-            print "network.conf found: $file\n";
+            print "network.conf for Snapshot found: $file\n";
         } else {
             print "   * No file $conf_network_snapshot\n";
         }
     }
 
-    if (-e $conf_network_vm){
-        # VM specific network.conf
-        $file = $conf_network_vm;
-        print "network.conf found: $file\n";
-    } else {
-        # no network conf found
-        print "   * No file $conf_network_vm\n";
+    if ($file eq ""){
         return;
-    } 
+    }
+
     
     # read config file network.conf
     print "Checking if network of $hostname must be patched\n";
