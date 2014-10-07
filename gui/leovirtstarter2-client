@@ -451,7 +451,10 @@ foreach my $dir (@cache_dirs){
 
 # --prepare-remote-vm  set the $vm
 if ($prepare_remote_vm ne ""){
+    # set vm name
     $vm=$prepare_remote_vm;
+    # use only local snapshots
+    $local_snapshots=1;
 }
 
 
@@ -630,6 +633,14 @@ if ($pid_string ne "" and $ignore_virtualbox==0){
     exit;
 }
 
+
+
+if ($prepare_remote_vm ne ""){
+    print "Preparing virtual machine $vm:\n";
+    &zip_base_image($base_image_target);
+    &clean_vm($vm_path_abs); 
+    exit;
+}
 
 
 INFO "Starting leovirtstarter2-client on $hostname";
@@ -1004,6 +1015,66 @@ Gtk2->main;
 ############################################################
 # subs
 ############################################################
+sub clean_vm {
+    my ($dir) = @_;
+    print "######## Cleaning VM in $dir ########\n";
+    print "   * Removing Logs";
+    my $logdir=$dir."/Logs";
+    system("rm -rf $logdir");
+    # ??? removing more stuff
+}
+
+
+sub zip_base_image {
+    my ($file) = @_;
+    if (-e $file){
+        print "######## Zipping Base image ########\n";
+        print "   * Image:   $file\n";
+        my $dirname = dirname($file);
+        my $filename = basename($file);
+        my $file_zipped=$dirname."/snapshot-store/base/".$filename.".zip";
+        my $dirname_zipped = dirname($file_zipped);
+        my $filesize = -s $file;
+        # file
+        my $old_filesize=0;
+        my $old_filesize_file=$dirname."/filesize.vdi";
+        if (-e $old_filesize_file){
+            $old_filesize=`cat '$old_filesize_file'`;
+            chomp($old_filesize);
+        }
+        # file zipped
+        my $zipped_filesize=0;
+        my $zipped_filesize_file=$dirname_zipped."/filesize.vdi.zipped";
+        my $zipped_filesize = -s $file_zipped;
+
+        print "   * Dir:     $dirname\n";
+        print "   * File:    $filename\n";
+        print "   * Zipped:  $file_zipped\n";
+        print "   * Newsize vdi: $filesize\n";
+        print "   * Oldsize vdi: $old_filesize\n";
+        if ($old_filesize==$filesize 
+              and -e $file_zipped
+              and -e $zipped_filesize_file){
+            print "   * Nothing to zip!\n";
+        } else {
+            print "   * Zipping ... (This can Take a while ...)\n";
+            system("mkdir -p $dirname_zipped");
+            my $zip_command="cd '$dirname'; zip $file_zipped $filename";
+            print "$zip_command\n";
+            system($zip_command);
+            print "   * ... Zipping done!\n";
+
+            system("echo $zipped_filesize > '$zipped_filesize_file'");
+
+            # remember zipped filesize
+            system("echo $filesize > '$old_filesize_file'");
+        }
+    } else {
+        print "Base image $file not found\n";
+    }
+}
+
+
 
 sub reset_vm_to_defaults {
     my $source_dir = $vm_path_abs."/defaults/*";
