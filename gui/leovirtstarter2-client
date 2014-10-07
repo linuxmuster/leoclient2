@@ -637,7 +637,8 @@ if ($pid_string ne "" and $ignore_virtualbox==0){
 
 if ($prepare_remote_vm ne ""){
     print "Preparing virtual machine $vm:\n";
-    &zip_base_image($base_image_target);
+    &zip_image($base_image_target,"base");
+    &zip_snapshots();
     &clean_vm($vm_path_abs); 
     exit;
 }
@@ -1015,24 +1016,42 @@ Gtk2->main;
 ############################################################
 # subs
 ############################################################
+sub zip_snapshots {
+    my @snapshots=&get_snapshots(@snapshot_search_dirs);
+    @snapshots = ("standard",@snapshots);
+    # all snaphots bit not base
+    foreach my $snapshot (@snapshots){
+        print "Processing Snapshot: $snapshot \n";
+        my $file=$snapshots{$snapshot}{'abs_path'};
+        print "   * File: $file \n";
+        &zip_image($file,$snapshot);
+    }
+}
+
+
 sub clean_vm {
     my ($dir) = @_;
     print "######## Cleaning VM in $dir ########\n";
-    print "   * Removing Logs";
+    print "   * Removing Logs\n";
     my $logdir=$dir."/Logs";
     system("rm -rf $logdir");
     # ??? removing more stuff
 }
 
 
-sub zip_base_image {
-    my ($file) = @_;
+sub zip_image {
+    my ($file,$type) = @_;
     if (-e $file){
-        print "######## Zipping Base image ########\n";
+        print "######## Zipping $type ########\n";
         print "   * Image:   $file\n";
         my $dirname = dirname($file);
         my $filename = basename($file);
-        my $file_zipped=$dirname."/snapshot-store/base/".$filename.".zip";
+        my $file_zipped="";
+        if ($type eq "base"){
+            $file_zipped=$dirname."/snapshot-store/base/".$filename.".zip";
+        } else {
+            $file_zipped=$dirname."/".$filename.".zip";
+        }
         my $dirname_zipped = dirname($file_zipped);
         my $filesize = -s $file;
         # file
@@ -1045,7 +1064,7 @@ sub zip_base_image {
         # file zipped
         my $zipped_filesize=0;
         my $zipped_filesize_file=$dirname_zipped."/filesize.vdi.zipped";
-        my $zipped_filesize = -s $file_zipped;
+        #my $zipped_filesize = -s $file_zipped;
 
         print "   * Dir:     $dirname\n";
         print "   * File:    $filename\n";
@@ -2204,7 +2223,10 @@ sub get_snapshots {
             if ($dirname ne $snapshot_default){
                 # jump over the default snapshot 
                 # (appears automagically at second in the list)
+		print "DIRNAME: $dirname\n";
                 push @snapshots, $dirname;
+            } else {
+		print "IGNORING: $dirname\n";
             }
 
             # read image.conf
