@@ -302,7 +302,7 @@ if (defined $snapshot_search_dirs_remote[0]){
 }
 
 
-# read config file /etc/leoclient2/servers.conf
+# read config file /etc/leoclient2/caches.conf
 print "  * Reading caches.conf in: $conf_caches\n";
 if (-f $conf_caches){
 open (CACHECONFFILE, $conf_caches);
@@ -1016,6 +1016,15 @@ Gtk2->main;
 ############################################################
 # subs
 ############################################################
+sub get_local_vm_path {
+    my ($vm,$vm_path_abs) = @_;
+    my $conffile = $vm_path_abs."/".$vm.".conf";
+    my $localpath=`cat $conffile`;
+    chomp($localpath);
+    return $localpath;
+}
+
+
 sub zip_snapshots {
     my @snapshots=&get_snapshots(@snapshot_search_dirs);
     @snapshots = ("standard",@snapshots);
@@ -1041,6 +1050,7 @@ sub clean_vm {
 
 sub zip_image {
     my ($file,$type) = @_;
+    # $type is base or other
     if (-e $file){
         print "######## Zipping $type ########\n";
         print "   * Image:   $file\n";
@@ -1101,6 +1111,22 @@ sub reset_vm_to_defaults {
     my $command = "cp $source_dir $target_dir";
     print "$command\n";
     system($command);
+}
+
+sub sync_vm_to_local {
+    print "Syncing vm $vm $vm_path_abs\n";
+    if (exists $vm_remote{$vm}){
+        print "$vm is remote\n";
+        my $target=&get_local_vm_path($vm,$vm_path_abs);
+        print "sync to $target\n";
+        my $excludes="";
+        #my $excludes="--exclude ${vm}.vdi --exclude ${vm}.vdi ".
+        #   "--exclude snapshot-store/base/${vm}.vdi.zip --exclude ${vm}.vdi ";
+        my $rsync_command="rsync -av $excludes ${vm_path_abs}/ ${target}/";
+        print "$rsync_command\n";
+        system($rsync_command);
+    }
+    #exit;
 }
 
 
@@ -1537,6 +1563,7 @@ sub start_button {
             system("$start_vbox");
             INFO "VirtualBox started in other window: Terminating here!";
         } else {
+            &sync_vm_to_local();
             &reset_vm_to_defaults();
             #sleep 10;
             my $remove_shared_folder=$vm_path_export.
@@ -1563,6 +1590,7 @@ sub start_button {
         }
         exit;
     } else {
+        &sync_vm_to_local();
         # get the zipped snapshot
         my $zipped_snapshot_file = &get_zipped_snapshot($selected{'SYSTEM'});
         #print "Snapshot file is local at $zipped_snapshot_file\n";
@@ -1650,6 +1678,7 @@ sub unzip_timeout {
             system("$start_vbox");
             INFO "VirtualBox started in other window: Terminating here!";
         } else {
+            &sync_vm_to_local();
             &reset_vm_to_defaults();
             #sleep 10;
 
