@@ -1,3 +1,11 @@
+ältere Versionen haben win7/snapshot-store/standard/snapshot.zip angelegt
+falls vorhanden: Warnung ausgeben diese umzubenennen in 
+{uuid}, ....
+
+
+--info: Für alle SERVERDIRS die remoten Maschinen nacheinander auflisten
+        Beim booten/auswählen das SERVERDIR anzeigen
+
 Wie vorgefunden: nicht drüberkopieren von einstellungen???
 
 --virtualbox : Fenster gehen nicht zu.

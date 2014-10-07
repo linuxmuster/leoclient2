@@ -187,6 +187,10 @@ my @host_entry= getpwuid($host_uid);
 my $host_gid=$host_entry[3];
 my ($host_room) = getgrgid($host_gid);
 
+# create VM, snapshots
+my $prepare_remote_vm="";
+
+
 
 my $on_the_go="";
 # Option --vm
@@ -225,6 +229,7 @@ my $testopt=GetOptions(
            "vm=s" => \$vm,
            "virtualbox|vbox" => \$virtualbox,
            "local-snapshots" => \$local_snapshots,
+           "prepare-remote-vm=s" => \$prepare_remote_vm,
            "clean|clean-cache" => \$clean_cache,
            "clean-log" => \$clean_log,
            "ignore-virtualbox" => \$ignore_virtualbox,
@@ -444,6 +449,11 @@ foreach my $dir (@cache_dirs){
     $cache_count++;
 }
 
+# --prepare-remote-vm  set the $vm
+if ($prepare_remote_vm ne ""){
+    $vm=$prepare_remote_vm;
+}
+
 
 if ($vm ne ""){
     # start vm
@@ -493,9 +503,13 @@ if ($vm ne ""){
 
 
 # vm is chosen --> setting paths for VM
+if (not exists $vm{$vm}){
+    print "ERROR: Could not find VM $vm \n";
+    exit;
+}
+$vm_path_abs=$vm{$vm};
 my $vbox_uuid=&get_vbox_uuid($vm);
 #print "UUID: $vbox_uuid\n";
-$vm_path_abs=$vm{$vm};
 $snapshot_file_dir=$vm_path_abs."/Snapshots";
 $search_dir_local=$vm_path_abs;
 # remove last dir to fit to remote dirs
