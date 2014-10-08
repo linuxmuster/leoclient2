@@ -149,8 +149,9 @@ my $snapshot_file_dir="";
 # fill this hash with configs
 # vm -> abs_path
 my %vm=();
-my %vm_remote=();
-my %vm_local=();
+my %vm_remote=(); # remote values of remote vm
+my %vm_remote_local=(); # local values of remote vm, empty for local vm
+my %vm_local=(); # local values of local vm
 my %vm_uuid=();
 my $vm_path_abs="";
 
@@ -350,6 +351,7 @@ foreach my $machine (readdir CONFDIR){
         my $path=&get_machine_path($machine);
         $machine=~s/.conf$//g;
         $vm_local{$machine}=$path;
+        $vm_remote_local{$machine}=""; # Empty for local machines
         $vm_uuid{$machine}=$path;
         # check if machine is accessible
         &read_access_vm($path);
@@ -365,11 +367,12 @@ foreach my $serverdir (@snapshot_search_dirs_remote){
     print "Looking for remote machines in: $serverdir\n";
     opendir SERVERDIR, $serverdir;
     foreach my $machine (readdir SERVERDIR){
+        my $vm_path_remote=$serverdir."/".$machine;
         if ($machine eq "."){next};
         if ($machine eq ".."){next};
-        if (not -d $serverdir."/".$machine){next};
+        if (not -d $vm_path_remote){next};
         # List only if the base image *.vdi can be seen
-        if (not -e $serverdir."/".$machine."/".$machine.".vdi"){next};
+        if (not -e $vm_path_remote."/".$machine.".vdi"){next};
         # dirty workaround ?????
         if ($machine eq "win7" and (
                $hostname eq "j1009p16" or
@@ -385,13 +388,16 @@ foreach my $serverdir (@snapshot_search_dirs_remote){
 
         if (exists $vm_local{$machine}){
             # use the local machine, ignore the remote
-            print "   * Local:  $machine\n";
+            print "   * Local VM:  $machine\n";
         } else {
-            print "   * Remote: $machine\n";
+            print "   * Remote VM: $machine\n";
             # check if machine is accessible
-            my $path=$serverdir."/".$machine;
-            $vm_remote{$machine}=$path;
-            &read_access_vm($path);
+            my $remote_path=$serverdir."/".$machine;
+            $vm_remote{$machine}=$remote_path;
+            my $local_path=&get_local_vm_path($machine,$vm_path_remote);
+            $vm_remote_local{$machine}=$local_path;
+            print "LOKAL von $vm: $local_path\n";
+            &read_access_vm($remote_path);
             if (1==&access_vm($hostname,$host_room)){
                 push @vm_remote, $machine;
             }
@@ -487,13 +493,13 @@ if ($vm ne ""){
     my $zenity_list="/usr/bin/zenity --list --width=800 --height=400 ".
        "--radiolist --title='Virtuelle Maschine wählen!' ".
        "--column='' --column='Maschine' ".
-       "--column='Beschreibung' --column='Pfad' ";
+       "--column='Beschreibung' --column='Pfad' --column='Lokaler Pfad' ";
     # add items
     print "Virtual machines (VM):\n";
     foreach my $machine (@vm){
         print "  $machine --> $vm{$machine}\n";    
         $zenity_list=$zenity_list.
-              "FALSE '$machine' '$machine' $vm{$machine} ";    
+           "FALSE '$machine' '$machine' '$vm{$machine}' '$vm_remote_local{$machine}' ";    
     }
     
     #print "$zenity_list\n";
