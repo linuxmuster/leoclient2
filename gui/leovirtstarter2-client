@@ -255,6 +255,9 @@ Power User:
     This may overwrite the virtual harddisk of a running virtual machine,
     which will therefore crash.
 
+Preparing VM or Snapshot:
+  --prepare-remote-vm VM
+
 
 Development:
   --clean-cache   (clean all caches)
@@ -370,6 +373,7 @@ foreach my $serverdir (@snapshot_search_dirs_remote){
         # dirty workaround ?????
         if ($machine eq "win7" and (
                $hostname eq "j1009p16" or
+               $hostname eq "j1009p18" or
                $hostname eq "f0422p01" or
                $hostname eq "molly02"
                )){
@@ -1071,16 +1075,16 @@ sub zip_image {
             $old_filesize=`cat '$old_filesize_file'`;
             chomp($old_filesize);
         }
-        # file zipped
+
         my $zipped_filesize=0;
         my $zipped_filesize_file=$dirname_zipped."/filesize.vdi.zipped";
-        #my $zipped_filesize = -s $file_zipped;
 
         print "   * Dir:     $dirname\n";
         print "   * File:    $filename\n";
         print "   * Zipped:  $file_zipped\n";
         print "   * Newsize vdi: $filesize\n";
         print "   * Oldsize vdi: $old_filesize\n";
+        print "   * filesize file zip: $zipped_filesize_file\n";
         if ($old_filesize==$filesize 
               and -e $file_zipped
               and -e $zipped_filesize_file){
@@ -1092,6 +1096,10 @@ sub zip_image {
             print "$zip_command\n";
             system($zip_command);
             print "   * ... Zipping done!\n";
+
+        # file zipped
+        $zipped_filesize = -s $file_zipped;
+
 
             system("echo $zipped_filesize > '$zipped_filesize_file'");
 
@@ -1734,7 +1742,8 @@ sub getzip_timeout {
     # Calculate the value of the progress bar using the
     # value range set in the adjustment object
     $actual_size = -s $target;
-
+    print "$actual_size vs $zipped_size $zipped_size $target \n";
+    #$zipped_size=1;
     my $new_val = $actual_size/$zipped_size;
     $actual_size=int($actual_size/1024/1024);
     $progress_bar_copy->set_text("Hole ... $actual_size von $zipped_size_mb MB");
@@ -2246,6 +2255,8 @@ sub get_snapshots {
             chomp($filesize_vdi);
             my $filesize_zipped=`cat '$file_zipped_size'`;
             chomp($filesize_zipped);
+            #print "SIZE of $file_vdi_size is $filesize_vdi\n";
+            #print "SIZE of $file_zipped_size is $filesize_zipped\n";
             ${snapshots}{$dirname}{'filesize_vdi'}=$filesize_vdi;
             ${snapshots}{$dirname}{'filesize_zipped'}=$filesize_zipped;
 
