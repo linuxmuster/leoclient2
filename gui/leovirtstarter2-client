@@ -570,41 +570,12 @@ if ($local_snapshots==1){
 @snapshot_search_dirs=($search_dir_local,@snapshot_search_dirs_remote);
 
 
-# set path
-if ($vm_path_abs ne ""){
-#     # start a given vm
-#     print "##### Starting Virtual machine $vm\n";
-    $vm_path_export="export VBOX_USER_HOME=".$vm_path_abs."; ";
-#     my $remove_shared_folder=$vm_path_export.
-#                "/usr/bin/VBoxManage sharedfolder remove $vm --name home";
-#     my $add_shared_folder=$vm_path_export.
-#                "/usr/bin/VBoxManage sharedfolder add $vm ".
-#                "--name home --hostpath $shared_home_abs";
-#     my $start_vm=$vm_path_export."/usr/bin/VBoxManage startvm $vm --type gui";
-#     my $start_vbox=$vm_path_export."/usr/bin/virtualbox";
-#     print "$remove_shared_folder\n";
-#     print "$add_shared_folder\n";
-#     print "$start_vm\n";
-#     &fix_vbox_permissions($vm_path_abs,$vm);
-#     system("$remove_shared_folder");
-#     system("$add_shared_folder");
-#     if ($virtualbox==1){
-#         system("$start_vbox");
-#     } else {
-#         system("$start_vm");
-#     }
-#     exit;
+
+if (exists $vm_remote_local{$vm}){
+   $vm_path_export="export VBOX_USER_HOME=".$vm_remote_local{$vm}."; ";
 } else {
-#     # just start vitualbox
-#     print "   ERROR:  None of these configuration files found:\n";
-#     print "   * $Conf::common_configuration_file\n";
-#     print "   * $on_the_go\n";
-#     system("/usr/bin/VirtualBox");
-#     exit;
-} 
-
-
-
+   $vm_path_export="export VBOX_USER_HOME=".$vm_path_abs."; ";
+}
 
 
 if ($clean_cache==1){
@@ -1120,9 +1091,11 @@ sub zip_image {
 
 
 sub reset_vm_to_defaults {
-    my $source_dir = $vm_path_abs."/defaults/*";
-    my $target_dir = $vm_path_abs;
-    my $command = "cp $source_dir $target_dir";
+    #my $source_dir = $vm_path_abs."/defaults/*";
+#    my $target_dir = $vm_path_abs;
+    my $local_dir=&get_local_vm_path($vm,$vm_path_abs);
+    my $source_dir = $local_dir."/defaults/*";
+    my $command = "cp $source_dir $local_dir";
     print "$command\n";
     system($command);
 }
@@ -1134,6 +1107,12 @@ sub sync_vm_to_local {
         my $target=&get_local_vm_path($vm,$vm_path_abs);
         print "sync to $target\n";
         my $excludes="";
+        my $snapshot_as_used=$target."/Snapshots/{".$vbox_uuid."}.vdi";
+        if (-e $snapshot_as_used){
+            # do not sync this file
+            print "Excluding $snapshot_as_used\n";
+            $excludes=$excludes."--exclude Snapshots/{".$vbox_uuid."}.vdi";
+        }
         #my $excludes="--exclude ${vm}.vdi --exclude ${vm}.vdi ".
         #   "--exclude snapshot-store/base/${vm}.vdi.zip --exclude ${vm}.vdi ";
         my $rsync_command="rsync -av $excludes ${vm_path_abs}/ ${target}/";
@@ -1685,6 +1664,7 @@ sub unzip_timeout {
         $progress_bar->set_text('Fertig!');
         $pb_win_start_zip->destroy;
         # modifying virtual machine
+        print "Working on $file ...\n";
         system("chmod 777 $file");
         if ($virtualbox==1){
             my $start_vbox=$vm_path_export."/usr/bin/virtualbox";

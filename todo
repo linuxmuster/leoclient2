@@ -1,3 +1,7 @@
+vbox läuft schon, .... früher aussteigen, 
+evtl. nur vbox öffnen (keine vm starten)
+
+
 ältere Versionen haben win7/snapshot-store/standard/snapshot.zip angelegt
 falls vorhanden: Warnung ausgeben diese umzubenennen in 
 {uuid}, ....
