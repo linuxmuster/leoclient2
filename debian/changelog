@@ -1,12 +1,18 @@
+leoclient2 (0.2.5-1) trusty-unstable; urgency=medium
+
+  * New Release that boots remote vm's
+
+ -- Ruediger Beck <bz@j1009p16.bszleo.de>  Thu, 09 Oct 2014 15:50:33 +0200
+
 leoclient2 (0.2.4-1) trusty-unstable; urgency=medium
 
-  * New Relase with lots of extensions
+  * New Release with lots of extensions
 
  -- Ruediger Beck <bz@j1009p16.bszleo.de>  Thu, 02 Oct 2014 16:36:52 +0200
 
 leoclient2 (0.1.1-3) trusty-testing; urgency=medium
 
-  * New Relase 
+  * New Release 
 
  -- Ruediger Beck <bz@j1009p16.bszleo.de>  Fri, 12 Sep 2014 19:20:22 +0200
 
