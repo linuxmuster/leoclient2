@@ -351,7 +351,7 @@ foreach my $machine (readdir CONFDIR){
         my $path=&get_machine_path($machine);
         $machine=~s/.conf$//g;
         $vm_local{$machine}=$path;
-        $vm_remote_local{$machine}=""; # Empty for local machines
+        $vm_remote_local{$machine}="-"; # Empty for local machines
         $vm_uuid{$machine}=$path;
         # check if machine is accessible
         &read_access_vm($path);
@@ -570,12 +570,16 @@ if ($local_snapshots==1){
 @snapshot_search_dirs=($search_dir_local,@snapshot_search_dirs_remote);
 
 
-
-if (exists $vm_remote_local{$vm}){
-   $vm_path_export="export VBOX_USER_HOME=".$vm_remote_local{$vm}."; ";
+# Setting $VBOX_USER_HOME
+if ($vm_remote_local{$vm} eq "-"){
+    print "Local Snapshot\n";
+    $vm_path_export="export VBOX_USER_HOME=".$vm_local{$vm}."; ";
+    
 } else {
-   $vm_path_export="export VBOX_USER_HOME=".$vm_path_abs."; ";
+    print "Remote Snapshot\n";
+    $vm_path_export="export VBOX_USER_HOME=".$vm_remote_local{$vm}."; ";
 }
+print "VBOX_USER_HOME: $vm_path_export\n";
 
 
 if ($clean_cache==1){
