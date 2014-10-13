@@ -99,7 +99,8 @@ my $server_popularity_log_file=".log-popularity";
 #************************************************************
 #************************************************************
 
-
+# which user,group,host,room can access the machine
+my %read_access_vm=();
 
 # Contains information about snapshots
 my %snapshots=();
@@ -354,13 +355,15 @@ foreach my $machine (readdir CONFDIR){
         $vm_remote_local{$machine}="-"; # Empty for local machines
         $vm_uuid{$machine}=$path;
         # check if machine is accessible
-        &read_access_vm($path);
+        &read_access_vm($path,$machine);
         if (1==&access_vm($hostname,$host_room)){
             push @vm_local, $machine;
         }
     }
 }
 closedir CONFDIR;
+
+
 
 # read REMOTE vm's from SERVERDIR (excude local machines)
 foreach my $serverdir (@snapshot_search_dirs_remote){
@@ -373,18 +376,19 @@ foreach my $serverdir (@snapshot_search_dirs_remote){
         if (not -d $vm_path_remote){next};
         # List only if the base image *.vdi can be seen
         if (not -e $vm_path_remote."/".$machine.".vdi"){next};
-        # dirty workaround ?????
-        if ($machine eq "win7" and (
-               $hostname eq "j1009p16" or
-               $hostname eq "j1009p18" or
-               $hostname eq "f0422p01" or
-               $hostname eq "molly02"
-               )){
-            # go on
-        } else {
-            next;
-        }
-        # dirty workaround ?????
+#        # dirty workaround ?????
+#        if ($machine eq "win7" and (
+#               $hostname eq "j1009p16" or
+#               $hostname eq "c0144p01" or
+#               $hostname eq "j1009p18" or
+#               $hostname eq "f0422p01" or
+#               $hostname eq "molly02"
+#               )){
+#            # go on
+#        } else {
+#            next;
+#        }
+#        # dirty workaround ?????
 
         if (exists $vm_local{$machine}){
             # use the local machine, ignore the remote
@@ -397,7 +401,7 @@ foreach my $serverdir (@snapshot_search_dirs_remote){
             my $local_path=&get_local_vm_path($machine,$vm_path_remote);
             $vm_remote_local{$machine}=$local_path;
             print "LOKAL von $vm: $local_path\n";
-            &read_access_vm($remote_path);
+            &read_access_vm($remote_path,$machine);
             if (1==&access_vm($hostname,$host_room)){
                 push @vm_remote, $machine;
             }
@@ -407,6 +411,9 @@ foreach my $serverdir (@snapshot_search_dirs_remote){
     closedir SERVERDIR;
 }
 
+
+print Dumper(\%read_access_vm);
+exit;
 
 
 @vm_local = sort @vm_local;
@@ -1129,6 +1136,34 @@ sub sync_vm_to_local {
 
 
 sub read_access_vm {
+    # which user,group,host,room can accessthe vm 
+    # fill the hash %read_access_vm
+    my ($path,$machine)=@_;
+    my $file=$path."/image.conf";
+    if (not -e $file){
+        return;
+    }
+    print "Reading $file for access rules to the vm\n";
+    open (ACCESS, $file);
+    while (<ACCESS>){
+        s/^ //g; # Leerzeichen am Zeilenangfang entfernen
+        if(/^\#/){ # # am Anfang bedeutet Kommentarzeile
+            next;
+        }
+        chomp();
+        if($_ eq ""){
+           next;
+        }
+        print "   ACCESS-LINE: $_\n";
+        s/ //g; # Leerzeichen entfernen
+        my ($option,$data)=split(/=/);
+        my @data=split(/,/,$data);
+        foreach my $date (@data){
+            $read_access_vm{$machine}{$option}{$date}='access';
+        }
+
+    }
+    close(ACCESS);
 
 }
 
