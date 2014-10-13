@@ -1,3 +1,9 @@
+leoclient2 (0.2.6-1) trusty-unstable; urgency=medium
+
+  * use image.conf in VM dir to access VM or not (host/room/user/group)
+
+ -- Ruediger Beck <bz@c0144p01.bszleo.de>  Mon, 13 Oct 2014 15:51:14 +0200
+
 leoclient2 (0.2.5-1) trusty-unstable; urgency=medium
 
   * New Release that boots remote vm's
