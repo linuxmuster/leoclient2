@@ -13,6 +13,7 @@ use Log::Log4perl qw(:easy);
 use Sys::Hostname;
 use Data::Dumper;
 use IO::Interface::Simple;
+use POSIX qw(getgroups);
 
 # todo
 # read config into hash see line 84 ?????
@@ -101,6 +102,8 @@ my $server_popularity_log_file=".log-popularity";
 
 # which user,group,host,room can access the machine
 my %read_access_vm=();
+# which user, group is the user that starts this script
+my %my_groups=();
 
 # Contains information about snapshots
 my %snapshots=();
@@ -178,7 +181,9 @@ my $home = $ENV{'HOME'};
 #my $shared_home_abs=$home;
 my $shared_home_abs="~/Home_auf_Server";
 
-# get hostname
+############################################################
+# Info about user,group,host,room
+# get hostname (host)
 my $hostname=hostname();
 chomp($hostname);
 
@@ -188,6 +193,19 @@ my $host_uid = getpwnam($hostname);
 my @host_entry= getpwuid($host_uid);
 my $host_gid=$host_entry[3];
 my ($host_room) = getgrgid($host_gid);
+
+# get username
+my $my_username = getpwuid( $< );
+
+# get list of the current groups for this process
+my @gidlist=getgroups();
+foreach my $gid (@gidlist){
+    my ($group) = getgrgid($gid);
+    $my_groups{$group}=$gid;
+}
+############################################################
+
+
 
 # create VM, snapshots
 my $prepare_remote_vm="";
@@ -274,6 +292,11 @@ Non-Server use:
    exit;
 }
 
+
+
+
+
+
 # read config file /etc/leoclient2/servers.conf
 print "Reading servers.conf in: $conf_servers\n";
 if (-f $conf_servers){
@@ -356,7 +379,7 @@ foreach my $machine (readdir CONFDIR){
         $vm_uuid{$machine}=$path;
         # check if machine is accessible
         &read_access_vm($path,$machine);
-        if (1==&access_vm($hostname,$host_room)){
+        if (1==&access_vm($machine)){
             push @vm_local, $machine;
         }
     }
@@ -402,7 +425,7 @@ foreach my $serverdir (@snapshot_search_dirs_remote){
             $vm_remote_local{$machine}=$local_path;
             print "LOKAL von $vm: $local_path\n";
             &read_access_vm($remote_path,$machine);
-            if (1==&access_vm($hostname,$host_room)){
+            if (1==&access_vm($machine)){
                 push @vm_remote, $machine;
             }
         }
@@ -412,8 +435,9 @@ foreach my $serverdir (@snapshot_search_dirs_remote){
 }
 
 
-print Dumper(\%read_access_vm);
-exit;
+#print Dumper(\%read_access_vm);
+#print Dumper(\%my_groups);
+#exit;
 
 
 @vm_local = sort @vm_local;
@@ -1168,13 +1192,59 @@ sub read_access_vm {
 }
 
 sub access_vm {
+    my ($machine) = @_;
     # return 1: show vm
     # return 0: hide vm
+    # grant access if no entry is given
+    # host-level acces
+    my $host_level=0;
+    # no host and no room
+    if (not exists $read_access_vm{$machine}{'host'} and 
+        not exists $read_access_vm{$machine}{'room'}){
+        # grant access
+        $host_level=1;
+    }
+    if (exists $read_access_vm{$machine}{'host'} and 
+        exists $read_access_vm{$machine}{'host'}{$hostname}){
+        # grant access
+        $host_level=1;
+    }
+    if (exists $read_access_vm{$machine}{'room'} and 
+        exists $read_access_vm{$machine}{'room'}{$host_room}){
+        # grant access
+        $host_level=1;
+    }
 
-    my ($host,$room) = @_;
-    print "Host: $host    Room: $room\n";
-
-    return 1;
+    # user-level acces
+    my $user_level=0;
+    # no user and no group
+    if (not exists $read_access_vm{$machine}{'user'} and 
+        not exists $read_access_vm{$machine}{'group'}){
+        # grant access
+        $user_level=1;
+    }
+    if (exists $read_access_vm{$machine}{'user'} and 
+        exists $read_access_vm{$machine}{'user'}{$my_username}){
+        # grant access
+        $user_level=1;
+    }
+    if (exists $read_access_vm{$machine}{'group'}){
+        # go through all groups
+        while (my ($group,$gid) = each %my_groups){
+            if (exists $read_access_vm{$machine}{'group'}){
+                # grant access
+                $user_level=1;
+            }
+        }
+    }
+    # connect access by lgical AND
+    if ($host_level==1 and $user_level==1){
+	return 1;
+        print "Access granted\n";
+    } else {
+        return 0;
+        print "Access denied\n";
+    }
 }
 
 sub read_network_conf {

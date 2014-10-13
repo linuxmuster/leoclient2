@@ -1,3 +1,6 @@
+image.conf in den snapshots auch umsetzen wie be vm's
+
+
 vbox läuft schon, .... früher aussteigen, 
 evtl. nur vbox öffnen (keine vm starten)
 
@@ -15,7 +18,7 @@ Wie vorgefunden: nicht drüberkopieren von einstellungen???
 --virtualbox : Fenster gehen nicht zu.
 
 dirty fix wegen hosts entfernen und durch host_access.conf ersetzen
-
+--> sollte jetzt gehen
 
 lokale maschinen (vm) verbergen, wenn sie nicht gestartet werden dürfen
 oder sind die IMMER zugreifbar?
