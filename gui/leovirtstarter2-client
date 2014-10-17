@@ -65,9 +65,9 @@ my $snapshot_file_name="";
 #my $base_image_source="base/winXP-2010.vdi";
 
 #in Snapshot-store/base
-my $base_image_size="2468409856"; # winXP as seen with 'ls -l'  
+#my $base_image_size="2468409856"; # winXP as seen with 'ls -l'  
 #my $base_image_size="33554432"; # tinycore
-#my $base_image_size="";
+my $base_image_size="";
 # the base image
 
 
@@ -401,20 +401,6 @@ foreach my $serverdir (@snapshot_search_dirs_remote){
         if (not -d $vm_path_remote){next};
         # List only if the base image *.vdi can be seen
         if (not -e $vm_path_remote."/".$machine.".vdi"){next};
-#        # dirty workaround ?????
-#        if ($machine eq "win7" and (
-#               $hostname eq "j1009p16" or
-#               $hostname eq "c0144p01" or
-#               $hostname eq "j1009p18" or
-#               $hostname eq "f0422p01" or
-#               $hostname eq "molly02"
-#               )){
-#            # go on
-#        } else {
-#            next;
-#        }
-#        # dirty workaround ?????
-
         if (exists $vm_local{$machine}){
             # use the local machine, ignore the remote
             print "   * Local VM:  $machine\n";
@@ -565,15 +551,22 @@ $search_dir_local=~s/\/${vm}$//g;
 $standard_snapshot_local_zipped=
      $vm_path_abs."/snapshot-store/standard/{".$vbox_uuid."}.vdi.zip";
 foreach my $dir (@snapshot_search_dirs_remote){
+    # Remote data
     $base_image_source = $dir."/$vm/snapshot-store/base/".$vm.".vdi";
-    $base_image_source_filesize = $dir."/$vm/snapshot-store/base/filesize.vdi";
+    $base_image_source_filesize = $dir."/$vm/filesize.vdi";
     $base_image_source_filesize_zipped = $dir."/$vm/snapshot-store/base/filesize.vdi.zipped";
     print "CHECK: $base_image_source\n";
     if (-e $base_image_source){
         last;
     }
 }
-$base_image_target=$vm_path_abs."/".$vm.".vdi";
+if (exists $vm_remote{$vm}){
+    # settings for remote machines
+    my $local_dir=&get_local_vm_path($vm,$vm_path_abs);
+    $base_image_target=$local_dir."/".$vm.".vdi";
+} else {
+    $base_image_target=$vm_path_abs."/".$vm.".vdi";
+}
 $conf_network_vm=$vm_path_abs."/network.conf";
 $snapshot_file_name="{$vbox_uuid}.vdi";
 print "Setting paths for $vm\n";
@@ -1137,13 +1130,14 @@ sub reset_vm_to_defaults {
     system($command);
 }
 
+
+
 sub sync_vm_to_local {
     print "Syncing vm $vm $vm_path_abs\n";
     if (exists $vm_remote{$vm}){
-        print "$vm is remote\n";
+        print "$vm is a remote machine\n";
         my $target=&get_local_vm_path($vm,$vm_path_abs);
         print "sync to $target\n";
-        #my $excludes="";
         # exclude BIG files for a fast rsync
         # BIG files are downloaded later with progressbar
         my $excludes="--exclude ${vm}.vdi ".
@@ -1158,7 +1152,6 @@ sub sync_vm_to_local {
         print "$rsync_command\n";
         system($rsync_command);
     }
-    #exit;
 }
 
 
@@ -1464,7 +1457,7 @@ sub get_machine_path {
 sub check_base_image {
     my ($vm) = @_;
     #my ($home,$on_the_go) = @_;
-    print "Checking Base Image of VM $vm\n";
+    print "Checking local base image of VM $vm at $base_image_target\n";
     my $get_it=0;
     my $target_dir = dirname($base_image_target);
     if (-e "$base_image_target"){
