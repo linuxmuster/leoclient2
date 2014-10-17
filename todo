@@ -1,3 +1,11 @@
+Fortschrittsbalken beim base image fehlt
+
+Wenn eine Netzwerkkarte fehlt (ausfall) und deshalb das Netz
+dervirtuellen Maschine nicht konfiguriert werden kann:
+Sinnvolle Fehlermeldung absetzten (zenity) und trotzdem booten.
+
+
+
 image.conf in den snapshots auch umsetzen wie be vm's
 
 

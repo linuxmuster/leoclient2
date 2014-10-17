@@ -65,8 +65,8 @@ my $snapshot_file_name="";
 #my $base_image_source="base/winXP-2010.vdi";
 
 #in Snapshot-store/base
-#my $base_image_size="2468409856"; # winXP as seen with 'ls -l'  
-my $base_image_size="33554432"; # tinycore
+my $base_image_size="2468409856"; # winXP as seen with 'ls -l'  
+#my $base_image_size="33554432"; # tinycore
 #my $base_image_size="";
 # the base image
 
@@ -124,6 +124,8 @@ my $snapshot_search_dir_client="";
 
 # Base Image is calculated
 my $base_image_source="";
+my $base_image_source_filesize="";
+my $base_image_source_filesize_zipped="";
 my $base_image_target="";
 
 ##### caches.conf ##### Caches on the clients
@@ -564,6 +566,8 @@ $standard_snapshot_local_zipped=
      $vm_path_abs."/snapshot-store/standard/{".$vbox_uuid."}.vdi.zip";
 foreach my $dir (@snapshot_search_dirs_remote){
     $base_image_source = $dir."/$vm/snapshot-store/base/".$vm.".vdi";
+    $base_image_source_filesize = $dir."/$vm/snapshot-store/base/filesize.vdi";
+    $base_image_source_filesize_zipped = $dir."/$vm/snapshot-store/base/filesize.vdi.zipped";
     print "CHECK: $base_image_source\n";
     if (-e $base_image_source){
         last;
@@ -795,8 +799,6 @@ my $pb_win_start_zip;
 # Checks 
 ############################################################
 
-# ???? disabled ?????
-#&check_base_image($home,$on_the_go);
 
 $app_window->show;
 
@@ -1141,15 +1143,17 @@ sub sync_vm_to_local {
         print "$vm is remote\n";
         my $target=&get_local_vm_path($vm,$vm_path_abs);
         print "sync to $target\n";
-        my $excludes="";
+        #my $excludes="";
+        # exclude BIG files for a fast rsync
+        # BIG files are downloaded later with progressbar
+        my $excludes="--exclude ${vm}.vdi ".
+           "--exclude snapshot-store/base/${vm}.vdi.zip ";
         my $snapshot_as_used=$target."/Snapshots/{".$vbox_uuid."}.vdi";
         if (-e $snapshot_as_used){
             # do not sync this file
             print "Excluding $snapshot_as_used\n";
-            $excludes=$excludes."--exclude Snapshots/{".$vbox_uuid."}.vdi";
+            $excludes=$excludes."--exclude Snapshots/{".$vbox_uuid."}.vdi ";
         }
-        #my $excludes="--exclude ${vm}.vdi --exclude ${vm}.vdi ".
-        #   "--exclude snapshot-store/base/${vm}.vdi.zip --exclude ${vm}.vdi ";
         my $rsync_command="rsync -av $excludes ${vm_path_abs}/ ${target}/";
         print "$rsync_command\n";
         system($rsync_command);
@@ -1458,17 +1462,19 @@ sub get_machine_path {
 
 
 sub check_base_image {
-    my ($home,$on_the_go) = @_;
+    my ($vm) = @_;
+    #my ($home,$on_the_go) = @_;
+    print "Checking Base Image of VM $vm\n";
     my $get_it=0;
     my $target_dir = dirname($base_image_target);
-    my $base_image_on_the_go=$snapshot_search_dir_client.
-                             "/".
-                             $base_image_source.
-                             ".zip";
     if (-e "$base_image_target"){
-        my $size = -s $base_image_target;
-        print "$size  $base_image_size\n";
-        if ($size ne $base_image_size){
+        # size of locally existing base image
+        my $local_size = -s $base_image_target;
+        my $remote_size = `cat '$base_image_source_filesize'`;
+        chomp($remote_size);
+        print "   Local size:  $local_size\n";
+        print "   Remote size: $remote_size\n";
+        if ($local_size ne $remote_size){
             $get_it=1;
         } else {
             #$app_window->show;
@@ -1479,13 +1485,15 @@ sub check_base_image {
             # nothing to do
         } else {
             print "Could not find $target_dir on your system:\n";
-            my $message="<b>Das Verzeichnis $target_dir konnte nicht gefunden werden!\n\n".
+            my $message="<b>Das Verzeichnis $target_dir konnte".
+                        " nicht gefunden werden!\n\n".
 		        "   Bitte starten Sie den Rechner neu\n".
                         "   und synchronisiren dann alle Partitionen!</b>";
             system("/usr/bin/zenity --error --text='$message'");
             exit;
         } 
     }
+
     if ($get_it==1){
 	&get_zipped_basefile($base_image_target);
     } else {
@@ -1497,11 +1505,17 @@ sub check_base_image {
 
 sub get_zipped_basefile {
     my ($target) = @_;
+
+    #exit;
     my $target_dir = dirname($base_image_target);
-    my $base_image_on_the_go=$snapshot_search_dir_client.
-                             "/".
-                             $base_image_source.
-                             ".zip";
+#    my $base_image_on_the_go=$snapshot_search_dir_client.
+#                             "/".
+#                             $base_image_source.
+#                             ".zip";
+    my $base_image_remote=$base_image_source.".zip";
+    print "Missing $target must be downloaded from:\n";
+    print "   $base_image_remote\n";
+
     $pb_win_get_base_zip = Gtk2::Window->new('toplevel');
     $pb_win_get_base_zip->set_title("Unpacking VM base image");
     $pb_win_get_base_zip->set_border_width(20);
@@ -1520,7 +1534,10 @@ sub get_zipped_basefile {
     $progress_bar->{timer} = Glib::Timeout->add(500, 
                                          \&unzip_base_timeout, 
                                          $progress_bar);
-    system("cd $target_dir; unzip -o '$base_image_on_the_go'|| sudo unzip -o '$base_image_on_the_go' &");
+    my $unzip_command="cd $target_dir; ".
+                      "unzip -o '$base_image_remote' &";
+    print "$unzip_command\n";
+    system("$unzip_command");
 }
 
 
@@ -1531,6 +1548,7 @@ sub unzip_base_timeout {
     my $unzipped_size_mb=int($unzipped_size/1024/1024);
     my $file=$base_image_target;
     my $progress_bar = shift;
+    INFO "Watching $base_image_target";
     # Calculate the value of the progress bar using the
     # value range set in the adjustment object
     $actual_size = -s $file;
@@ -1667,7 +1685,7 @@ sub start_button {
         } else {
             &sync_vm_to_local();
             &reset_vm_to_defaults();
-            #sleep 10;
+            &check_base_image($vm);
             my $remove_shared_folder=$vm_path_export.
                "/usr/bin/VBoxManage sharedfolder remove $vm --name home";
             INFO "$remove_shared_folder";
@@ -1758,6 +1776,8 @@ sub unzip_timeout {
     my $unzipped_size_mb=int($unzipped_size/1024/1024);
     my $file=$snapshot_file_dir."/".$snapshot_file_name;
     my $progress_bar = shift;
+    INFO "Watching $file";
+
     # Calculate the value of the progress bar using the
     # value range set in the adjustment object
     $actual_size = -s $file;
@@ -1783,8 +1803,7 @@ sub unzip_timeout {
         } else {
             &sync_vm_to_local();
             &reset_vm_to_defaults();
-            #sleep 10;
-
+            &check_base_image($vm);
             my $remove_shared_folder=$vm_path_export.
                 "/usr/bin/VBoxManage sharedfolder remove $vm --name home";
             INFO "$remove_shared_folder";
@@ -2358,7 +2377,7 @@ sub get_snapshots {
             if ($dirname ne $snapshot_default){
                 # jump over the default snapshot 
                 # (appears automagically at second in the list)
-		print "DIRNAME: $dirname\n";
+		#print "DIRNAME: $dirname\n";
                 push @snapshots, $dirname;
             } else {
 		print "IGNORING: $dirname\n";
