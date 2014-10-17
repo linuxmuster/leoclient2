@@ -1505,13 +1505,7 @@ sub check_base_image {
 
 sub get_zipped_basefile {
     my ($target) = @_;
-
-    #exit;
     my $target_dir = dirname($base_image_target);
-#    my $base_image_on_the_go=$snapshot_search_dir_client.
-#                             "/".
-#                             $base_image_source.
-#                             ".zip";
     my $base_image_remote=$base_image_source.".zip";
     print "Missing $target must be downloaded from:\n";
     print "   $base_image_remote\n";
@@ -1520,7 +1514,7 @@ sub get_zipped_basefile {
     $pb_win_get_base_zip->set_title("Unpacking VM base image");
     $pb_win_get_base_zip->set_border_width(20);
     # Fenstergroesse
-    $pb_win_get_base_zip->set_size_request( 900, 70 );
+    $pb_win_get_base_zip->set_size_request( 700, 70 );
     # zentrieren
     $pb_win_get_base_zip->set_position('center_always');
     $pb_win_get_base_zip->show;
