@@ -663,6 +663,8 @@ if ($prepare_remote_vm ne ""){
 &sync_vm_to_local();
 &reset_vm_to_defaults();
 &check_base_image($vm);
+system("rm /virtual/leoclient2-vm/winXP/winXP.vdi");
+
 exit;
 
 
@@ -1465,6 +1467,7 @@ sub get_machine_path {
 
 sub check_base_image {
     my ($vm) = @_;
+    INFO "Checking base image of $vm";
     print "Checking local base image of VM $vm at $base_image_target\n";
     my $get_it=0;
     my $target_dir = dirname($base_image_target);
@@ -1476,91 +1479,73 @@ sub check_base_image {
         print "   Local size:  $local_size\n";
         print "   Remote size: $remote_size\n";
         if ($local_size ne $remote_size){
-            $get_it=1;
+            &get_base_image();
         } else {
-            #$app_window->show;
+            return;
         }
     } else {
-        $get_it=1;
-        if (-d $target_dir){
-            # nothing to do
-        } else {
-            print "Could not find $target_dir on your system:\n";
-            my $message="<b>Das Verzeichnis $target_dir konnte".
-                        " nicht gefunden werden!\n\n".
-		        "   Bitte starten Sie den Rechner neu\n".
-                        "   und synchronisiren dann alle Partitionen!</b>";
-            system("/usr/bin/zenity --error --text='$message'");
-            exit;
-        } 
-    }
-
-    if ($get_it==1){
-	&get_zipped_basefile($base_image_target);
-    } else {
-
+        &get_base_image();
     }
 }
 
 
-
-sub get_zipped_basefile {
-    my ($target) = @_;
-    my $target_dir = dirname($base_image_target);
-    my $base_image_remote=$base_image_source.".zip";
-    print "Missing $target must be unzipped from:\n";
-    print "   $base_image_remote\n";
-
-
-    $pb_win_get_base_zip = Gtk2::Window->new('toplevel');
-    $pb_win_get_base_zip->set_title("Unpacking VM base image");
-    $pb_win_get_base_zip->set_border_width(20);
-    # Fenstergroesse
-    $pb_win_get_base_zip->set_size_request( 900, 70 );
-    # zentrieren
-    $pb_win_get_base_zip->set_position('center_always');
-    $pb_win_get_base_zip->show;
-    my $progress_bar = Gtk2::ProgressBar->new;
-    $pb_win_get_base_zip->{pbar} = $progress_bar;
-    $pb_win_get_base_zip->add($progress_bar);
-    # movement from left to right
-    $progress_bar->{activity_mode} = 0;
-    $progress_bar->show;
-    # Add a timer callback to update the value of the progress bar
-    $progress_bar->{timer} = Glib::Timeout->add(500, 
-                                         \&unzip_base_timeout, 
-                                          $progress_bar);
-    my $unzip_command="cd $target_dir; ".
-                      "unzip -o '$base_image_remote'";
-    print "$unzip_command\n";
-    system("$unzip_command");
+sub get_base_image {
+   INFO "Unzipping Base Image";
+   my ($target) = @_;
+   my $target_dir = dirname($base_image_target);
+   my $base_image_remote=$base_image_source.".zip";
+   $pb_win_get_base_zip = Gtk2::Window->new('toplevel');
+   $pb_win_get_base_zip->set_title("Unpacking  base image of VM $vm");
+   $pb_win_get_base_zip->set_border_width(20);
+   # Fenstergroesse
+   $pb_win_get_base_zip->set_size_request( 900, 70 );
+   # zentrieren
+   $pb_win_get_base_zip->set_position('center_always');
+   $pb_win_get_base_zip->show;
+   my $progress_bar = Gtk2::ProgressBar->new;
+   $pb_win_get_base_zip->{pbar} = $progress_bar;
+   $pb_win_get_base_zip->add($progress_bar);
+   # movement from left to right
+   $progress_bar->{activity_mode} = 0;
+   $progress_bar->show;
+   # Add a timer callback to update the value of the progress bar
+   $progress_bar->{timer} = Glib::Timeout->add(200, 
+                                    \&unzip_base_timeout, 
+                                     $progress_bar);
+   my $unzip_command="cd $target_dir; ".
+                     "unzip -o '$base_image_remote' || sudo unzip -o '$base_image_remote' &";
+   print "$unzip_command\n";
+   #system("$unzip_command");
+   system("cd $target_dir; unzip -o '$base_image_remote' &");
+   return;
 }
-
 
 
 sub unzip_base_timeout {
-    my $actual_size=0;
+    my $progress_bar = shift;
+    my $actual_size;
     my $remote_size = `cat '$base_image_source_filesize'`;
     my $remote_size_mb=int($remote_size/1024/1024);
     my $file=$base_image_target;
-    my $progress_bar = shift;
     INFO "Watching $base_image_target";
     print "Checking $file for its size\n";
     # Calculate the value of the progress bar using the
-    # value range set in the adjustment object
+    # value range set in the adxjustment object
     if (-e $file){
         $actual_size = -s $file;
     }
     my $new_val = $actual_size/$remote_size;
     $actual_size=int($actual_size/1024/1024);
+    print "Size: $actual_size";
 
     # check if done
     if ($new_val == 1.0){
         $progress_bar->set_fraction($new_val);
         $progress_bar->set_text('Fertig!');
-        $pb_win_get_base_zip->destroy;
+        #$pb_win_get_base_zip->destroy;
 # this is run by program main ????
 #        $app_window->show;
+Gtk2->main_quit;
         return FALSE;
     }
     # Set the new value
