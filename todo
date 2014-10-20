@@ -1,4 +1,8 @@
 Fortschrittsbalken beim base image fehlt
+- wieso kommt der Fortschrittsbalken nur wenn man den \ beim aufruf weglässt?
+- Fenster im Hintergrund?
+- vergleich mit snaphot holen
+
 
 Wenn eine Netzwerkkarte fehlt (ausfall) und deshalb das Netz
 dervirtuellen Maschine nicht konfiguriert werden kann:

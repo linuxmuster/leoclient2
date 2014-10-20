@@ -1518,11 +1518,9 @@ sub get_zipped_basefile {
     $progress_bar->{activity_mode} = 0;
     $progress_bar->show;
     # Add a timer callback to update the value of the progress bar
-    $progress_bar->{timer} = Glib::Timeout->add(500, 
-                                         \&unzip_base_timeout, 
-                                         $progress_bar);
+    $progress_bar->{timer} = Glib::Timeout->add(500, \&unzip_base_timeout, $progress_bar);
     my $unzip_command="cd $target_dir; ".
-                      "unzip -o '$base_image_remote' &";
+                      "unzip -o '$base_image_remote'";
     print "$unzip_command\n";
     system("$unzip_command");
 }
@@ -1530,16 +1528,19 @@ sub get_zipped_basefile {
 
 
 sub unzip_base_timeout {
-    my $actual_size;
-    my $unzipped_size=$base_image_size;
-    my $unzipped_size_mb=int($unzipped_size/1024/1024);
+    my $actual_size=0;
+    my $remote_size = `cat '$base_image_source_filesize'`;
+    my $remote_size_mb=int($remote_size/1024/1024);
     my $file=$base_image_target;
     my $progress_bar = shift;
     INFO "Watching $base_image_target";
+    print "Checking $file for its size\n";
     # Calculate the value of the progress bar using the
     # value range set in the adjustment object
-    $actual_size = -s $file;
-    my $new_val = $actual_size/$unzipped_size;
+    if (-e $file){
+        $actual_size = -s $file;
+    }
+    my $new_val = $actual_size/$remote_size;
     $actual_size=int($actual_size/1024/1024);
 
     # check if done
@@ -1552,7 +1553,7 @@ sub unzip_base_timeout {
         return FALSE;
     }
     # Set the new value
-    $progress_bar->set_text("Unpacking ... $actual_size of $unzipped_size_mb MB");
+    $progress_bar->set_text("Unpacking ... $actual_size of $remote_size_mb MB");
     # make it 10% faster
     $new_val=1.1*$new_val;
     if ($new_val>=1){
