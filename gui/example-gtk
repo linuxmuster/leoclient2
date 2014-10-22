@@ -1,0 +1,132 @@
+#!/usr/bin/perl -w
+
+
+# Use the TRUE and FALSE constants exported by the Glib module.
+use Glib qw/TRUE FALSE/;
+use Gtk2 '-init';
+
+############################################################
+# create a new window 1
+$window1 = Gtk2::Window->new('toplevel');
+
+# When the window is given the "delete_event" signal (this is given
+# by the window manager, usually by the "close" option, or on the
+# titlebar), we ask it to call the delete_event () functio
+# as defined above. No data is passed to the callback function.
+$window1->signal_connect(delete_event => \&delete_event1);
+
+# Here we connect the "destroy" event to a signal handler.
+# This event occurs when we call Gtk2::Widget::destroy on the window,
+# or if we return FALSE in the "delete_event" callback. Perl supports
+# anonymous subs, so we can use one of them for one line callbacks.
+$window1->signal_connect(destroy => sub { Gtk2->main_quit; });
+
+# Sets the border width of the window.
+$window1->set_border_width(10);
+
+# Creates a new button with a label "Hello World".
+$button1 = Gtk2::Button->new("Hello World 1");
+
+# When the button receives the "clicked" signal, it will call the function
+# hello() with the window reference passed to it.The hello() function is
+# defined above.
+$button1->signal_connect(clicked => \&hello1, $window1);
+# This packs the button into the window (a gtk container).
+$window1->add($button1);
+
+# The final step is to display this newly created widget.
+$button1->show;
+
+# and the window
+$window1->show;
+
+# All GTK applications must have a call to the main() method. Control ends here
+# and waits for an event to occur (like a key press or a mouse event).
+Gtk2->main;
+
+
+
+
+############################################################
+# create a new window 2
+$window2 = Gtk2::Window->new('toplevel');
+$window2->signal_connect(delete_event => \&delete_event2);
+$window2->signal_connect(destroy => sub { Gtk2->main_quit; });
+$window2->set_border_width(10);
+$button2 = Gtk2::Button->new("Hello World 2");
+$button2->signal_connect(clicked => \&hello2, $window2);
+$window2->add($button2);
+$button2->show;
+$window2->show;
+Gtk2->main;
+
+
+
+
+# This is a callback function. We simply say hello to the world, and destroy
+# the window object in order to close the program.
+sub hello1
+{
+	my ($widget, $window) = @_;
+	print "Hello, World 1\n";
+
+	$window1->destroy;
+}
+sub hello2
+{
+	my ($widget, $window) = @_;
+	print "Hello, World 2\n";
+
+	$window2->destroy;
+}
+
+
+sub delete_event1
+{
+	# If you return FALSE in the "delete_event" signal handler,
+	# GTK will emit the "destroy" signal. Returning TRUE means
+	# you don't want the window to be destroyed.
+	# This is useful for popping up 'are you sure you want to quit?'
+	# type dialogs.
+	print "delete event 1 occurred\n";
+
+	# Change TRUE to FALSE and the main window will be destroyed with
+	# a "delete_event".
+	return TRUE;
+}
+
+sub delete_event2
+{
+	# If you return FALSE in the "delete_event" signal handler,
+	# GTK will emit the "destroy" signal. Returning TRUE means
+	# you don't want the window to be destroyed.
+	# This is useful for popping up 'are you sure you want to quit?'
+	# type dialogs.
+	print "delete event 2 occurred\n";
+
+	# Change TRUE to FALSE and the main window will be destroyed with
+	# a "delete_event".
+	return TRUE;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+0;
