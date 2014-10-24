@@ -22,6 +22,14 @@ use POSIX qw(getgroups);
 # start using snapshots
 # Haken beim starten (Rechner starten / Virtualbox starten)
 
+# GUI: three Windows appear
+# Window 1: choose a VM -> $gui1_vm_chooser 
+#           (is managed as a zenity window now) ???
+# Window 2: download base image if necessary -> $base_download
+#           (progressbar, not working now)
+# Window 3: choose a snapshot -> $gui3_snapshot_chooser
+
+
 
 #************************************************************
 #************************************************************
@@ -663,9 +671,8 @@ if ($prepare_remote_vm ne ""){
 &sync_vm_to_local();
 &reset_vm_to_defaults();
 &check_base_image($vm);
-system("rm /virtual/leoclient2-vm/winXP/winXP.vdi");
-
-exit;
+#system("rm /virtual/leoclient2-vm/winXP/winXP.vdi");
+#exit;
 
 
 INFO "Starting leovirtstarter2-client on $hostname";
@@ -716,7 +723,7 @@ my @unused=@ram_steps;
 # evtl zusatzoption --link-virtual (verlinkt /virtual zum stick/Platte)
 
 
-########### $app_window ########################################################
+########### $gui3_snapshot_chooser #############################################
 # +++++++++++++++++++++++++ $vbox ++++++++++++++++++++++++++++++++++++++++++++ #
 # + ######################## $ hbox ######################################## + #
 # + # +++ $hbox_starter ++++++++++++++ # +++++++ $hbox_hardware +++++++++  # + #
@@ -770,7 +777,7 @@ my $copying_done=0;
 
 
 
-my $app_window = Gtk2::Window->new('toplevel');
+my $gui3_snapshot_chooser = Gtk2::Window->new('toplevel');
 
 
 # The following lists might be created automatically
@@ -794,7 +801,7 @@ my @grafik_buttons=("2D",
                     "3D und Video Beschleunigung");
 my $grafik_buttons_default="2D";
 
-my $pb_win_get_base_zip;
+my $gui2_base_download;
 my $pb_win_get_zip;
 my $pb_win_start_zip;
 
@@ -804,7 +811,7 @@ my $pb_win_start_zip;
 ############################################################
 
 
-$app_window->show;
+$gui3_snapshot_chooser->show;
 
 
 my ($ram_buttons_default, @ram_sizes)=&ram_sizes();
@@ -836,26 +843,26 @@ INFO "Starting leovirtstarter2-client GUI on $hostname";
 # GUI
 ############################################################
 
-# create programm window: app_window
-# $app_window definded before check base image which shows it
-$app_window->set_resizable(TRUE);
-$app_window->signal_connect(destroy => \&destroy_progress);
-$app_window->signal_connect('delete_event' => sub { Gtk2->main_quit; });
-$app_window->set_title("$vm starten");
-$app_window->set_border_width(0);
+# create programm window: gui3_snapshot_chooser
+# $gui3_snapshot_chooser definded before check base image which shows it
+$gui3_snapshot_chooser->set_resizable(TRUE);
+$gui3_snapshot_chooser->signal_connect(destroy => \&destroy_progress);
+$gui3_snapshot_chooser->signal_connect('delete_event' => sub { Gtk2->main_quit; });
+$gui3_snapshot_chooser->set_title("$vm starten");
+$gui3_snapshot_chooser->set_border_width(0);
 # Fenstergroesse
-$app_window->set_size_request( 800, 600 );
+$gui3_snapshot_chooser->set_size_request( 800, 600 );
 # zentrieren
-$app_window->set_position('center_always');
+$gui3_snapshot_chooser->set_position('center_always');
 
 
 ############################################################
-# create vbox inside app_window and fill it:
+# create vbox inside gui3_snapshot_chooser and fill it:
 # hbox, vbox_seperator, align, progress_bar
 ############################################################
 my $vbox = Gtk2::VBox->new(FALSE, 5);
 $vbox->set_border_width(0);
-$app_window->add($vbox);
+$gui3_snapshot_chooser->add($vbox);
 $vbox->show;
 
 
@@ -1026,7 +1033,7 @@ $vbox->pack_start($table, FALSE, TRUE, 0);
 $table->show;
 
 # is shown by base image restorer
-#$app_window->show;
+#$gui3_snapshot_chooser->show;
 
 Gtk2->main;
 
@@ -1489,34 +1496,39 @@ sub check_base_image {
 }
 
 
+
 sub get_base_image {
    INFO "Unzipping Base Image";
    my ($target) = @_;
    my $target_dir = dirname($base_image_target);
    my $base_image_remote=$base_image_source.".zip";
-   $pb_win_get_base_zip = Gtk2::Window->new('toplevel');
-   $pb_win_get_base_zip->set_title("Unpacking  base image of VM $vm");
-   $pb_win_get_base_zip->set_border_width(20);
+   # window
+   $gui2_base_download = Gtk2::Window->new('toplevel');
+   $gui2_base_download->set_title("Unpacking  base image of VM $vm");
+   $gui2_base_download->set_border_width(20);
    # Fenstergroesse
-   $pb_win_get_base_zip->set_size_request( 900, 70 );
+   $gui2_base_download->set_size_request( 900, 70 );
    # zentrieren
-   $pb_win_get_base_zip->set_position('center_always');
-   $pb_win_get_base_zip->show;
-   my $progress_bar = Gtk2::ProgressBar->new;
-   $pb_win_get_base_zip->{pbar} = $progress_bar;
-   $pb_win_get_base_zip->add($progress_bar);
+   $gui2_base_download->set_position('center_always');
+   $gui2_base_download->show;
+
+   my $pbar = Gtk2::ProgressBar->new;
+   #$pbar->set_fraction(0.5);
    # movement from left to right
-   $progress_bar->{activity_mode} = 0;
-   $progress_bar->show;
+   $pbar->{activity_mode} = 0;
+
+   $gui2_base_download->{pbar} = $pbar;
+   $gui2_base_download->add($pbar);
+   $pbar->show;
    # Add a timer callback to update the value of the progress bar
-   $progress_bar->{timer} = Glib::Timeout->add(200, 
+   $pbar->{timer} = Glib::Timeout->add(200, 
                                     \&unzip_base_timeout, 
-                                     $progress_bar);
+                                     $pbar);
    my $unzip_command="cd $target_dir; ".
-                     "unzip -o '$base_image_remote' || sudo unzip -o '$base_image_remote' &";
+                     "unzip -o '$base_image_remote' &";
    print "$unzip_command\n";
-   #system("$unzip_command");
-   system("cd $target_dir; unzip -o '$base_image_remote' &");
+   system("$unzip_command");
+   Gtk2->main;
    return;
 }
 
@@ -1528,7 +1540,7 @@ sub unzip_base_timeout {
     my $remote_size_mb=int($remote_size/1024/1024);
     my $file=$base_image_target;
     INFO "Watching $base_image_target";
-    print "Checking $file for its size\n";
+    #print "Checking $file for its size\n";
     # Calculate the value of the progress bar using the
     # value range set in the adxjustment object
     if (-e $file){
@@ -1536,15 +1548,15 @@ sub unzip_base_timeout {
     }
     my $new_val = $actual_size/$remote_size;
     $actual_size=int($actual_size/1024/1024);
-    print "Size: $actual_size";
+    #print "Size: $actual_size";
 
     # check if done
     if ($new_val == 1.0){
         $progress_bar->set_fraction($new_val);
         $progress_bar->set_text('Fertig!');
-        #$pb_win_get_base_zip->destroy;
+        #$gui2_base_download->destroy;
 # this is run by program main ????
-#        $app_window->show;
+#        $gui3_snapshot_chooser->show;
 Gtk2->main_quit;
         return FALSE;
     }
@@ -1611,39 +1623,11 @@ sub starter_vbox {
 
 
 
-sub progress_timeout {
-	my $progress_bar = shift;
-	if ($progress_bar->{activity_mode}){
-	    $progress_bar->pulse;
-	} else {
-	    # Calculate the value of the progress bar using the
-	    # value range set in the adjustment object
-	    my $new_val = $progress_bar->get_fraction() + 0.01;
-		
-            if ($new_val > 1.0){
-                $progress_bar->set_text('Unpacking  ...');
-                $new_val = 0.0;
-            }
-	    # Set the new value 
-            # make it faster
-            #$new_val=1.1*$new_val;
-            #if ($new_val>=1){
-            #    $new_val=1;
-            #}
-	    $progress_bar->set_fraction($new_val);
-	}
-
-	# As this is a timeout function, return TRUE so that it
-	# continues to get called
-	return TRUE;
-}
-
-
 
 # Remove the timer
 sub destroy_progress {
-	my $app_window = shift;
-	Glib::Source->remove($app_window->{pbar}->{timer});
+	my $gui3_snapshot_chooser = shift;
+	Glib::Source->remove($gui3_snapshot_chooser->{pbar}->{timer});
 	Gtk2->main_quit;
 }
 
@@ -1712,7 +1696,7 @@ sub start_zipped_snaphot {
         INFO "to    $selected{'CACHE-ZIP'} ";
 
         $pb_win_start_zip = Gtk2::Window->new('toplevel');
-        $pb_win_start_zip->set_title("Unpacking VM: '$selected{'SYSTEM'}'");
+        $pb_win_start_zip->set_title("Unpacking snapshot '$selected{'SYSTEM'}' of VM $vm");
         $pb_win_start_zip->set_border_width(20);
         # Fenstergroesse
         $pb_win_start_zip->set_size_request( 700, 70 );
@@ -2394,8 +2378,6 @@ sub get_snapshots {
     @snapshots = sort @snapshots;
     return @snapshots;
 }
-
-
 
 
 
