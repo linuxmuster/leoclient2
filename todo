@@ -1,3 +1,7 @@
+Bei nicht vorhandenen lokalen maschinen, die remote liegen, 
+wird die uuid nicht erkannt
+kann man die uuid erst später ermitteln?
+
 Install snapshot and vms from stick
 Bug: lokale snapshots (außer standard) werden nicht angezeigt
 

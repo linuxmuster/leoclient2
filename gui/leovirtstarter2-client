@@ -189,7 +189,13 @@ my $home = $ENV{'HOME'};
 # ????? was ist besser ?????
 # vm-printer/spooler/splitter
 #my $shared_home_abs=$home;
+
 my $shared_home_abs="~/Home_auf_Server";
+if (not -d $shared_home_abs){
+    $shared_home_abs="~";
+    print "Using $shared_home_abs for shared home folder\n";
+}
+
 
 ############################################################
 # Info about user,group,host,room
@@ -1166,6 +1172,17 @@ sub sync_vm_to_local {
             print "Excluding $snapshot_as_used\n";
             $excludes=$excludes."--exclude Snapshots/{".$vbox_uuid."}.vdi ";
         }
+        my $mkdir_command="mkdir -p ${target}";
+        print "$mkdir_command\n";
+        my $result=system($mkdir_command);
+        #print "RESULT: $result\n";
+        if ($result==0){
+            # OK
+        } else {
+            print "\nERROR: Cold not create $target ",
+                  "for local copy of remote machine\n\n";
+            exit;
+        }
         my $rsync_command="rsync -av $excludes ${vm_path_abs}/ ${target}/";
         print "$rsync_command\n";
         system($rsync_command);
@@ -1442,6 +1459,7 @@ sub get_vbox_uuid {
     $path=$path."/Snapshots";
     my $vbox_uuid="";
     opendir SNAP, $path;
+    #print "PATH: $path\n\n";
     foreach my $machine (readdir SNAP){
         if ($machine eq "."){next};
         if ($machine eq ".."){next};
