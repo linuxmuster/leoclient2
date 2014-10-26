@@ -130,7 +130,10 @@ my @snapshot_search_dirs_remote=();
 # this is double ??? should be removed
 my $snapshot_search_dir_client="";
 
-# Base Image is calculated
+# Snapshot dir source is calculated
+my $snapshot_dir_source="";
+
+# Base image source is calculated
 my $base_image_source="";
 my $base_image_source_filesize="";
 my $base_image_source_filesize_zipped="";
@@ -555,7 +558,8 @@ if (not exists $vm{$vm}){
 }
 $vm_path_abs=$vm{$vm};
 my $vbox_uuid=&get_vbox_uuid($vm);
-#print "UUID: $vbox_uuid\n";
+print "UUID: $vbox_uuid\n";
+exit;
 $snapshot_file_dir=$vm_path_abs."/Snapshots";
 $search_dir_local=$vm_path_abs;
 # remove last dir to fit to remote dirs
@@ -566,9 +570,14 @@ $standard_snapshot_local_zipped=
      $vm_path_abs."/snapshot-store/standard/{".$vbox_uuid."}.vdi.zip";
 foreach my $dir (@snapshot_search_dirs_remote){
     # Remote data
-    $base_image_source = $dir."/$vm/snapshot-store/base/".$vm.".vdi";
-    $base_image_source_filesize = $dir."/$vm/filesize.vdi";
-    $base_image_source_filesize_zipped = $dir."/$vm/snapshot-store/base/filesize.vdi.zipped";
+    $snapshot_dir_source = $dir.
+        "/$vm/Snapshots";
+    $base_image_source = $dir.
+        "/$vm/snapshot-store/base/".$vm.".vdi";
+    $base_image_source_filesize = $dir.
+        "/$vm/filesize.vdi";
+    $base_image_source_filesize_zipped = $dir.
+        "/$vm/snapshot-store/base/filesize.vdi.zipped";
     print "CHECK: $base_image_source\n";
     if (-e $base_image_source){
         last;
@@ -1456,19 +1465,37 @@ sub set_vm_network {
 sub get_vbox_uuid {
     my ($vm) = @_;
     my $path=$vm{$vm};
+    
     $path=$path."/Snapshots";
     my $vbox_uuid="";
-    opendir SNAP, $path;
+    my $success=0;
+    if (-d $path){
+        # ok
+    } else {
+        #print "$path not found\n";
+        my $remote=$snapshot_search_dirs_remote[0]."/".$vm."/Snapshots";
+        #print "checking remote $remote\n";
+        if (-d $remote){
+            $path=$remote;
+        }
+    }
     #print "PATH: $path\n\n";
+    opendir SNAP, $path;
     foreach my $machine (readdir SNAP){
         if ($machine eq "."){next};
         if ($machine eq ".."){next};
         $machine=~s/}.vdi$//g;
         $machine=~s/^{//g;
         $vbox_uuid=$machine;
+        $success=1;
     }
     closedir SNAP;
-    return $vbox_uuid;
+    if ($success==0){
+        # try remote dir
+        return "???";
+    } else {
+        return $vbox_uuid;
+    }
 }
 
 
