@@ -1610,10 +1610,10 @@ sub unzip_base_timeout {
     if ($new_val == 1.0){
         $progress_bar->set_fraction($new_val);
         $progress_bar->set_text('Fertig!');
-        #$gui2_base_download->destroy;
-# this is run by program main ????
-#        $gui3_snapshot_chooser->show;
-Gtk2->main_quit;
+        $gui2_base_download->destroy;
+        # this is run by program main ????
+        #        $gui3_snapshot_chooser->show;
+        Gtk2->main_quit;
         return FALSE;
     }
     # Set the new value
