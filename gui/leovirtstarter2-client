@@ -632,11 +632,11 @@ if ($local_snapshots==1){
 
 # Setting $VBOX_USER_HOME
 if ($vm_remote_local{$vm} eq "-"){
-    print "Local Snapshot\n";
+    print "$vm needs local VBOX_USER_HOME\n";
     $vm_path_export="export VBOX_USER_HOME=".$vm_local{$vm}."; ";
     
 } else {
-    print "Remote Snapshot\n";
+    print "$vm needs remote VBOX_USER_HOME\n";
     $vm_path_export="export VBOX_USER_HOME=".$vm_remote_local{$vm}."; ";
 }
 print "VBOX_USER_HOME: $vm_path_export\n";
