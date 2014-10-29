@@ -3,6 +3,8 @@ Was soll da alle gelassen werden?
 Siehe "start VM with snapshot as found" im script
 
 
+$snapshot_dir_source -> $snapshot_file_dir_remote
+
 
 Install snapshot and vms from stick
 Bug: lokale snapshots (außer standard) werden nicht angezeigt

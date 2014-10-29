@@ -131,9 +131,6 @@ my @snapshot_search_dirs_remote=();
 # this is double ??? should be removed
 my $snapshot_search_dir_client="";
 
-# Snapshot dir source is calculated
-my $snapshot_dir_source="";
-
 # Base image source is calculated
 my $base_image_source="";
 my $base_image_source_filesize="";
@@ -157,7 +154,8 @@ my $conf_defaults="";
 # in which directory is the snapshot that is  used as the
 # second entry
 my $snapshot_default="standard";
-my $snapshot_file_dir="";
+my $snapshot_file_dir_local="";
+my $snapshot_file_dir_remote="";
 
 
 
@@ -565,17 +563,14 @@ if (not exists $vm{$vm}){
 $vm_path_abs=$vm{$vm};
 my $vbox_uuid=&get_vbox_uuid($vm);
 print "UUID: $vbox_uuid\n";
-$snapshot_file_dir=$vm_path_abs."/Snapshots";
 $search_dir_local=$vm_path_abs;
 # remove last dir to fit to remote dirs
 $search_dir_local=~s/\/$//g;
 $search_dir_local=~s/\/${vm}$//g;
 # Where is the zipped standard snaphot
-$standard_snapshot_local_zipped=
-     $vm_path_abs."/snapshot-store/standard/{".$vbox_uuid."}.vdi.zip";
 foreach my $dir (@snapshot_search_dirs_remote){
     # Remote data
-    $snapshot_dir_source = $dir.
+    $snapshot_file_dir_remote=$dir.
         "/$vm/Snapshots";
     $base_image_source = $dir.
         "/$vm/snapshot-store/base/".$vm.".vdi";
@@ -592,8 +587,15 @@ if (exists $vm_remote{$vm}){
     # settings for remote machines
     my $local_dir=&get_local_vm_path($vm,$vm_path_abs);
     $base_image_target=$local_dir."/".$vm.".vdi";
+    $standard_snapshot_local_zipped=
+        $local_dir."/snapshot-store/standard/{".$vbox_uuid."}.vdi.zip";
+    $snapshot_file_dir_local=$local_dir."/Snapshots";
 } else {
+    # settings for local machines
     $base_image_target=$vm_path_abs."/".$vm.".vdi";
+    $standard_snapshot_local_zipped=
+        $vm_path_abs."/snapshot-store/standard/{".$vbox_uuid."}.vdi.zip";
+    $snapshot_file_dir_local=$vm_path_abs."/Snapshots";
 }
 $conf_network_vm=$vm_path_abs."/network.conf";
 $snapshot_file_name="{$vbox_uuid}.vdi";
@@ -602,7 +604,7 @@ print "  * base_image_source:   $base_image_source\n";
 print "  * base_image_target:   $base_image_target\n";
 print "  * network.conf der VM: $conf_network_vm\n";
 print "  * Snapshot file name:  $snapshot_file_name\n";
-
+print "  * Local base snapshot: $standard_snapshot_local_zipped\n";
 
 @network_vbox_commands=(
    "/usr/bin/vboxmanage modifyvm $vm --nic1 null --nic1 none",
@@ -1187,7 +1189,7 @@ sub sync_vm_to_local {
         my $snapshot_as_used=$target."/Snapshots/{".$vbox_uuid."}.vdi";
         if (-e $snapshot_as_used){
             # do not sync this file
-            print "Excluding $snapshot_as_used\n";
+            #print "Excluding $snapshot_as_used\n";
             $excludes=$excludes."--exclude Snapshots/{".$vbox_uuid."}.vdi ";
         }
         my $mkdir_command="mkdir -p ${target}";
@@ -1596,7 +1598,7 @@ sub unzip_base_timeout {
     INFO "Watching $base_image_target";
     #print "Checking $file for its size\n";
     # Calculate the value of the progress bar using the
-    # value range set in the adxjustment object
+    # value range set in the adjustment object
     if (-e $file){
         $actual_size = -s $file;
     }
@@ -1775,12 +1777,12 @@ sub start_zipped_snaphot {
                                              \&unzip_timeout, 
                                              $progress_bar);
    
-        my $command_prep="mkdir -p $snapshot_file_dir || ".
-                      "sudo mkdir -p $snapshot_file_dir";
+        my $command_prep="mkdir -p $snapshot_file_dir_local || ".
+                      "sudo mkdir -p $snapshot_file_dir_local";
         INFO "$command_prep";
         system("$command_prep");
 
-        my $command_unzip="cd $snapshot_file_dir; ".
+        my $command_unzip="cd $snapshot_file_dir_local; ".
 	                  "unzip -o '$zipped_snapshot_file' &";
 
         INFO "$command_unzip";
@@ -1801,7 +1803,7 @@ sub unzip_timeout {
     my $actual_size;
     my $unzipped_size=$snapshots{$selected{'SYSTEM'}}{'filesize_vdi'};
     my $unzipped_size_mb=int($unzipped_size/1024/1024);
-    my $file=$snapshot_file_dir."/".$snapshot_file_name;
+    my $file=$snapshot_file_dir_local."/".$snapshot_file_name;
     my $progress_bar = shift;
     INFO "Watching $file";
 
