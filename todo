@@ -1,15 +1,28 @@
-starten wie vorgefunden 
-Was soll da alle gelassen werden?
-Siehe "start VM with snapshot as found" im script
+Todo:
+----------------------------------------------------------------------
+winXP tut ohne lokale Daten?
+
+
+Bugs important
+------------------------------------------------
+Install snapshot and vms from stick
+Bug: lokale snapshots (außer standard) werden nicht angezeigt
+
+image.conf in den snapshots auch umsetzen wie be vm's
+
+
+
+
+Bugs nice to have
+----------------------------------------------------------------------
+
+vbox läuft schon, .... früher aussteigen, 
+evtl. nur vbox öffnen (keine vm starten)
+
 
 wenn nix lokales einer remoten maschine vorhanden
 dann gibts keinen sinn "wie vorgefunden" anzugeben -> aus startmenü entfernen
 (wie vorgefunden tut, ist identisch aber identisch zu )
-
-
-Install snapshot and vms from stick
-Bug: lokale snapshots (außer standard) werden nicht angezeigt
-
 
 Wenn eine Netzwerkkarte fehlt (ausfall) und deshalb das Netz
 dervirtuellen Maschine nicht konfiguriert werden kann:
@@ -17,69 +30,57 @@ Sinnvolle Fehlermeldung absetzten (zenity) und trotzdem booten.
 
 
 
-image.conf in den snapshots auch umsetzen wie be vm's
-
-
-vbox läuft schon, .... früher aussteigen, 
-evtl. nur vbox öffnen (keine vm starten)
-
+Abgleichen/Überlegen
+----------------------------------------------------------------------
+starten wie vorgefunden 
+Was soll da alle gelassen werden?
+Siehe "start VM with snapshot as found" im script
 
 ältere Versionen haben win7/snapshot-store/standard/snapshot.zip angelegt
 falls vorhanden: Warnung ausgeben diese umzubenennen in 
 {uuid}, ....
 
+- cache obligatorisch oder freiwillig
+  IDEE: wenn kein cahe, dann in den snapshot-store
+
+
+
+Sonstiges:
+----------------------------------------------------------------------
+
+
+
 
 --info: Für alle SERVERDIRS die remoten Maschinen nacheinander auflisten
         Beim booten/auswählen das SERVERDIR anzeigen
 
-Wie vorgefunden: nicht drüberkopieren von einstellungen???
-
---virtualbox : Fenster gehen nicht zu.
-
-dirty fix wegen hosts entfernen und durch host_access.conf ersetzen
---> sollte jetzt gehen
 
 lokale maschinen (vm) verbergen, wenn sie nicht gestartet werden dürfen
 oder sind die IMMER zugreifbar?
 WEITER: funktionen read_access_vm und access_vm
 nutzen um access.conf auszulesen/anzuwenden
 
-Welche Bedingung mus gelten, dass verborgen wird:
+Welche Bedingung muss gelten, dass verborgen wird:
 wenn die win7/win7.vdi existiert, dann auflisten
 
 
 Option -i sollte noch den Zugriff angeben
 
 vor dem starten einer remoten machine:
-   - rsync nach lokal (ohne basis image und snapshots)
+   - rsync --ignore-existing nach lokal (ohne basis image und snapshots)
    - dann basis-image mit gui fortschritt zeigen
    - wohin soll kopiert werden?
      (lokale maschinen abklappern, wo gibts platz
       image.conf: LOCALPATH)
 
 
-
-aus image.conf sollte access.conf ausgegliedert werden (host, room)
-
 displayauflösung und skalierung einstellbar machen
-
-
-check_base_image disabled
-  - woher bekommt man base-image filesize?
-    -> SERVERDIR: cp und unzip
-    -> Lokal: Hinweis, die Partition zu syncen
 
 
 Problem:
 
 CPU-Begrenzung ist evtl. manchmal niedrig
  - soll das auf einen Festgelegten Wert gepached weden?
-
-#Ort für Network.conf:
-# in der machine --> alle snapshots dieselbe network.conf (schlecht)
-# im snapshot    --> je nach snapshot andere network.conf möglich
-#                    aber oft redundanz
-#Fertig: beide auswerten
 
 Beim bridgen: evtl. adaptertyp festlegen/Welcher/Wie
 Am BSZ: --nictype<1-N> Am79C973
@@ -89,8 +90,6 @@ Evtl. Option vorsehen in network.conf
 default.conf einführen, ähnlich wie cache.conf 
   - Variable conf_defaults existiert schon
 
-- cache obligatorisch oder freiwillig
-  IDEE: wenn kein cahe, dann in den snapshot-store
 
 - warum tut 
   sudo leoclient2-set-permissions 
