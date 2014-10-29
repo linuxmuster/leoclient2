@@ -210,6 +210,11 @@ chomp($hostname);
 # get group(=room) of host (not user)
 my $host_group="";
 my $host_uid = getpwnam($hostname);
+if (not defined $host_uid){
+    # no host group (no linuxmuster-base client)
+    print "No host account found (no primary group)\n";
+    $host_uid=0;
+}
 my @host_entry= getpwuid($host_uid);
 my $host_gid=$host_entry[3];
 my ($host_room) = getgrgid($host_gid);
