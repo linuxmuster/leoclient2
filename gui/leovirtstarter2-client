@@ -54,10 +54,11 @@ my @ram_steps=("192",
             "4096",
             "6144",
             "8192",
-            "12288");
+            "12288",
+            "16384");
 
 my $min_host_ram="256";
-my $max_guest_ram="2048";
+my $max_guest_ram="3072";
 
 my $snapshot_file_name="";
 
@@ -559,7 +560,6 @@ if (not exists $vm{$vm}){
 $vm_path_abs=$vm{$vm};
 my $vbox_uuid=&get_vbox_uuid($vm);
 print "UUID: $vbox_uuid\n";
-exit;
 $snapshot_file_dir=$vm_path_abs."/Snapshots";
 $search_dir_local=$vm_path_abs;
 # remove last dir to fit to remote dirs
@@ -683,8 +683,8 @@ if ($prepare_remote_vm ne ""){
 
 
 # prepare local machine             
-&sync_vm_to_local();
-&reset_vm_to_defaults();
+&sync_vm_to_local("--ignore-existing");
+#&reset_vm_to_defaults();
 &check_base_image($vm);
 #system("rm /virtual/leoclient2-vm/winXP/winXP.vdi");
 #exit;
@@ -831,7 +831,7 @@ $gui3_snapshot_chooser->show;
 
 my ($ram_buttons_default, @ram_sizes)=&ram_sizes();
 
-print "\n---$ram_buttons_default---\n\n";
+print "\n---Default RAM: $ram_buttons_default---\n\n";
 
 my %ram_mapping=();
 my @ram_buttons=();
@@ -1166,6 +1166,10 @@ sub reset_vm_to_defaults {
 
 
 sub sync_vm_to_local {
+    my ($option) = @_;
+    if (not defined $option){
+        $option="";
+    }
     print "Syncing vm $vm $vm_path_abs\n";
     if (exists $vm_remote{$vm}){
         print "$vm is a remote machine\n";
@@ -1192,7 +1196,7 @@ sub sync_vm_to_local {
                   "for local copy of remote machine\n\n";
             exit;
         }
-        my $rsync_command="rsync -av $excludes ${vm_path_abs}/ ${target}/";
+        my $rsync_command="rsync $option -av $excludes ${vm_path_abs}/ ${target}/";
         print "$rsync_command\n";
         system($rsync_command);
     }
@@ -1696,9 +1700,11 @@ sub start_button {
             system("$start_vbox");
             INFO "VirtualBox started in other window: Terminating here!";
         } else {
-            #&sync_vm_to_local();
-            #&reset_vm_to_defaults();
-            #&check_base_image($vm);
+            # start VM with snapshot as found
+	    print "SELECTED: $selected{'SYSTEM'}\n\n";
+            #&sync_vm_to_local(); # overwrite existing files
+            #&reset_vm_to_defaults(); # set default machine hardware
+            #&check_base_image($vm); # done earlier
             my $remove_shared_folder=$vm_path_export.
                "/usr/bin/VBoxManage sharedfolder remove $vm --name home";
             INFO "$remove_shared_folder";
@@ -1713,8 +1719,10 @@ sub start_button {
                               " --memory $selected{'RAM'}";
             INFO "$command_mod";
             system($command_mod);
-            &read_network_conf($selected{'SYSTEM'});
-            &set_vm_network();
+
+            # as found, not resetting Network
+            #&read_network_conf($selected{'SYSTEM'});
+            #&set_vm_network();
             my $start_vm = $vm_path_export.
                            "/usr/bin/VBoxManage startvm $vm --type gui";
             INFO "$start_vm";
@@ -1723,7 +1731,7 @@ sub start_button {
         }
         exit;
     } else {
-        &sync_vm_to_local();
+        &sync_vm_to_local("--ignore-existing");# double???
         # get the zipped snapshot
         my $zipped_snapshot_file = &get_zipped_snapshot($selected{'SYSTEM'});
         #print "Snapshot file is local at $zipped_snapshot_file\n";
@@ -1771,6 +1779,7 @@ sub start_zipped_snaphot {
 	                  "unzip -o '$zipped_snapshot_file' &";
 
         INFO "$command_unzip";
+        print "$command_unzip\n";
         system("$command_unzip");
         
         my $unzipped_actual_size=0;
@@ -1809,14 +1818,17 @@ sub unzip_timeout {
         print "Working on $file ...\n";
         system("chmod 777 $file");
         if ($virtualbox==1){
+            # start virtualbox gui (instead of VN)
             my $start_vbox=$vm_path_export."/usr/bin/virtualbox";
             INFO "Executing: $start_vbox\n";
             system("$start_vbox");
             INFO "VirtualBox started in other window: Terminating here!";
         } else {
-            #&sync_vm_to_local();
-            #&reset_vm_to_defaults();
-            #&check_base_image($vm);
+            # start VM with synced snapshot
+            # reset the VM hardware
+            &sync_vm_to_local(); # overwrite existing files
+            &reset_vm_to_defaults(); # set default machine hardware
+            #&check_base_image($vm); # done earlier
             my $remove_shared_folder=$vm_path_export.
                 "/usr/bin/VBoxManage sharedfolder remove $vm --name home";
             INFO "$remove_shared_folder";
@@ -1833,6 +1845,8 @@ sub unzip_timeout {
             system($command_mod);
             &read_network_conf($selected{'SYSTEM'});
             &set_vm_network();
+
+
             my $start_vm=$vm_path_export.
                          "/usr/bin/VBoxManage startvm $vm --type gui";
             INFO "Executing: $start_vm\n";

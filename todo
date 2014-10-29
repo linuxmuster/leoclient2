@@ -1,16 +1,11 @@
-starten wie vorgefunden sollte auch die Konfiguration der Maschine 
-(CDROM, ... lassen, oder?)
+starten wie vorgefunden 
+Was soll da alle gelassen werden?
+Siehe "start VM with snapshot as found" im script
+
 
 
 Install snapshot and vms from stick
 Bug: lokale snapshots (außer standard) werden nicht angezeigt
-
-
-Fortschrittsbalken beim base image fehlt
-- wieso kommt der Fortschrittsbalken nur wenn man den \ beim aufruf weglässt?
-- Fenster im Hintergrund?
-- vergleich mit snaphot holen
-- Fortschrittsbalen nach image holen schließen
 
 
 Wenn eine Netzwerkkarte fehlt (ausfall) und deshalb das Netz
