@@ -1702,10 +1702,12 @@ sub start_button {
        # copy not needed
     if ($selected{'SYSTEM'} eq $buttons_as_used){
         if ($virtualbox==1){
-            my $start_vbox=$vm_path_export."/usr/bin/virtualbox";
+            # --virtualbox
+            my $start_vbox=$vm_path_export."/usr/bin/virtualbox &";
             INFO "$start_vbox\n";
             system("$start_vbox");
             INFO "VirtualBox started in other window: Terminating here!";
+            Gtk2->main_quit;
         } else {
             # start VM with snapshot as found
 	    print "SELECTED: $selected{'SYSTEM'}\n\n";
