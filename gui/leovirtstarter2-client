@@ -1193,11 +1193,12 @@ sub sync_vm_to_local {
     my $excludes="--exclude ${vm}.vdi ".
        "--exclude snapshot-store/base/${vm}.vdi.zip ";
     my $snapshot_as_used=$target."/Snapshots/{".$vbox_uuid."}.vdi";
-    if (-e $snapshot_as_used){
+#    if (-e $snapshot_as_used){
         # do not sync this file
         #print "Excluding $snapshot_as_used\n";
         $excludes=$excludes."--exclude Snapshots/{".$vbox_uuid."}.vdi ";
-    }
+#    }
+    $excludes=$excludes."--exclude snapshot-store/* ";
     my $mkdir_command="mkdir -p ${target}";
     print "$mkdir_command\n";
     my $result=system($mkdir_command);
@@ -1209,9 +1210,13 @@ sub sync_vm_to_local {
               "for local copy of remote machine\n\n";
         exit;
     }
-    my $rsync_command="rsync $option -av $excludes ${vm_dir_remote}/ ${target}/";
-    print "$rsync_command\n";
-    system($rsync_command);
+    my $rsync_command1="rsync $option -av $excludes ${vm_dir_remote}/ ${target}/";
+    print "$rsync_command1\n";
+    system($rsync_command1);
+    # get standard snapshot
+    my $rsync_command2="rsync -av ${vm_dir_remote}/snapshot-store/standard ${target}/snapshot-store";
+    print "$rsync_command2\n";
+    system($rsync_command2);
 }
 
 

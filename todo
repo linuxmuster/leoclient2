@@ -16,6 +16,8 @@ Todo:
 ----------------------------------------------------------------------
 winXP tut ohne lokale Daten?
 
+bei langem rsync hinundhergehender Fortschrittsbalken anzeigen?
+
 
 Bugs important
 ------------------------------------------------
@@ -31,7 +33,7 @@ Bugs nice to have
 ----------------------------------------------------------------------
 
 rsync der maschine nach lokal:
-1 Ohne snapshot-store
+1 Ohne snapshot-store, ohne Snapshots
 2 snapshot-store standard
 
 gezippter standard snashot aus rsync entfernen, 
