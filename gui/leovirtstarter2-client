@@ -16,8 +16,6 @@ use IO::Interface::Simple;
 use POSIX qw(getgroups);
 
 # todo
-# read config into hash see line 84 ?????
-# create zenity chooser with hash
 # set $vm if only ONE vm is there
 # start using snapshots
 # Haken beim starten (Rechner starten / Virtualbox starten)
@@ -156,6 +154,7 @@ my $conf_defaults="";
 my $snapshot_default="standard";
 my $snapshot_file_dir_local="";
 my $snapshot_file_dir_remote="";
+my $vm_dir_remote="";
 
 
 
@@ -570,6 +569,8 @@ $search_dir_local=~s/\/${vm}$//g;
 # Where is the zipped standard snaphot
 foreach my $dir (@snapshot_search_dirs_remote){
     # Remote data
+    $vm_dir_remote=$dir.
+        "/$vm";
     $snapshot_file_dir_remote=$dir.
         "/$vm/Snapshots";
     $base_image_source = $dir.
@@ -600,6 +601,7 @@ if (exists $vm_remote{$vm}){
 $conf_network_vm=$vm_path_abs."/network.conf";
 $snapshot_file_name="{$vbox_uuid}.vdi";
 print "Setting paths for $vm\n";
+print "  * vm_dir_remote:   $vm_dir_remote\n";
 print "  * base_image_source:   $base_image_source\n";
 print "  * base_image_target:   $base_image_target\n";
 print "  * network.conf der VM: $conf_network_vm\n";
@@ -691,6 +693,7 @@ if ($prepare_remote_vm ne ""){
 
 # prepare local machine             
 &sync_vm_to_local("--ignore-existing");
+#exit;
 #&reset_vm_to_defaults();
 &check_base_image($vm);
 #system("rm /virtual/leoclient2-vm/winXP/winXP.vdi");
@@ -1069,7 +1072,12 @@ Gtk2->main;
 ############################################################
 sub get_local_vm_path {
     my ($vm,$vm_path_abs) = @_;
-    my $conffile = $vm_path_abs."/".$vm.".conf";
+    my $conffile = "";
+    $conffile = $vm_path_abs."/".$vm.".conf";
+    if (not -e $conffile){
+        # look in /etc for local machines that are deleted locally
+        $conffile = $conf_machines."/".$vm.".conf";
+    }
     my $localpath=`cat $conffile`;
     chomp($localpath);
     return $localpath;
@@ -1178,35 +1186,32 @@ sub sync_vm_to_local {
         $option="";
     }
     print "Syncing vm $vm $vm_path_abs\n";
-    if (exists $vm_remote{$vm}){
-        print "$vm is a remote machine\n";
-        my $target=&get_local_vm_path($vm,$vm_path_abs);
-        print "sync to $target\n";
-        # exclude BIG files for a fast rsync
-        # BIG files are downloaded later with progressbar
-        my $excludes="--exclude ${vm}.vdi ".
-           "--exclude snapshot-store/base/${vm}.vdi.zip ";
-        my $snapshot_as_used=$target."/Snapshots/{".$vbox_uuid."}.vdi";
-        if (-e $snapshot_as_used){
-            # do not sync this file
-            #print "Excluding $snapshot_as_used\n";
-            $excludes=$excludes."--exclude Snapshots/{".$vbox_uuid."}.vdi ";
-        }
-        my $mkdir_command="mkdir -p ${target}";
-        print "$mkdir_command\n";
-        my $result=system($mkdir_command);
-        #print "RESULT: $result\n";
-        if ($result==0){
-            # OK
-        } else {
-            print "\nERROR: Cold not create $target ",
-                  "for local copy of remote machine\n\n";
-            exit;
-        }
-        my $rsync_command="rsync $option -av $excludes ${vm_path_abs}/ ${target}/";
-        print "$rsync_command\n";
-        system($rsync_command);
+    my $target=&get_local_vm_path($vm,$vm_path_abs);
+    print "sync to $target\n";
+    # exclude BIG files for a fast rsync
+    # BIG files are downloaded later with progressbar
+    my $excludes="--exclude ${vm}.vdi ".
+       "--exclude snapshot-store/base/${vm}.vdi.zip ";
+    my $snapshot_as_used=$target."/Snapshots/{".$vbox_uuid."}.vdi";
+    if (-e $snapshot_as_used){
+        # do not sync this file
+        #print "Excluding $snapshot_as_used\n";
+        $excludes=$excludes."--exclude Snapshots/{".$vbox_uuid."}.vdi ";
     }
+    my $mkdir_command="mkdir -p ${target}";
+    print "$mkdir_command\n";
+    my $result=system($mkdir_command);
+    #print "RESULT: $result\n";
+    if ($result==0){
+        # OK
+    } else {
+        print "\nERROR: Cold not create $target ",
+              "for local copy of remote machine\n\n";
+        exit;
+    }
+    my $rsync_command="rsync $option -av $excludes ${vm_dir_remote}/ ${target}/";
+    print "$rsync_command\n";
+    system($rsync_command);
 }
 
 

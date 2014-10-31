@@ -1,3 +1,17 @@
+Bugs Schule/Rainer:
+bei winXP im serverordner fehlt der Ordner defaults mit Inhalt
+In: defaults/VirtualBox.xml:
+      <MachineEntry uuid="{85d347a6-a3f5-4dc9-bbfd-e4685ef874e0}" src="/virtual/winXP/winXP.vbox"/>
+
+Müsste lauten:
+      <MachineEntry uuid="{85d347a6-a3f5-4dc9-bbfd-e4685ef874e0}" src="/virtual/leoclient2-vm/winXP/winXP.vbox"/>
+
+so wie in /etc/leoclient2/machines/winXP.conf
+
+Wieso tuts an der Schule eigentlich mit dem anderen Pfad? (leoclient1 übrigbleibsel)
+
+
+
 Todo:
 ----------------------------------------------------------------------
 winXP tut ohne lokale Daten?
@@ -15,6 +29,14 @@ image.conf in den snapshots auch umsetzen wie be vm's
 
 Bugs nice to have
 ----------------------------------------------------------------------
+
+rsync der maschine nach lokal:
+1 Ohne snapshot-store
+2 snapshot-store standard
+
+gezippter standard snashot aus rsync entfernen, 
+und erst bei VM standard booten holen
+
 
 vbox läuft schon, .... früher aussteigen, 
 evtl. nur vbox öffnen (keine vm starten)
