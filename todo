@@ -28,25 +28,25 @@ image.conf in den snapshots auch umsetzen wie be vm's
 
 
 
-
 Bugs nice to have
 ----------------------------------------------------------------------
 
-rsync der maschine nach lokal:
-1 Ohne snapshot-store, ohne Snapshots
-2 snapshot-store standard
 
-gezippter standard snashot aus rsync entfernen, 
-und erst bei VM standard booten holen
+gezippter standard snapshot aus rsync entfernen, 
+und erst bei VM standard booten holen(wird dann aber gecached und entpackt)
 
 
 vbox läuft schon, .... früher aussteigen, 
 evtl. nur vbox öffnen (keine vm starten)
 
 
-wenn nix lokales einer remoten maschine vorhanden
-dann gibts keinen sinn "wie vorgefunden" anzugeben -> aus startmenü entfernen
-(wie vorgefunden tut, ist identisch aber identisch zu )
+#wenn nix lokales einer remoten maschine vorhanden
+#dann gibts keinen sinn "wie vorgefunden" anzugeben -> aus startmenü entfernen
+#(wie vorgefunden tut, ist identisch aber identisch zu )
+---> wenn Snapshots{xx}.vdi fehlt, dann "wie vorgefunden" ausblenden
+
+
+
 
 Wenn eine Netzwerkkarte fehlt (ausfall) und deshalb das Netz
 dervirtuellen Maschine nicht konfiguriert werden kann:

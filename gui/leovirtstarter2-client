@@ -59,7 +59,7 @@ my $min_host_ram="256";
 my $max_guest_ram="3072";
 
 my $snapshot_file_name="";
-
+my $local_standard_snapshot_abs="";
 
 ############################################################                    
 # virtualbox                                                                    
@@ -151,7 +151,7 @@ my $conf_defaults="";
 # Snapshots
 # in which directory is the snapshot that is  used as the
 # second entry
-my $snapshot_default="standard";
+my $snapshot_standard="standard";
 my $snapshot_file_dir_local="";
 my $snapshot_file_dir_remote="";
 my $vm_dir_remote="";
@@ -348,7 +348,7 @@ close CONFFILE;
 if (defined $snapshot_search_dirs_remote[0]){ 
     $conf_caches=$snapshot_search_dirs_remote[0]."/caches.conf";
 } else {
-    # default cahe
+    # default cache
 }
 
 
@@ -600,6 +600,7 @@ if (exists $vm_remote{$vm}){
 }
 $conf_network_vm=$vm_path_abs."/network.conf";
 $snapshot_file_name="{$vbox_uuid}.vdi";
+$local_standard_snapshot_abs=$snapshot_file_dir_local."/".$snapshot_file_name;
 print "Setting paths for $vm\n";
 print "  * vm_dir_remote:   $vm_dir_remote\n";
 print "  * base_image_source:   $base_image_source\n";
@@ -817,8 +818,7 @@ my @buttons=&get_snapshots(@snapshot_search_dirs);
 #print Dumper(\@snapshot_search_dirs);
 #print Dumper(\%snapshots);
 
-#exit;
-
+# display as used button? 
 @buttons=($buttons_as_used,$buttons_default,@buttons);
 
 my @grafik_buttons=("2D",
@@ -1210,11 +1210,13 @@ sub sync_vm_to_local {
               "for local copy of remote machine\n\n";
         exit;
     }
+    # get small stuff
     my $rsync_command1="rsync $option -av $excludes ${vm_dir_remote}/ ${target}/";
     print "$rsync_command1\n";
     system($rsync_command1);
-    # get standard snapshot
-    my $rsync_command2="rsync -av ${vm_dir_remote}/snapshot-store/standard ${target}/snapshot-store";
+    # get standard snapshot alone
+    my $rsync_command2="rsync -av ${vm_dir_remote}/snapshot-store/standard ".
+                                  "${target}/snapshot-store";
     print "$rsync_command2\n";
     system($rsync_command2);
 }
@@ -1488,9 +1490,10 @@ sub get_vbox_uuid {
     my $path=$vm{$vm};
     
     $path=$path."/Snapshots";
+    my $file=$path."/Snapshots/*.vdi";
     my $vbox_uuid="";
     my $success=0;
-    if (-d $path){
+    if (-d $path and -e $file){
         # ok
     } else {
         #print "$path not found\n";
@@ -1938,7 +1941,7 @@ sub get_zipped_snapshot {
     my ($snapshot) = @_;
     if ($snapshot eq $buttons_default){
        # This is the default snapshot, do what is configured as default/standard
-	$snapshot=$snapshot_default;
+	$snapshot=$snapshot_standard;
         $selected{'SYSTEM'}=$snapshot;
     } elsif ($snapshot eq $buttons_as_used){
         # start as found
@@ -2150,11 +2153,23 @@ sub create_radiobuttons {
         # $button: dirname
         # $snaphots{$button}
 	INFO "Checking for button $button";
+	print "Checking for button: >$button<\n";
         my $displayname="---";
         my $host_string="";
         my $host_check=0; # default: no check
         my $room_string="";
         my $room_check=0; # default: no check
+
+        # Ignore "as used" button, when no snapshot is in $VM/Snapshots
+        if ($type eq "SYSTEM" # Buttonlist SYSTEM
+             and $button eq $buttons_as_used # working on this button
+             and not -e $local_standard_snapshot_abs # no 'as used' snapshot file
+           ){
+            print "No 'as used' button: nonexisting $local_standard_snapshot_abs\n";
+            $selected{$type}=$snapshot_standard;
+            next;
+        }
+
         if (exists $snapshots{$button}{'name'}){
  	    INFO "   * Name:       ",
                  "$snapshots{$button}{'name'}";
@@ -2270,6 +2285,7 @@ sub create_radiobuttons {
         }
         $i++;
     }
+    $radiobutton[0]->set_active(TRUE);
 }
 
 
@@ -2420,7 +2436,7 @@ sub get_snapshots {
             ${snapshots}{$dirname}{'filesize_vdi'}=$filesize_vdi;
             ${snapshots}{$dirname}{'filesize_zipped'}=$filesize_zipped;
 
-            if ($dirname ne $snapshot_default){
+            if ($dirname ne $snapshot_standard){
                 # jump over the default snapshot 
                 # (appears automagically at second in the list)
 		#print "DIRNAME: $dirname\n";
