@@ -43,6 +43,9 @@ image.conf in den snapshots auch umsetzen wie be vm's
 
 
 
+VEU:
+wenn eine Maschine gestartet wird und man geht in virtualbox und zum standard-snapshot zurück, dann werden die shared folders nicht gepatched
+
 
 
 Bugs nice to have
