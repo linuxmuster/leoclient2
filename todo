@@ -20,6 +20,12 @@ bei langem rsync hinundhergehender Fortschrittsbalken anzeigen?
 
 Bugs important
 ------------------------------------------------
+????
+Beide zeigen die Größe von {7491a86a-8ef3-4022-87d8-ebe88df86dec}.vdi.zip an
+snapshot-store/standard/filesize.vdi.zipped
+-> FALSCH: snapshot-store/standard/filesize.vdi
+
+
 Install snapshot and vms from stick
 
 Variablen umbenennen
@@ -34,6 +40,8 @@ Bug: lokale snapshots (außer standard) werden nicht angezeigt
 
 
 image.conf in den snapshots auch umsetzen wie be vm's
+
+
 
 
 

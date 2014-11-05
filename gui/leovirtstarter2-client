@@ -117,6 +117,8 @@ my %snapshots=();
 
 my $search_dir_local="";
 my $standard_snapshot_local_zipped="";
+# old snapshot.zip
+my $standard_snapshot_local_zipped_obsolete="";
 
 
 ############################################################
@@ -613,6 +615,8 @@ if (exists $vm_remote{$vm}){
 } else {
     # settings for local machines
     $base_image_target=$vm_path_abs."/".$vm.".vdi";
+    $standard_snapshot_local_zipped_obsolete=
+        $vm_path_abs."/snapshot-store/standard/snapshot.zip";
     $standard_snapshot_local_zipped=
         $vm_path_abs."/snapshot-store/standard/{".$vbox_uuid."}.vdi.zip";
     $snapshot_file_dir_local=$vm_path_abs."/Snapshots";
@@ -1111,9 +1115,32 @@ sub zip_snapshots {
     # all snaphots bit not base
     foreach my $snapshot (@snapshots){
         print "Processing Snapshot: $snapshot \n";
-        my $file=$snapshots{$snapshot}{'abs_path'};
-        print "   * File: $file \n";
-        &zip_image($file,$snapshot);
+        my $file="";
+        if ($snapshot ne "standard"){
+            $file=$snapshots{$snapshot}{'abs_path'};
+            print "   * File: $file $snapshot\n";
+            &zip_image($file,$snapshot);
+        } else {
+            # standard
+            if (-e $standard_snapshot_local_zipped_obsolete){
+                print "\nERROR: You have an obsolete file in your installation:\n";
+                print "   $standard_snapshot_local_zipped_obsolete\n";
+                print "Please rename it to:\n";
+                print "   $standard_snapshot_local_zipped\n\n";
+                print "and run this script again\n";
+                exit;
+            } else {
+                if (-e $standard_snapshot_local_zipped){
+                    print "Zipped file exists:\n";
+                    print "   $standard_snapshot_local_zipped\n";
+                    $file=$standard_snapshot_local_zipped;
+                    &zip_image($file,$snapshot);
+                    #my $zipped_filesize_file=$dirname_zipped."/filesize.vdi.zipped";
+                    #my $zipped_filesize = -s $file;
+                    #system("echo $zipped_filesize > '$zipped_filesize_file'");
+                }
+            }
+        }
     }
 }
 
@@ -1139,6 +1166,8 @@ sub zip_image {
         my $file_zipped="";
         if ($type eq "base"){
             $file_zipped=$dirname."/snapshot-store/base/".$filename.".zip";
+        } elsif ($type eq "standard"){
+            $file_zipped=$file;
         } else {
             $file_zipped=$dirname."/".$filename.".zip";
         }
@@ -1166,16 +1195,16 @@ sub zip_image {
               and -e $zipped_filesize_file){
             print "   * Nothing to zip!\n";
         } else {
-            print "   * Zipping ... (This can Take a while ...)\n";
-            system("mkdir -p $dirname_zipped");
-            my $zip_command="cd '$dirname'; zip $file_zipped $filename";
-            print "$zip_command\n";
-            system($zip_command);
-            print "   * ... Zipping done!\n";
-
-        # file zipped
-        $zipped_filesize = -s $file_zipped;
-
+            if ($type ne "standard"){
+                print "   * Zipping ... (This can Take a while ...)\n";
+                system("mkdir -p $dirname_zipped");
+                my $zip_command="cd '$dirname'; zip $file_zipped $filename";
+                print "$zip_command\n";
+                system($zip_command);
+                print "   * ... Zipping done!\n";
+            }
+            # file zipped
+            $zipped_filesize = -s $file_zipped;
 
             system("echo $zipped_filesize > '$zipped_filesize_file'");
 
