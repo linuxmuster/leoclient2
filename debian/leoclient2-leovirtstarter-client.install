@@ -9,4 +9,5 @@ usr/share/applications/leovirtstarter2-client.desktop
 usr/share/pixmaps/leovirtstarter2-client.png
 usr/sbin/leoclient2-init
 usr/sbin/leoclient2-base-snapshot-renew
+usr/sbin/leoclient2-vm-move
 

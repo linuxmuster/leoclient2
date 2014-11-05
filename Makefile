@@ -56,6 +56,7 @@ leoclient2-leovirtstarter-client:
 	@install -oroot -groot --mode=0700 sudoers/leoclient2-set-permissions $(BIN)
 	@install -d -m0755 -oroot -groot $(SBIN)
 	@install -oroot -groot --mode=0700 installer-scripts/leoclient2-init $(SBIN)
+	@install -oroot -groot --mode=0700 installer-scripts/leoclient2-vm-move $(SBIN)
 	@install -oroot -groot --mode=0700 installer-scripts/leoclient2-base-snapshot-renew $(SBIN)
 	@echo '   * Installing the client configuration files'
 	@install -d -oroot -groot --mode=0755 $(LEOCLIENTCONF)/machines
