@@ -1196,12 +1196,15 @@ sub zip_image {
             print "   * Nothing to zip!\n";
         } else {
             if ($type ne "standard"){
+                # ??? wenn Datei *.vdi existiert???
                 print "   * Zipping ... (This can Take a while ...)\n";
                 system("mkdir -p $dirname_zipped");
                 my $zip_command="cd '$dirname'; zip $file_zipped $filename";
                 print "$zip_command\n";
                 system($zip_command);
                 print "   * ... Zipping done!\n";
+            } else {
+                print "Standard needs not be zipped";
             }
             # file zipped
             $zipped_filesize = -s $file_zipped;
