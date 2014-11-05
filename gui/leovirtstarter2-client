@@ -154,6 +154,7 @@ my $conf_defaults="";
 my $snapshot_standard="standard";
 my $snapshot_file_dir_local="";
 my $snapshot_file_dir_remote="";
+my $vm_dir_remote_parent="";
 my $vm_dir_remote="";
 
 
@@ -209,7 +210,7 @@ my $host_group="";
 my $host_uid = getpwnam($hostname);
 if (not defined $host_uid){
     # no host group (no linuxmuster-base client)
-    print "No host account found (no primary group)\n";
+    print "No host account found (this is likely no linuxmuster.net client)\n";
     $host_uid=0;
 }
 my @host_entry= getpwuid($host_uid);
@@ -351,14 +352,9 @@ close CONFFILE;
 }
 
 # --serverdir ...
-if (defined @serverdir){
+if (@serverdir){
     # option used, overwrite
     @snapshot_search_dirs_remote = @serverdir;
-}
-
-print "Configured SERVERDIR:\n";
-foreach my $dir (@snapshot_search_dirs_remote){
-       print "  SERVERDIR: $dir\n";
 }
 
 
@@ -504,10 +500,13 @@ if ($info==1){
 
 
 # List serverdirs (hide later, show only with --info ??????) 
+
+print "Configured SERVERDIR:\n";
 foreach my $dir (@snapshot_search_dirs_remote){
-    print "Serverdir : $dir\n";
-    $snapshot_search_dir_client=$dir;
+       print "  SERVERDIR: $dir\n";
 }
+
+
 
 # List caches (hide later, show only with --info ??????) 
 my $cache_count=0;
@@ -588,6 +587,7 @@ $search_dir_local=~s/\/${vm}$//g;
 # Where is the zipped standard snaphot
 foreach my $dir (@snapshot_search_dirs_remote){
     # Remote data
+    $vm_dir_remote_parent=$dir;
     $vm_dir_remote=$dir.
         "/$vm";
     $snapshot_file_dir_remote=$dir.
@@ -1206,21 +1206,18 @@ sub sync_vm_to_local {
     if (not defined $option){
         $option="";
     }
-    print "Syncing vm $vm $vm_path_abs\n";
     my $target=&get_local_vm_path($vm,$vm_path_abs);
-    print "sync to $target\n";
     # exclude BIG files for a fast rsync
     # BIG files are downloaded later with progressbar
     my $excludes="--exclude ${vm}.vdi ".
        "--exclude snapshot-store/base/${vm}.vdi.zip ";
     my $snapshot_as_used=$target."/Snapshots/{".$vbox_uuid."}.vdi";
-#    if (-e $snapshot_as_used){
-        # do not sync this file
-        #print "Excluding $snapshot_as_used\n";
-        $excludes=$excludes."--exclude Snapshots/{".$vbox_uuid."}.vdi ";
-#    }
+    $excludes=$excludes."--exclude Snapshots/{".$vbox_uuid."}.vdi ";
     $excludes=$excludes."--exclude snapshot-store/* ";
     my $mkdir_command="mkdir -p ${target}";
+    if (-d ${vm_dir_remote}){
+    print "Syncing vm $vm $vm_path_abs\n";
+    print "   to $target\n";
     print "$mkdir_command\n";
     my $result=system($mkdir_command);
     #print "RESULT: $result\n";
@@ -1240,6 +1237,7 @@ sub sync_vm_to_local {
                                   "${target}/snapshot-store";
     print "$rsync_command2\n";
     system($rsync_command2);
+    }
 }
 
 
@@ -1571,11 +1569,17 @@ sub check_base_image {
     if (-e "$base_image_target"){
         # size of locally existing base image
         my $local_size = -s $base_image_target;
-        my $remote_size = `cat '$base_image_source_filesize'`;
+  
+        my $remote_size = "none";
+        if (-e $base_image_source_filesize){
+            $remote_size = `cat '$base_image_source_filesize'`;
+        }
+
         chomp($remote_size);
         print "   Local size:  $local_size\n";
         print "   Remote size: $remote_size\n";
-        if ($local_size ne $remote_size){
+        if ($local_size ne $remote_size
+            and $remote_size ne "none"){
             &get_base_image();
         } else {
             return;
@@ -1789,7 +1793,7 @@ sub start_zipped_snaphot {
 
     if ($zipped_snapshot_file ne "___NOSNAPSHOT___"){
         INFO "unzip $zipped_snapshot_file ";
-        INFO "to    $selected{'CACHE-ZIP'} ";
+        INFO "to    $snapshot_file_dir_local} ";
 
         $pb_win_start_zip = Gtk2::Window->new('toplevel');
         $pb_win_start_zip->set_title("Unpacking snapshot '$selected{'SYSTEM'}' of VM $vm");
