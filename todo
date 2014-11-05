@@ -14,8 +14,6 @@ Wieso tuts an der Schule eigentlich mit dem anderen Pfad? (leoclient1 übrigblei
 
 Todo:
 ----------------------------------------------------------------------
-Option --serverdir (überschreibt die Konfigurationsdatei)
-
 winXP tut ohne lokale Daten?
 
 bei langem rsync hinundhergehender Fortschrittsbalken anzeigen?
@@ -24,7 +22,17 @@ bei langem rsync hinundhergehender Fortschrittsbalken anzeigen?
 Bugs important
 ------------------------------------------------
 Install snapshot and vms from stick
+
+Variablen umbenennen
+evtl. alles in ein Hash %var-> vm -> local -> ...
+                                  -> remote -> ...
+
 Bug: lokale snapshots (außer standard) werden nicht angezeigt
+- remote gucken, lokal gucken nach snapshots
+  nur 1x anzeigen mit Hinweis (lokal).
+  beim starten syncen und lokales startetn
+
+
 
 image.conf in den snapshots auch umsetzen wie be vm's
 

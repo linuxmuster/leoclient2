@@ -241,6 +241,8 @@ my $vm="";
 my $virtualbox=0;
 # Option --local-snapshots
 my $local_snapshots=0;
+# Option --serverdir /one --serverdir /two
+my @serverdir=();
 my $clean_cache=0;
 my $clean_log=0;
 my $help=0;
@@ -272,6 +274,7 @@ my $testopt=GetOptions(
            "virtualbox|vbox" => \$virtualbox,
            "local-snapshots" => \$local_snapshots,
            "prepare-remote-vm=s" => \$prepare_remote_vm,
+           "serverdir=s" => \@serverdir,
            "clean|clean-cache" => \$clean_cache,
            "clean-log" => \$clean_log,
            "ignore-virtualbox" => \$ignore_virtualbox,
@@ -293,9 +296,13 @@ Power User:
     instead of starting the machine
   --local-snapshots
     look only for snapshots in the snapshot-store of the machine
-  --ignore-virtualbox (start leovirtstarter2 even if VirtualBox ist running)
+  --ignore-virtualbox 
+    Start leovirtstarter2 even if VirtualBox ist running.
     This may overwrite the virtual harddisk of a running virtual machine,
     which will therefore crash.
+  --serverdir /abs/path/to/dir1 --serverdir /abs/path/to/dir2
+    Use /abs/path/to/dir1, ... instead of the configured SERVERDIR in
+    /etc/leoclient2/servers.conf 
 
 Preparing VM or Snapshot:
   --prepare-remote-vm VM
@@ -335,7 +342,6 @@ while (<CONFFILE>){
    print "servers.conf LINE:   $_\n";
    my ($option,$data)=split(/=/);
    if ($option eq "SERVERDIR"){
-       print "  SERVERDIR: $data\n";
        push @snapshot_search_dirs_remote, $data;
    }
 }
@@ -343,6 +349,19 @@ close CONFFILE;
 } else {
     print "  * WARNING: nonexisting $conf_servers\n";
 }
+
+# --serverdir ...
+if (defined @serverdir){
+    # option used, overwrite
+    @snapshot_search_dirs_remote = @serverdir;
+}
+
+print "Configured SERVERDIR:\n";
+foreach my $dir (@snapshot_search_dirs_remote){
+       print "  SERVERDIR: $dir\n";
+}
+
+
 # Set variables based on serverdirs
 # caches.conf must be in first serverdir (????? Look in all server dirs)
 if (defined $snapshot_search_dirs_remote[0]){ 
@@ -668,6 +687,7 @@ if ($clean_log==1){
 
 
 
+# --ignore-virtualbox
 # Abbruch, falls virtualbox schon läuft
 my $pid_string=`pgrep -f /usr/lib/virtualbox/VirtualBox`;
 chomp($pid_string);
@@ -675,7 +695,8 @@ chomp($pid_string);
 if ($pid_string ne "" and $ignore_virtualbox==0){
     print "VirtualBox is running already\n";
     my $message="<b>Oracle VM VirtualBox</b> läuft schon!\n\n".
-                "Deshalb kann <b>VirtualBox Snapshotstarter</b> nicht gestartet werden.\n\n".
+                "Deshalb kann <b>VirtualBox Snapshotstarter</b>".
+                " nicht gestartet werden.\n\n".
                 "Bitte beenden Sie zuerst <b>Oracle VM VirtualBox</b>!";
     system("/usr/bin/zenity --warning --text='$message'");
     exit;
