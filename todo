@@ -1,3 +1,23 @@
+sudoers: this works (on a normal ubuntu 14.04)
+
+1) sudo cp sudoers/leoclient2-sudoers  /usr/sbin/leoclient2-sudoers
+2) chmod +x /usr/sbin/leoclient2-sudoers
+3) sudo visudo 
+   add the following line:
+     %user ALL=NOPASSWD: /usr/sbin/leoclient2-sudoers
+   save the file
+4) as a normal user:
+    sudo /usr/sbin/leoclient2-sudoers
+   - shows that the user is root
+   - no password required
+   - chmod works
+
+? ist die Reihenfolge wichtig?
+? kann das nicht in /etc/sudoers.d/leoclient2
+
+
+
+
 Bugs Schule/Rainer:
 bei winXP im serverordner fehlt der Ordner defaults mit Inhalt
 In: defaults/VirtualBox.xml:
