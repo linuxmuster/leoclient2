@@ -1,7 +1,7 @@
 sudoers: this works (on a normal ubuntu 14.04)
 
 1) sudo cp sudoers/leoclient2-sudoers  /usr/sbin/leoclient2-sudoers
-2) chmod +x /usr/sbin/leoclient2-sudoers
+2) sudo chmod +x /usr/sbin/leoclient2-sudoers
 3) sudo visudo 
    add the following line:
      %user ALL=NOPASSWD: /usr/sbin/leoclient2-sudoers
