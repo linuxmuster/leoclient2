@@ -1,3 +1,11 @@
+ -- Ruediger Beck <bz@j1009p16.bszleo.de>  Fri, 28 Nov 2014 18:43:39 +0100
+
+leoclient2 (0.2.7-1) trusty-unstable; urgency=medium
+
+  * new upstream
+
+ -- Ruediger Beck <bz@molly02.bszleo.de>  Thu, 13 Nov 2014 17:01:04 +0100
+
 leoclient2 (0.2.6-1) trusty-unstable; urgency=medium
 
   * use image.conf in VM dir to access VM or not (host/room/user/group)

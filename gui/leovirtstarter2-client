@@ -473,12 +473,6 @@ foreach my $serverdir (@snapshot_search_dirs_remote){
 %vm = (%vm_local, %vm_remote);
 
 
-if ($set_permissions==1){
-    # this can be called as root
-    print "--set-permissions called as \n";
-    exit;
-}
-
 if ($info==1){
     # list machines alphabetically
     print "\nLocal VM's listed in ${conf_machines}:\n";
@@ -507,6 +501,34 @@ if ($info==1){
           "-----------------------\n";
     exit;
 }
+
+
+if ($set_permissions==1){
+    # this can be called as root
+    my %local_vm_dirs=();
+    print "--set-permissions called as $my_username by sudo from $ENV{SUDO_USER}\n";
+    foreach my $vm (@vm_local){
+        # local VM's
+        $local_vm_dirs{$vm}="$vm_local{$vm}";
+    }
+    foreach my $vm (@vm_remote){
+        # local copy of remote VM's
+        $local_vm_dirs{$vm}="$vm_remote_local{$vm}";
+    }
+    while (my ($vm,$path) = each %local_vm_dirs){
+        print "$vm  --> local --> $path\n";
+        my $file=$path."/".$vm.".vbox";
+        chmod 0777, $file;
+        $file=$path."/".$vm.".vbox-prev";
+        chmod 0777, $file;
+        $file=$path."/VBoxSVC.log";
+        chmod 0777, $file;
+        my $dir=$path."/Logs";
+        system("/bin/chmod 0777 -R $dir");
+    }
+    exit;
+}
+
 
 
 # List serverdirs (hide later, show only with --info ??????) 
@@ -697,6 +719,8 @@ if ($clean_log==1){
     exit;
 }
 
+# chmod all local dirs with sodo script
+system("/bin/leovirtstarter2-client --set-permissions");
 
 
 # --ignore-virtualbox
