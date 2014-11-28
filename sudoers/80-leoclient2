@@ -1,0 +1,3 @@
+# leoclient2 needs to make a VM of other users usable
+# option --set-permissions allows to do this
+%vboxusers ALL=NOPASSWD: /usr/bin/leovirtstarter2-client --set-permissions

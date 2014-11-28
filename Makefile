@@ -53,7 +53,6 @@ leoclient2-leovirtstarter-client:
 	@echo '   * Installing the client script'
 	@install -d -m0755 -oroot -groot $(BIN)
 	@install -oroot -groot --mode=0755 gui/leovirtstarter2-client $(BIN)
-	@install -oroot -groot --mode=0700 sudoers/leoclient2-set-permissions $(BIN)
 	@install -d -m0755 -oroot -groot $(SBIN)
 	@install -oroot -groot --mode=0700 installer-scripts/leoclient2-init $(SBIN)
 	@install -oroot -groot --mode=0700 installer-scripts/leoclient2-vm-move $(SBIN)
@@ -63,7 +62,7 @@ leoclient2-leovirtstarter-client:
 	@install -oroot -groot --mode=0644 conf/servers.conf  $(LEOCLIENTCONF)
 	@echo '   * Installing sudoers stuff'
 	@install -d -m0644 -oroot -groot $(ETC)
-	@install -oroot -groot --mode=0440 sudoers/leoclient2 $(ETC)
+	@install -oroot -groot --mode=0440 sudoers/80-leoclient2 $(ETC)
 	@echo '   * Installing linuxmusterclient sudoers stuff'
 	@install -d -m755 -oroot -groot $(POSTMOUNT)
 	@install -oroot -groot --mode=0644 mount-scripts/011-leoclient2-set-permissions $(POSTMOUNT)

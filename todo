@@ -37,6 +37,8 @@ Todo:
 
 bei langem rsync hinundhergehender Fortschrittsbalken anzeigen?
 
+Paket/Script leovirtstarter2-client in leovirtstarter2 umbenennen
+
 
 Bugs important
 ------------------------------------------------
@@ -99,6 +101,9 @@ Abgleichen/Überlegen
 starten wie vorgefunden 
 Was soll da alle gelassen werden?
 Siehe "start VM with snapshot as found" im script
+
+Wie ist das wenn beim ausschalten "Zustand der virtuellen Maschine speichern gewählt wird"
+
 
 ältere Versionen haben win7/snapshot-store/standard/snapshot.zip angelegt
 falls vorhanden: Warnung ausgeben diese umzubenennen in 

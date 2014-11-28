@@ -1,2 +1,0 @@
-# for leoclient2
-%vboxusers ALL=NOPASSWD: /usr/bin/leoclient2-set-permissions 

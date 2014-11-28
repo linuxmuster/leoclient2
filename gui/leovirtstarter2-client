@@ -250,6 +250,7 @@ my $clean_cache=0;
 my $clean_log=0;
 my $help=0;
 my $info=0;
+my $set_permissions=0;
 my $show_menu=0;
 my $snapshot_search_dir="";
 my $ignore_virtualbox=0;
@@ -271,6 +272,7 @@ use Filesys::Df;
 my $testopt=GetOptions(
            "help|h" => \$help,
            "info|i" => \$info,
+           "set-permissions" => \$set_permissions,
            "show-menu|menu" => \$show_menu,
            "on-the-go|g=s" => \$on_the_go,
            "vm=s" => \$vm,
@@ -470,6 +472,12 @@ foreach my $serverdir (@snapshot_search_dirs_remote){
 @vm = (@vm_local,@vm_remote);
 %vm = (%vm_local, %vm_remote);
 
+
+if ($set_permissions==1){
+    # this can be called as root
+    print "--set-permissions called as \n";
+    exit;
+}
 
 if ($info==1){
     # list machines alphabetically
