@@ -529,6 +529,9 @@ if ($set_permissions==1){
     exit;
 }
 
+# chmod all local dirs with sodo script 
+# as early as possible, not before the option (would be recursive)
+system("sudo /usr/bin/leovirtstarter2-client --set-permissions");
 
 
 # List serverdirs (hide later, show only with --info ??????) 
@@ -719,8 +722,6 @@ if ($clean_log==1){
     exit;
 }
 
-# chmod all local dirs with sodo script
-system("/bin/leovirtstarter2-client --set-permissions");
 
 
 # --ignore-virtualbox
