@@ -4,6 +4,7 @@
 ============LEOCLIENT2 CHANGELOG ====================================
 
 0.2.7-1 (2014-11-xx)
+    - added option --dump
     - renamed leovirtstarter2-client to leovirtstarter2 
     - delete Snapshots/*.sav file if exising to start a VM
       - do not show 'as found' to avoid errors

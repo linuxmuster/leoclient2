@@ -254,6 +254,7 @@ my $clean_cache=0;
 my $clean_log=0;
 my $help=0;
 my $info=0;
+my $dump=0;
 my $set_permissions=0;
 my $show_menu=0;
 my $snapshot_search_dir="";
@@ -276,6 +277,7 @@ use Filesys::Df;
 my $testopt=GetOptions(
            "help|h" => \$help,
            "info|i" => \$info,
+           "dump" => \$dump,
            "set-permissions" => \$set_permissions,
            "show-menu|menu" => \$show_menu,
            "on-the-go|g=s" => \$on_the_go,
@@ -320,6 +322,7 @@ Preparing VM or Snapshot:
 Development:
   --clean-cache   (clean all caches)
   --clean-log     (clean all log files)
+  --dump          (dump vars and exit)
 
 Non-Server use:
   --on-the-go /path/to/config/file  (using another config file)
@@ -469,9 +472,11 @@ foreach my $serverdir (@snapshot_search_dirs_remote){
 
 #print Dumper(\%read_access_vm);
 #print Dumper(\%my_groups);
-print Dumper(\%vars);
-#exit;
-
+# --dump
+if ($dump==1){
+    print Dumper(\%vars);
+    exit;
+}
 
 @vm_local = sort @vm_local;
 @vm_remote = sort @vm_remote;
