@@ -239,8 +239,9 @@ else
   mkdir -p $VMPATH/$MACHINENAME/snapshot-store/standard
 fi
 cd $VMPATH/$MACHINENAME/Snapshots
-zip -9 snapshot.zip *
-mv snapshot.zip $VMPATH/$MACHINENAME/snapshot-store/standard/
+SNAPSHOTDATEI=`ls *.vdi`
+zip -9 $SNAPSHOTDATEI.zip $SNAPSHOTDATEI
+mv $SNAPSHOTDATEI.zip $VMPATH/$MACHINENAME/snapshot-store/standard/
 
 chmod -R 777 $VMPATH/$MACHINENAME
 chmod -R 755 $VMPATH/$MACHINENAME/snapshot-store/standard
