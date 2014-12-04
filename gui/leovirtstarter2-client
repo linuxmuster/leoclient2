@@ -27,7 +27,11 @@ use POSIX qw(getgroups);
 #           (progressbar, not working now)
 # Window 3: choose a snapshot -> $gui3_snapshot_chooser
 
+# save all data for machines in this hash
+# %var-> vm -> local -> ... sav
+#           -> remote -> ...
 
+my %vars=();
 
 #************************************************************
 #************************************************************
@@ -420,6 +424,7 @@ foreach my $machine (readdir CONFDIR){
         $vm_uuid{$machine}=$path;
         # check if machine is accessible
         &read_access_vm($path,$machine);
+        &check_sav_file($path,$machine);
         if (1==&access_vm($machine)){
             push @vm_local, $machine;
         }
@@ -464,6 +469,7 @@ foreach my $serverdir (@snapshot_search_dirs_remote){
 
 #print Dumper(\%read_access_vm);
 #print Dumper(\%my_groups);
+print Dumper(\%vars);
 #exit;
 
 
@@ -503,6 +509,7 @@ if ($info==1){
 }
 
 
+# --set-permissions
 if ($set_permissions==1){
     # this can be called as root
     my %local_vm_dirs=();
@@ -525,6 +532,11 @@ if ($set_permissions==1){
         chmod 0777, $file;
         my $dir=$path."/Logs";
         system("/bin/chmod 0777 -R $dir");
+        # remove file from save current state (at shutdown)
+        $file=&check_sav_file($path,$vm);
+        if ($file ne "none"){
+            unlink $file;
+        }
     }
     exit;
 }
@@ -1128,6 +1140,26 @@ Gtk2->main;
 ############################################################
 # subs
 ############################################################
+sub check_sav_file {
+    my ($path,$machine) = @_;
+    my $sav_dir=$path."/Snapshots";
+    my $sav_file="none";
+    opendir SAV, $sav_dir;
+    foreach my $file (readdir SAV){
+        if ($file eq "."){next};
+        if ($file eq ".."){next};
+        if ($file=~m/.sav$/){
+            $sav_file=$sav_dir."/".$file;
+            # abs path to *.sav file
+            $vars{$machine}{'local'}{'sav'}=$sav_file;
+            # encountered sav file 0|1
+            $vars{$machine}{'local'}{'sav_seen'}=1;
+        }
+    }
+    closedir SAV;
+    return $sav_file;
+}
+
 sub get_local_vm_path {
     my ($vm,$vm_path_abs) = @_;
     my $conffile = "";
@@ -2256,6 +2288,16 @@ sub create_radiobuttons {
              and not -e $local_standard_snapshot_abs # no 'as used' snapshot file
            ){
             print "No 'as used' button: nonexisting $local_standard_snapshot_abs\n";
+            $selected{$type}=$snapshot_standard;
+            next;
+        }
+
+        # Ignore "as used" button, when *.sav file was present
+        if ($type eq "SYSTEM" # Buttonlist SYSTEM
+             and $button eq $buttons_as_used # working on this button
+             and $vars{$vm}{'local'}{'sav_seen'}==1
+           ){
+            print "No 'as used' button: Deleted $vars{$vm}{'local'}{'sav'}\n";
             $selected{$type}=$snapshot_standard;
             next;
         }
