@@ -52,7 +52,7 @@ default:
 leoclient2-leovirtstarter-client:
 	@echo '   * Installing the client script'
 	@install -d -m0755 -oroot -groot $(BIN)
-	@install -oroot -groot --mode=0755 gui/leovirtstarter2-client $(BIN)
+	@install -oroot -groot --mode=0755 gui/leovirtstarter2 $(BIN)
 	@install -d -m0755 -oroot -groot $(SBIN)
 	@install -oroot -groot --mode=0700 installer-scripts/leoclient2-init $(SBIN)
 	@install -oroot -groot --mode=0700 installer-scripts/leoclient2-vm-move $(SBIN)
@@ -70,10 +70,10 @@ leoclient2-leovirtstarter-client:
 	@install -oroot -groot --mode=0644 mount-scripts/011-leoclient2-set-permissions $(PREUMOUNT)
 	@echo '   * Installing unity dash entry'
 	@install -d -m0755 -oroot -groot $(DESKTOP)
-	@install -oroot -groot --mode=0644 gui/leovirtstarter2-client.desktop $(DESKTOP)
+	@install -oroot -groot --mode=0644 gui/leovirtstarter2.desktop $(DESKTOP)
 	@echo '   * Installing icon'
 	@install -d -m0755 -oroot -groot $(ICON)
-	@install -oroot -groot --mode=0644 gui/leovirtstarter2-client.png $(ICON)
+	@install -oroot -groot --mode=0644 gui/leovirtstarter2.png $(ICON)
 
 
 leoclient2-leovirtstarter-server:

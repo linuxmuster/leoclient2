@@ -3,9 +3,9 @@ etc/leoclient2/servers.conf
 etc/sudoers.d/80-leoclient2
 etc/linuxmuster-client/post-mount.d/011-leoclient2-set-permissions
 etc/linuxmuster-client/pre-umount.d/011-leoclient2-set-permissions
-usr/bin/leovirtstarter2-client
-usr/share/applications/leovirtstarter2-client.desktop
-usr/share/pixmaps/leovirtstarter2-client.png
+usr/bin/leovirtstarter2
+usr/share/applications/leovirtstarter2.desktop
+usr/share/pixmaps/leovirtstarter2.png
 usr/sbin/leoclient2-init
 usr/sbin/leoclient2-base-snapshot-renew
 usr/sbin/leoclient2-vm-move
