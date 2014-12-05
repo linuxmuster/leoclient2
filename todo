@@ -1,3 +1,11 @@
+
+Werden diese Scripte bei Paketupdate entfernt?
+/etc/linuxmuster-client/post-mount.d/011-leoclient2-set-permissions
+/etc/linuxmuster-client/pre-umount.d/011-leoclient2-set-permissions
+Wenn nein: evtl. mit einem postinstall script entfernen.
+
+
+
 sudoers: this works (on a normal ubuntu 14.04)
 
 1) sudo cp sudoers/leoclient2-sudoers  /usr/sbin/leoclient2-sudoers
