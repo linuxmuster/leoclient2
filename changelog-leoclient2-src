@@ -3,8 +3,11 @@
 
 ============LEOCLIENT2 CHANGELOG ====================================
 
-0.2.7-1 (2014-11-xx)
-    - added option --dump
+0.4.0-1 (2014-12-05)
+    - removed old config files:
+      - /etc/linuxmuster-client/post-mount.d/011-leoclient2-set-permissions
+      - /etc/linuxmuster-client/pre-umount.d/011-leoclient2-set-permissions
+    - added option --dump (just dumps a few things)
     - renamed leovirtstarter2-client to leovirtstarter2 
     - delete Snapshots/*.sav file if exising to start a VM
       - do not show 'as found' to avoid errors

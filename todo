@@ -2,7 +2,14 @@
 Werden diese Scripte bei Paketupdate entfernt?
 /etc/linuxmuster-client/post-mount.d/011-leoclient2-set-permissions
 /etc/linuxmuster-client/pre-umount.d/011-leoclient2-set-permissions
-Wenn nein: evtl. mit einem postinstall script entfernen.
+
+Entfernen mit:
+siehe:
+
+http://raphaelhertzog.com/2010/10/07/the-right-way-to-remove-an-obsolete-conffile-in-a-debian-package/
+
+dpkg-maintscript-helper rm_conffile /etc/linuxmuster-client/post-mount.d/011-leoclient2-set-permissions 0.2.7-1 -- "$@"
+dpkg-maintscript-helper rm_conffile  /etc/linuxmuster-client/pre-umount.d/011-leoclient2-set-permissions 0.2.7-1 -- "$@"
 
 
 
