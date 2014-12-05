@@ -12,7 +12,7 @@ Architecture: all
 Suggests: 
 Depends: libfilesys-df-perl, liblog-log4perl-perl, zenity, libio-interface-perl, rsync 
 Description: alternativ software to start VirtualBox
- leovirtstarter2-client copies and caches VirtualBox snapshots and starts
+ leovirtstarter2 copies and caches VirtualBox snapshots and starts
  them
 
 

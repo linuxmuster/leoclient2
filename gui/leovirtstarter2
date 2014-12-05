@@ -1,5 +1,5 @@
 #!/usr/bin/perl -w
-# This Script (leovirtstarter2-client) was created by Rüdiger Beck
+# This Script (leovirtstarter2) was created by Rüdiger Beck
 # It is released under the GPL Version 3
 # For Bugs send mail to (jeffbeck-at-web.de)
 
@@ -548,7 +548,7 @@ if ($set_permissions==1){
 
 # chmod all local dirs with sodo script 
 # as early as possible, not before the option (would be recursive)
-system("sudo /usr/bin/leovirtstarter2-client --set-permissions");
+system("sudo /usr/bin/leovirtstarter2 --set-permissions");
 
 
 # List serverdirs (hide later, show only with --info ??????) 
@@ -584,7 +584,7 @@ if ($vm ne ""){
     ## remove last dir to fit to remote dirs
     #$search_dir_local=~s/\/$//g;
     #$search_dir_local=~s/\/${vm}$//g;
-    ##system("leovirtstarter2-client --vm $vm");
+    ##system("leovirtstarter2 --vm $vm");
     ##exit;
 } elsif ($#vm==-1) {
     INFO "No machines found, aborting with gui Error\n";
@@ -719,7 +719,7 @@ print "VBOX_USER_HOME: $vm_path_export\n";
 
 
 if ($clean_cache==1){
-    INFO "Starting leovirtstarter2-client --clean-cache on $hostname";
+    INFO "Starting leovirtstarter2 --clean-cache on $hostname";
     INFO "Cleaning the cache";
     foreach my $cache (@cache_dirs){
         INFO "Removing recursively $cache";
@@ -734,7 +734,7 @@ if ($clean_cache==1){
 
 if ($clean_log==1){
     system("echo '' > $log");
-    INFO "Previous logfiles cleaned by leovirtstarter2-client --clean-log";
+    INFO "Previous logfiles cleaned by leovirtstarter2 --clean-log";
     INFO "########################## Exiting ###############################";
     exit;
 }
@@ -776,7 +776,7 @@ if ($prepare_remote_vm ne ""){
 #exit;
 
 
-INFO "Starting leovirtstarter2-client on $hostname";
+INFO "Starting leovirtstarter2 on $hostname";
 INFO "UUID: $vbox_uuid (Max RAM: $max_guest_ram)";
 my @unused=@ram_steps;
 # Abhängigkeiten von Paketen: 
@@ -817,7 +817,7 @@ my @unused=@ram_steps;
 # 
 
 # Option --pack-and-go path-to-packed-files
-# benutze leovirtstarter2-client.conf mit Pfad zu vorbereiteter/gepatchter 
+# benutze leovirtstarter2.conf mit Pfad zu vorbereiteter/gepatchter 
 # leovirtstarter2-server.conf
 # ersetze .VirtualBox oder patche sie (unionfs?)
 # beim beenden fragen ob /virtual wieder gelöschtw werden soll
@@ -937,7 +937,7 @@ foreach my $dir (@cache_dirs){
 }
 
 
-INFO "Starting leovirtstarter2-client GUI on $hostname";
+INFO "Starting leovirtstarter2 GUI on $hostname";
 
 ############################################################
 # GUI
