@@ -31,7 +31,7 @@ use POSIX qw(getgroups);
 # %var-> vm -> local -> ... sav
 #           -> remote -> ...
 
-my %vars=();
+my %all_vars=();
 
 #************************************************************
 #************************************************************
@@ -152,7 +152,8 @@ my @cache_dirs_size=();
 ##### defaults.conf ##### Server settings on the clients
 my $conf_defaults="";
 
-
+# the group a user must be member in to use all features
+my $permissive_group="vboxusers";
 
 # Snapshots
 # in which directory is the snapshot that is  used as the
@@ -224,12 +225,16 @@ my $host_gid=$host_entry[3];
 my ($host_room) = getgrgid($host_gid);
 
 # get username
-my $my_username = getpwuid( $< );
+$all_vars{'user'}{'uid'} = getpwuid( $< );
+# ???
+#my $my_username=$all_vars{'user'}{'uid'};
 
 # get list of the current groups for this process
 my @gidlist=getgroups();
 foreach my $gid (@gidlist){
+    #$all_vars{'user'}{'gidnumber'}{$gid} = "seen";
     my ($group) = getgrgid($gid);
+    $all_vars{'user'}{'gid'}{$group} = "seen";
     $my_groups{$group}=$gid;
 }
 ############################################################
@@ -295,6 +300,21 @@ my $testopt=GetOptions(
 # Prüfen, ob Optionen erkannt wurden, sonst Abbruch
 &check_options($testopt);
 
+# exit with warning if user is NOT in group vboxusers
+# (only vboxusers are allowed to use passwordless sudo to change permissions of a machine)
+if ($all_vars{'user'}{'uid'} ne "root"){
+    if (not exists $all_vars{'user'}{'gid'}{$permissive_group}){
+        # user in not in permissive group
+        print "$all_vars{'user'}{'uid'} is not in group $permissive_group\n";
+        my $message="$all_vars{'user'}{'uid'} muss in der Gruppe $permissive_group sein um leoclient2 verwenden zu können";
+        system("/usr/bin/zenity --warning --text='$message'");
+        exit;
+    } else {
+        print "OK: $all_vars{'user'}{'uid'} is in group $permissive_group\n";
+    }
+}
+
+
 if ($help==1){
    print('
 Options
@@ -322,7 +342,7 @@ Preparing VM or Snapshot:
 Development:
   --clean-cache   (clean all caches)
   --clean-log     (clean all log files)
-  --dump          (dump vars and exit)
+  --dump          (dump all_vars and exit)
 
 Non-Server use:
   --on-the-go /path/to/config/file  (using another config file)
@@ -471,10 +491,9 @@ foreach my $serverdir (@snapshot_search_dirs_remote){
 
 
 #print Dumper(\%read_access_vm);
-#print Dumper(\%my_groups);
 # --dump
 if ($dump==1){
-    print Dumper(\%vars);
+    print Dumper(\%all_vars);
     exit;
 }
 
@@ -514,11 +533,14 @@ if ($info==1){
 }
 
 
+
+
+
 # --set-permissions
 if ($set_permissions==1){
     # this can be called as root
     my %local_vm_dirs=();
-    print "--set-permissions called as $my_username by sudo from $ENV{SUDO_USER}\n";
+    print "--set-permissions called as $all_vars{'user'}{'uid'} by sudo from $ENV{SUDO_USER}\n";
     foreach my $vm (@vm_local){
         # local VM's
         $local_vm_dirs{$vm}="$vm_local{$vm}";
@@ -1156,9 +1178,9 @@ sub check_sav_file {
         if ($file=~m/.sav$/){
             $sav_file=$sav_dir."/".$file;
             # abs path to *.sav file
-            $vars{$machine}{'local'}{'sav'}=$sav_file;
+            $all_vars{$machine}{'local'}{'sav'}=$sav_file;
             # encountered sav file 0|1
-            $vars{$machine}{'local'}{'sav_seen'}=1;
+            $all_vars{$machine}{'local'}{'sav_seen'}=1;
         }
     }
     closedir SAV;
@@ -1409,13 +1431,15 @@ sub access_vm {
         $user_level=1;
     }
     if (exists $read_access_vm{$machine}{'user'} and 
-        exists $read_access_vm{$machine}{'user'}{$my_username}){
+#        exists $read_access_vm{$machine}{'user'}{$my_username}){
+        exists $read_access_vm{$machine}{'user'}{$all_vars{'user'}{'uid'}}){
         # grant access
         $user_level=1;
     }
     if (exists $read_access_vm{$machine}{'group'}){
         # go through all groups
         while (my ($group,$gid) = each %my_groups){
+#        while (my ($group,$gid) = each %all_vars{'user'}{'gid'}){
             if (exists $read_access_vm{$machine}{'group'}){
                 # grant access
                 $user_level=1;
@@ -2300,9 +2324,9 @@ sub create_radiobuttons {
         # Ignore "as used" button, when *.sav file was present
         if ($type eq "SYSTEM" # Buttonlist SYSTEM
              and $button eq $buttons_as_used # working on this button
-             and $vars{$vm}{'local'}{'sav_seen'}==1
+             and $all_vars{$vm}{'local'}{'sav_seen'}==1
            ){
-            print "No 'as used' button: Deleted $vars{$vm}{'local'}{'sav'}\n";
+            print "No 'as used' button: Deleted $all_vars{$vm}{'local'}{'sav'}\n";
             $selected{$type}=$snapshot_standard;
             next;
         }
