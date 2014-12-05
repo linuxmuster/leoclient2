@@ -2,27 +2,18 @@
 Packaging:
 ############################################################
 
-Testig git source code in a package:
-../developer-tools/packaging
-
-
 Make official package:
 make deb
 
+############################################################
+Packaging:
+############################################################
 
-Update a manual installation:
+Make sure to tag a new Release in git:
 
-1. Login as localadmin
-2. become root
-3. aptitude update
-4. aptitude install leoclient2-bsz-clientbundle
-   Overwrite configs: Y
-5. linuxmuster-client-extras-setup --delete-old stuff
-6. cd /usr/share/linuxmuster-client-extras/examples
-   ./bszleo-setup
-   
+Example:
 
-
+git tag V-0.4.1-1
 
 
 ############################################################
