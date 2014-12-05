@@ -3,6 +3,9 @@
 
 ============LEOCLIENT2 CHANGELOG ====================================
 
+0.4.1-1 (2014-12-05)
+    - show warning and exit if user is not in group vboxusers
+
 0.4.0-1 (2014-12-05)
     - removed old config files:
       - /etc/linuxmuster-client/post-mount.d/011-leoclient2-set-permissions
