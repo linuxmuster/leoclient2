@@ -16,8 +16,6 @@ DESKTOP=$(DESTDIR)/usr/share/applications
 ICON=$(DESTDIR)/usr/share/pixmaps
 INIT=$(DESTDIR)/etc/init.d
 ETC=$(DESTDIR)/etc/sudoers.d
-POSTMOUNT=$(DESTDIR)/etc/linuxmuster-client/post-mount.d
-PREUMOUNT=$(DESTDIR)/etc/linuxmuster-client/pre-umount.d
 
 
 help:
@@ -63,11 +61,6 @@ leoclient2-leovirtstarter-client:
 	@echo '   * Installing sudoers stuff'
 	@install -d -m0644 -oroot -groot $(ETC)
 	@install -oroot -groot --mode=0440 sudoers/80-leoclient2 $(ETC)
-	@echo '   * Installing linuxmusterclient sudoers stuff'
-	@install -d -m755 -oroot -groot $(POSTMOUNT)
-	@install -oroot -groot --mode=0644 mount-scripts/011-leoclient2-set-permissions $(POSTMOUNT)
-	@install -d -m755 -oroot -groot $(PREUMOUNT)
-	@install -oroot -groot --mode=0644 mount-scripts/011-leoclient2-set-permissions $(PREUMOUNT)
 	@echo '   * Installing unity dash entry'
 	@install -d -m0755 -oroot -groot $(DESKTOP)
 	@install -oroot -groot --mode=0644 gui/leovirtstarter2.desktop $(DESKTOP)
