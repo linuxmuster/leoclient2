@@ -3,7 +3,8 @@
 
 ============LEOCLIENT2 CHANGELOG ====================================
 
-0.4.1-1 (2014-12-05)
+0.4.2-1 (2014-12-09)
+    - change ownership of machine before starting
     - show warning and exit if user is not in group vboxusers
 
 0.4.0-1 (2014-12-05)

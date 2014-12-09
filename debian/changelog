@@ -1,3 +1,15 @@
+leoclient2 (0.4.3-1) trusty-unstable; urgency=medium
+
+  * Remove obsolete file /etc/sudoers.d/leoclient2
+
+ -- Ruediger Beck <bz@j1009p16.bszleo.de>  Tue, 09 Dec 2014 14:31:52 +0100
+
+leoclient2 (0.4.2-1) trusty-unstable; urgency=medium
+
+  * new upsteam Release
+
+ -- Ruediger Beck <bz@j1009p16.bszleo.de>  Tue, 09 Dec 2014 14:06:55 +0100
+
 leoclient2 (0.4.1-1) trusty-unstable; urgency=medium
 
   * new upsteam Release
