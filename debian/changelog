@@ -1,3 +1,9 @@
+leoclient2 (0.4.4-1) trusty-unstable; urgency=medium
+
+  * new upsteam Release
+
+ -- Ruediger Beck <bz@j1010p16.bszleo.de>  Tue, 09 Dec 2014 15:36:53 +0100
+
 leoclient2 (0.4.3-1) trusty-unstable; urgency=medium
 
   * Remove obsolete file /etc/sudoers.d/leoclient2

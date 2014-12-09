@@ -3,6 +3,9 @@
 
 ============LEOCLIENT2 CHANGELOG ====================================
 
+0.4.4-1 (2014-12-09)
+    - Use ~/Home_auf_Server for sharde home folder
+
 0.4.3-1 (2014-12-09)
     - remove obsolete file/etc/sudoers.d/leoclient2
 

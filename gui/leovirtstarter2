@@ -193,17 +193,13 @@ my @vm_remote=();
 # shell export variable for the machine
 my $vm_path_export="";
 
-# which filepath is used for the shared folder
+# which filepath is used for the shared home folder
 my $home = $ENV{'HOME'};
-# ????? was ist besser ?????
-# vm-printer/spooler/splitter
-#my $shared_home_abs=$home;
-
-my $shared_home_abs="~/Home_auf_Server";
+my $shared_home_abs=$home."/Home_auf_Server";
 if (not -d $shared_home_abs){
     $shared_home_abs="~";
-    print "Using $shared_home_abs for shared home folder\n";
 }
+print "Using $shared_home_abs for shared home folder\n";
 
 
 ############################################################
