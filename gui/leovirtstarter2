@@ -1180,6 +1180,9 @@ sub check_sav_file {
     my ($path,$machine) = @_;
     my $sav_dir=$path."/Snapshots";
     my $sav_file="none";
+    # set to not seen
+    $all_vars{$machine}{'local'}{'sav_seen'}=0;
+    $all_vars{$machine}{'local'}{'sav'}=$sav_file;
     opendir SAV, $sav_dir;
     foreach my $file (readdir SAV){
         if ($file eq "."){next};
