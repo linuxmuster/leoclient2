@@ -3,6 +3,9 @@
 
 ============LEOCLIENT2 CHANGELOG ====================================
 
+0.4.3-1 (2014-12-09)
+    - remove obsolete file/etc/sudoers.d/leoclient2
+
 0.4.2-1 (2014-12-09)
     - change ownership of machine before starting
     - show warning and exit if user is not in group vboxusers
