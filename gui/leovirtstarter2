@@ -551,16 +551,29 @@ if ($set_permissions==1){
     }
     while (my ($vm,$path) = each %local_vm_dirs){
         print "$vm  --> local --> $path\n";
-        my $file=$path."/".$vm.".vbox";
-        chmod 0777, $file;
-        $file=$path."/".$vm.".vbox-prev";
-        chmod 0777, $file;
-        $file=$path."/VBoxSVC.log";
-        chmod 0777, $file;
-        my $dir=$path."/Logs";
-        system("/bin/chmod 0777 -R $dir");
+        # make sure root can change owners and permissions
+        system("chmod -R 0755 $path");
+        # fix permissions
+        system("chown -R $ENV{SUDO_USER}.$permissive_group $path");
+        my $defaults=$path."/defaults";
+        system("chown -R root.root $defaults");
+        system("chmod -R 0555 $defaults");
+        my $snapshot_store=$path."/snapshot-store";
+        system("chown -R root.root $snapshot_store");
+        system("chmod -R 0555 $snapshot_store");
+        my $base_image=$path."/".$vm.".vdi";
+        chown 0, 0, $base_image;
+        chmod 0555, $base_image;
+        #my $file=$path."/".$vm.".vbox";
+        #chmod 0777, $file;
+        #$file=$path."/".$vm.".vbox-prev";
+        #chmod 0777, $file;
+        #$file=$path."/VBoxSVC.log";
+        #chmod 0777, $file;
+        #my $dir=$path."/Logs";
+        #system("/bin/chmod 0777 -R $dir");
         # remove file from save current state (at shutdown)
-        $file=&check_sav_file($path,$vm);
+        my $file=&check_sav_file($path,$vm);
         if ($file ne "none"){
             unlink $file;
         }
