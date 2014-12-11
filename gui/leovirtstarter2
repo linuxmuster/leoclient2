@@ -2475,7 +2475,8 @@ sub ram_sizes {
     DEBUG "Host memory size: $mem_mb";
     foreach my $size ( @ram_steps ){
         DEBUG "Is $size ok for $mem_mb ?";
-        my $diff_size=abs((0.4*$mem_mb)-$size);
+        # 0.34: give approx 34% to the virtual machine
+        my $diff_size=abs((0.34*$mem_mb)-$size);
         DEBUG "$diff_size > $last_diff_size ($size MB)";        
         if ($diff_size > $last_diff_size or
             $size >$max_guest_ram){
