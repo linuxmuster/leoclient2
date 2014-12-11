@@ -1,3 +1,9 @@
+leoclient2 (0.4.5-1) trusty; urgency=medium
+
+  * new upstream Release
+
+ -- Ruediger Beck <bz@j1009p21.bszleo.de>  Thu, 11 Dec 2014 16:31:46 +0100
+
 leoclient2 (0.4.4-1) trusty-unstable; urgency=medium
 
   * new upsteam Release

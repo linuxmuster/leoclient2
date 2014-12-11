@@ -3,6 +3,10 @@
 
 ============LEOCLIENT2 CHANGELOG ====================================
 
+0.4.5-1 (2014-12-11)
+    - correct lognames for printer/spooler added
+    - changed ram ro 40% (instead of 50%)
+
 0.4.4-1 (2014-12-09)
     - Use ~/Home_auf_Server for sharde home folder
 
