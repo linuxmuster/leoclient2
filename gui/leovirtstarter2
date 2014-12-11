@@ -2127,29 +2127,17 @@ sub get_zipped_snapshot {
     chomp($filesize_correct);
     my $filesize_correct_mb=int((1.1*$filesize_correct)/(1024*1024));
 
-    # snapshot is local
-    
+    # snapshot is only local
     if($#cache_dirs==-1){
-# ??????????
-    my $local_dir=&get_local_vm_path($vm,$vm_path_abs);
-
-    my $zip_file_local=$local_dir.
+        my $local_dir=&get_local_vm_path($vm,$vm_path_abs);
+        my $zip_file_local=$local_dir.
            "/snapshot-store/".$snapshot."/".$snapshot_file_name.".zip";
-        #my $target_dir = $dir."/".$snapshot;
-        #my $target=$target_dir."/".$snapshot_file_name.".zip";
-
-#        INFO "WARNING: No cache configured in $conf_caches";
-#        print "WARNING: No cache configured in $conf_caches",
-#              "$search_dir_local \n";
-#        INFO "Local snapshot is in:  $standard_snapshot_local_zipped";
-#        print "Local snapshot is in:  $standard_snapshot_local_zipped\n";
         my $started=&start_zipped_snaphot($zip_file_local);
         return $started;
-#         return $zip_file_local;
     }
 
-    INFO "Wanted in cache with size $filesize_correct:\n   $file_zipped";
 
+    INFO "Wanted in cache with size $filesize_correct:\n   $file_zipped";
     # is snapshot in cache already and size OK?
     foreach my $dir (@cache_dirs){
         my $file=$dir."/".$snapshot."/".$snapshot_file_name.".zip";
