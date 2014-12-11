@@ -24,8 +24,8 @@ my ($GID_name)=getgrgid($GID);
 my ($EGID_name)=getgrgid($EGID);
 
 # configure logging
-my $log="/tmp/run-vm-printer-splitter.log-".$UID_name;
-my $script="run-vm-printer-splitter";
+my $log="/tmp/run-vm-printer2-splitter.log-".$UID_name;
+my $script="run-vm-printer2-splitter";
 # allow everybody to log int the logfile
 umask 000;
 Log::Log4perl->easy_init({ 

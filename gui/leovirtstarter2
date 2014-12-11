@@ -2475,7 +2475,7 @@ sub ram_sizes {
     DEBUG "Host memory size: $mem_mb";
     foreach my $size ( @ram_steps ){
         DEBUG "Is $size ok for $mem_mb ?";
-        my $diff_size=abs((0.5*$mem_mb)-$size);
+        my $diff_size=abs((0.4*$mem_mb)-$size);
         DEBUG "$diff_size > $last_diff_size ($size MB)";        
         if ($diff_size > $last_diff_size or
             $size >$max_guest_ram){
