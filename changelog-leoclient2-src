@@ -3,6 +3,11 @@
 
 ============LEOCLIENT2 CHANGELOG ====================================
 
+0.4.6-1 (2014-12-11)
+    - start multiple local snapshots, when no SERVERDIR is configured
+      correctly
+    - changed ram ro 34% (instead of 40%)
+
 0.4.5-1 (2014-12-11)
     - correct lognames for printer/spooler added
     - changed ram ro 40% (instead of 50%)
