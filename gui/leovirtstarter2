@@ -132,6 +132,7 @@ my $standard_snapshot_local_zipped_obsolete="";
 # This will be read from /etc/leoclient2/servers.conf
 my @snapshot_search_dirs=();
 my @snapshot_search_dirs_remote=();
+my @snapshot_search_dirs_local=();
 # this is double ??? should be removed
 my $snapshot_search_dir_client="";
 
@@ -2126,17 +2127,28 @@ sub get_zipped_snapshot {
     chomp($filesize_correct);
     my $filesize_correct_mb=int((1.1*$filesize_correct)/(1024*1024));
 
-    INFO "Wanted in cache with size $filesize_correct:\n   $file_zipped";
+    # snapshot is local
     
     if($#cache_dirs==-1){
-        INFO "WARNING: No cache configured in $conf_caches";
-        print "WARNING: No cache configured in $conf_caches",
-              "$search_dir_local \n";
-        INFO "Local snapshot is in:  $standard_snapshot_local_zipped";
-        print "Local snapshot is in:  $standard_snapshot_local_zipped\n";
-        my $started=&start_zipped_snaphot($standard_snapshot_local_zipped);
+# ??????????
+    my $local_dir=&get_local_vm_path($vm,$vm_path_abs);
+
+    my $zip_file_local=$local_dir.
+           "/snapshot-store/".$snapshot."/".$snapshot_file_name.".zip";
+        #my $target_dir = $dir."/".$snapshot;
+        #my $target=$target_dir."/".$snapshot_file_name.".zip";
+
+#        INFO "WARNING: No cache configured in $conf_caches";
+#        print "WARNING: No cache configured in $conf_caches",
+#              "$search_dir_local \n";
+#        INFO "Local snapshot is in:  $standard_snapshot_local_zipped";
+#        print "Local snapshot is in:  $standard_snapshot_local_zipped\n";
+        my $started=&start_zipped_snaphot($zip_file_local);
         return $started;
+#         return $zip_file_local;
     }
+
+    INFO "Wanted in cache with size $filesize_correct:\n   $file_zipped";
 
     # is snapshot in cache already and size OK?
     foreach my $dir (@cache_dirs){
@@ -2247,11 +2259,6 @@ sub get_zipped_snapshot {
             system("cp -v '$file_zipped' '$target' &");
             INFO "* ... done!";
             return $target;
-            #my $actual_size = -s $target;
-            #if (defined $actual_size and $actual_size==$filesize_correct){
-            #    INFO "*** Snapshot size correct!";
-            #    return $target;
-            #}
         } else {
             INFO "Could not find space to cache $file";
         }# end if $space_left_mb > 10+int ...
