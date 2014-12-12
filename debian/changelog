@@ -1,3 +1,10 @@
+leoclient2 (0.4.7-2) trusty; urgency=medium
+
+  * Added dependency from virtualbox
+  * Removed server package and bsz-client-bundle
+
+ -- Ruediger Beck <bz@j1009p16.bszleo.de>  Fri, 12 Dec 2014 15:34:04 +0100
+
 leoclient2 (0.4.6-1) trusty; urgency=medium
 
   * new upstream Release

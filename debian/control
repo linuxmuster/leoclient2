@@ -10,20 +10,20 @@ Standards-Version: 3.5.2
 Package: leoclient2-leovirtstarter-client
 Architecture: all
 Suggests: 
-Depends: libfilesys-df-perl, liblog-log4perl-perl, zenity, libio-interface-perl, rsync 
+Depends: libfilesys-df-perl, liblog-log4perl-perl, zenity, libio-interface-perl, rsync, virtualbox 
 Description: alternativ software to start VirtualBox
  leovirtstarter2 copies and caches VirtualBox snapshots and starts
  them
 
 
-Package: leoclient2-leovirtstarter-server
-Architecture: all
-Suggests: 
-Pre-Depends:
-Depends:
-Description: prepare snapshots for leovirtstarter-client 
- leovirtstarter-server compresses snapshots and determines theis sizes and 
- syncs them to other servers
+#Package: leoclient2-leovirtstarter-server
+#Architecture: all
+#Suggests: 
+#Pre-Depends:
+#Depends:
+#Description: prepare snapshots for leovirtstarter-client 
+# leovirtstarter-server compresses snapshots and determines theis sizes and 
+# syncs them to other servers
 
 
 
@@ -37,12 +37,12 @@ Description: Watches a directory used for virtual machine printing.
 
 
 
-Package: leoclient2-bsz-clientbundle
-Architecture: all
-Suggests: 
-Pre-Depends:
-Depends: leoclient2-leovirtstarter-client, leoclient2-vm-printer, linuxmuster-client-extras 
-Description: Complete bundle of packages at BSZ Leonberg 
+#Package: leoclient2-bsz-clientbundle
+#Architecture: all
+#Suggests: 
+#Pre-Depends:
+#Depends: leoclient2-leovirtstarter-client, leoclient2-vm-printer, linuxmuster-c#lient-extras 
+#Description: Complete bundle of packages at BSZ Leonberg 
 
 
 
