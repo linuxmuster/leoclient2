@@ -113,8 +113,6 @@ my $server_popularity_log_file=".log-popularity";
 
 # which user,group,host,room can access the machine
 my %read_access_vm=();
-# which user, group is the user that starts this script
-my %my_groups=();
 
 # Contains information about snapshots
 my %snapshots=();
@@ -219,12 +217,13 @@ if (not defined $host_uid){
 }
 my @host_entry= getpwuid($host_uid);
 my $host_gid=$host_entry[3];
-my ($host_room) = getgrgid($host_gid);
+$all_vars{'host'}{'roomuidnumber'} = $host_entry[3];
+$all_vars{'host'}{'room'} = getgrgid($host_gid);
+
+#my ($host_room) = getgrgid($host_gid);
 
 # get username
 $all_vars{'user'}{'uid'} = getpwuid( $< );
-# ???
-#my $my_username=$all_vars{'user'}{'uid'};
 
 # get list of the current groups for this process
 my @gidlist=getgroups();
@@ -232,7 +231,6 @@ foreach my $gid (@gidlist){
     #$all_vars{'user'}{'gidnumber'}{$gid} = "seen";
     my ($group) = getgrgid($gid);
     $all_vars{'user'}{'gid'}{$group} = "seen";
-    $my_groups{$group}=$gid;
 }
 ############################################################
 
@@ -1430,7 +1428,8 @@ sub access_vm {
         $host_level=1;
     }
     if (exists $read_access_vm{$machine}{'room'} and 
-        exists $read_access_vm{$machine}{'room'}{$host_room}){
+#        exists $read_access_vm{$machine}{'room'}{$host_room}){
+        exists $read_access_vm{$machine}{'room'}{$all_vars{'host'}{'room'}}){
         # grant access
         $host_level=1;
     }
@@ -1444,15 +1443,13 @@ sub access_vm {
         $user_level=1;
     }
     if (exists $read_access_vm{$machine}{'user'} and 
-#        exists $read_access_vm{$machine}{'user'}{$my_username}){
         exists $read_access_vm{$machine}{'user'}{$all_vars{'user'}{'uid'}}){
         # grant access
         $user_level=1;
     }
     if (exists $read_access_vm{$machine}{'group'}){
         # go through all groups
-        while (my ($group,$gid) = each %my_groups){
-#        while (my ($group,$gid) = each %all_vars{'user'}{'gid'}){
+        while (my ($group,$gid) = each %{ $all_vars{'user'}{'gid'} }){
             if (exists $read_access_vm{$machine}{'group'}){
                 # grant access
                 $user_level=1;
@@ -2380,11 +2377,15 @@ sub create_radiobuttons {
         my $host_check_ok=1; # default: display
 
         if ($room_check==1){
-          if (exists $snapshots{$button}{'rooms'}{$host_room}){
-	      INFO "Room $host_room is ",
-                   "$snapshots{$button}{'rooms'}{$host_room}";
+#          if (exists $snapshots{$button}{'rooms'}{$host_room}){
+          if (exists $snapshots{$button}{'rooms'}{$all_vars{'host'}{'room'}}){
+#	      INFO "Room $host_room is ",
+#                   "$snapshots{$button}{'rooms'}{$host_room}";
+	      INFO "Room $all_vars{'host'}{'room'} is ",
+                   "$snapshots{$button}{'rooms'}{$all_vars{'host'}{'room'}}";
           } else {
-              INFO "Room >$host_room< not found as allowed room";
+#              INFO "Room >$host_room< not found as allowed room";
+              INFO "Room >$all_vars{'host'}{'room'}< not found as allowed room";
               $room_check_ok=0; 
           }
         }
