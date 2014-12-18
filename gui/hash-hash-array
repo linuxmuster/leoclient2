@@ -1,0 +1,101 @@
+#!/usr/bin/perl -w
+# This Script (leovirtstarter2) was created by Rüdiger Beck
+# It is released under the GPL Version 3
+# For Bugs send mail to (jeffbeck-at-web.de)
+
+use strict;
+use Glib qw/TRUE FALSE/;
+use Gtk2 '-init';
+use Getopt::Long;
+use utf8;
+use File::Basename;
+use Log::Log4perl qw(:easy);
+use Sys::Hostname;
+use Data::Dumper;
+use IO::Interface::Simple;
+use POSIX qw(getgroups);
+
+my %hash=();
+
+# Start, deletes previous
+#%hash=(ordered => ["first","second","third","fourth"]);
+
+
+my @list=("first","second","third","fourth");
+my @append=("7th","8th","9th");
+
+
+
+# add a list
+$hash{'ordered'}=[ @list ];
+# this deletes the previous content
+#$hash{'ordered'}=["fourth"];
+
+# push to an list
+push @{ $hash{'ordered'} }, "fifth", "sixth";
+# overwrite element 1
+$hash{'ordered'}[0]="1st";
+
+
+# add hashes of hashes
+$hash{'marks'}{'Peter'}="3";
+$hash{'marks'}{'Hans'}="4";
+$hash{'marks'}{'Werner'}="2";
+$hash{'OS'}{'win'}{'XP'}="1";
+$hash{'OS'}{'win'}{'7'}="0";
+$hash{'OS'}{'win'}{'8'}="1";
+$hash{'OS'}{'win'}{'8.1'}="1";
+
+
+# dump the hash
+print Dumper(\%hash);
+
+
+print "Show the subarray:\n";
+print "   * List: @{ $hash{'ordered'} }\n";
+
+############################################################
+# ARRAY
+############################################################
+my $subarray="ordered";
+print "Iterate through all elements of the subarray:\n";
+foreach my $item ( @{ $hash{$subarray} } ){
+    print "   * $item  \n";
+
+}
+
+
+# sort the Array
+print "Iterate through all elements of the subarray:\n";
+@{ $hash{$subarray} } = sort @{ $hash{$subarray} };
+
+
+# print the array again
+print "Iterate through all elements of the subarray:\n";
+foreach my $item ( @{ $hash{$subarray} } ){
+    print "   * $item  \n";
+
+}
+
+
+
+############################################################
+# HASH
+############################################################
+
+
+# SUBHASH
+my $subhash="marks";
+print "Iterate through all elements of the subhash $subhash:\n";
+for my $key ( keys %{ $hash{$subhash} } ) {
+    print "   * $key --> $hash{$subhash}{$key} \n";
+}
+
+
+# SUBSUBHASH
+$subhash="OS";
+my $subsubhash="win";
+print "Iterate through all elements of the subsubhash $subsubhash:\n";
+for my $key ( keys %{ $hash{$subhash}{$subsubhash} } ) {
+    print "   * $key --> $hash{$subhash}{$subsubhash}{$key} \n";
+}
