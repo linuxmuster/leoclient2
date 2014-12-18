@@ -84,7 +84,7 @@ foreach my $item ( @{ $hash{$subarray} } ){
 ############################################################
 
 
-# SUBHASH
+# SUBHASH using keys
 my $subhash="marks";
 print "Iterate through all elements of the subhash $subhash:\n";
 for my $key ( keys %{ $hash{$subhash} } ) {
@@ -92,10 +92,10 @@ for my $key ( keys %{ $hash{$subhash} } ) {
 }
 
 
-# SUBSUBHASH
+# SUBSUBHASH using each
 $subhash="OS";
 my $subsubhash="win";
 print "Iterate through all elements of the subsubhash $subsubhash:\n";
-for my $key ( keys %{ $hash{$subhash}{$subsubhash} } ) {
-    print "   * $key --> $hash{$subhash}{$subsubhash}{$key} \n";
+while (my ($key,$value) = each %{ $hash{$subhash}{$subsubhash} } ) {
+    print "   * $key --> $value \n";
 }
