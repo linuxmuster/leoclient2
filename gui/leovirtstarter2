@@ -128,7 +128,7 @@ my $standard_snapshot_local_zipped_obsolete="";
 
 
 # This will be read from /etc/leoclient2/servers.conf
-my @snapshot_search_dirs=();
+#my @snapshot_search_dirs=();
 #my @snapshot_search_dirs_remote=();
 #my @snapshot_search_dirs_local=();
 # this is double ??? should be removed
@@ -740,8 +740,7 @@ if ($local_snapshots==1){
 }
 
 #@snapshot_search_dirs=($search_dir_local,@snapshot_search_dirs_remote);
-@snapshot_search_dirs=($all_vars{'searchdirs'}{'local'}[0],@{ $all_vars{'searchdirs'}{'remote'} });
-
+@{ $all_vars{'searchdirs'}{'all'} }=($all_vars{'searchdirs'}{'local'}[0],@{ $all_vars{'searchdirs'}{'remote'} });;
 
 
 
@@ -783,6 +782,13 @@ if ($clean_log==1){
 # --dump
 if ($dump==1){
     print Dumper(\%all_vars);
+    print "Explanation of VARS:\n";
+    print "searchdirs -> local is THE exactly ONE dir of the local machine\n";
+    print "           -> remote are the dir(s) in SERVERDIR\n";
+    print "           -> all is ONE local followed by the remote(s)\n";
+    print "user       -> Info about the user that has started leovirtstarter2\n";
+    print "host       -> Info about the machine on which leovirtstarter2 runs\n";
+    print "machines   -> Info about ALL virtual machines available\n";
     exit;
 }
 
@@ -932,11 +938,11 @@ my $buttons_default="$vm Standard";
 my $buttons_as_used="$vm wie vorgefunden";
 
 #my @buttons=&get_snapshots($snapshot_search_dir_client);
-my @buttons=&get_snapshots(@snapshot_search_dirs);
+#my @buttons=&get_snapshots(@snapshot_search_dirs);
+my @buttons=&get_snapshots( @{ $all_vars{'searchdirs'}{'all'} } );
 
 
 # ??????
-#print Dumper(\@snapshot_search_dirs);
 #print Dumper(\%snapshots);
 
 # display as used button? 
@@ -1196,8 +1202,8 @@ sub check_sav_file {
     my $sav_dir=$path."/Snapshots";
     my $sav_file="none";
     # set to not seen
-    $all_vars{$machine}{'local'}{'sav_seen'}=0;
-    $all_vars{$machine}{'local'}{'sav'}=$sav_file;
+    $all_vars{'machines'}{$machine}{'local'}{'sav_seen'}=0;
+    $all_vars{'machines'}{$machine}{'local'}{'sav'}=$sav_file;
     opendir SAV, $sav_dir;
     foreach my $file (readdir SAV){
         if ($file eq "."){next};
@@ -1205,9 +1211,9 @@ sub check_sav_file {
         if ($file=~m/.sav$/){
             $sav_file=$sav_dir."/".$file;
             # abs path to *.sav file
-            $all_vars{$machine}{'local'}{'sav'}=$sav_file;
+            $all_vars{'machines'}{$machine}{'local'}{'sav'}=$sav_file;
             # encountered sav file 0|1
-            $all_vars{$machine}{'local'}{'sav_seen'}=1;
+            $all_vars{'machines'}{$machine}{'local'}{'sav_seen'}=1;
         }
     }
     closedir SAV;
@@ -1229,7 +1235,8 @@ sub get_local_vm_path {
 
 
 sub zip_snapshots {
-    my @snapshots=&get_snapshots(@snapshot_search_dirs);
+#    my @snapshots=&get_snapshots(@snapshot_search_dirs);
+    my @snapshots=&get_snapshots( @{ $all_vars{'searchdirs'}{'all'} } );
     @snapshots = ("standard",@snapshots);
     # all snaphots bit not base
     foreach my $snapshot (@snapshots){
@@ -2347,9 +2354,9 @@ sub create_radiobuttons {
         # Ignore "as used" button, when *.sav file was present
         if ($type eq "SYSTEM" # Buttonlist SYSTEM
              and $button eq $buttons_as_used # working on this button
-             and $all_vars{$vm}{'local'}{'sav_seen'}==1
+             and $all_vars{'machines'}{$vm}{'local'}{'sav_seen'}==1
            ){
-            print "No 'as used' button: Deleted $all_vars{$vm}{'local'}{'sav'}\n";
+            print "No 'as used' button: Deleted $all_vars{'machines'}{$vm}{'local'}{'sav'}\n";
             $selected{$type}=$snapshot_standard;
             next;
         }
