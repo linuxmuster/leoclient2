@@ -1,0 +1,57 @@
+Leoclient 2 Betatest beginnt!
+
+Wir freuen uns noch vor Weihnachten den Leoclient2
+(Paketversion 0.4.7-2) in die Betatestphase zu bringen.
+
+Das bedeutet:
+
+ - Paketquelle für den Leoclient2 ist ab sofort das Trusty-Repository von
+   linuxmuster.net
+
+ - Das Format(Dateistruktur) der virtuellen Maschinen wird sich nicht 
+   mehr ändern. 
+
+ - Wir finden keine Fehler mehr, ihr müsst mithelfen welche zu suchen.
+
+ - Leoclient (Version 1) erfährt keine Bugfixes/Updates mehr
+   Bis zum neuen Schuljahr sollte man auf den Leoclient2 umgestiegen sein.
+   Eine Anleitung zum Umziehen folgt.
+
+ - Alphatester, die Leoclient2 schon vor Paketversion 0.4.7-2 nutzen,
+   sollten möglichst bald auf 0.4.7-2 upgraden. Evtl. müssen dazu in
+   der Virtuellen Maschine Dateinamen angepasst und
+   Konfigurationsdateien angepasst werden. Bei Fragen bitte an uns mailen.
+
+
+Features von Leoclient2:
+
+- Stark vereinfachte Konfiguration:
+  VM mit einem Script erstellen, neues Linbo Image erstellen, habe fertig.
+
+- Starten unterschiedlicher Virtueller Maschinen möglich (z.B. winXP
+  und Windows 7) 
+
+- Bestehende VirtualBox-Maschinen (z.B. auf dem Laptop daheim) werden
+  vom Leoclient2 nicht tangiert.
+
+- Es können auch Entwicklungsumgebungen erstellt werden (z.B. IPFIRE
+  UND Linuxmuster.net Server und Ubuntuclient)
+
+- Zu jeder Maschine können wie bisher beliebig viele Snapshots
+  erstellt werden.
+
+- Remote virtuelle Maschinen sind möglich (Ressourcensparendes
+  kopieren auf die Clients)
+
+- Rechtevergabe für die Maschinen (Auf welchem Rechner kann welche
+  Person welche VM starten)
+
+- Netzwerk konfigurierbar (ohne Netz, NAT, Bridge)
+
+
+Die Dokumentation findet sich unter:
+
+http://www.linuxmuster.net/wiki/entwicklung:linuxclient:leoclient2
+
+
+   Rainer und Rüdiger
