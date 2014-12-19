@@ -10,6 +10,7 @@ snapshot_search_dirs
 
 rsync commands throw errors, because snapshot-store and defaults and baseimage is not writeable
 --> fix this as root in --set-permissions
+    rsync from server (snapshot-store, defaults, baseimage)
 --> remove $rsync_command1 and $rsync_command2
 
 
@@ -43,24 +44,12 @@ sudoers: this works (on a normal ubuntu 14.04)
 
 
 Bugs Schule/Rainer:
-bei winXP im serverordner fehlt der Ordner defaults mit Inhalt
-In: defaults/VirtualBox.xml:
-      <MachineEntry uuid="{85d347a6-a3f5-4dc9-bbfd-e4685ef874e0}" src="/virtual/winXP/winXP.vbox"/>
-
-Müsste lauten:
-      <MachineEntry uuid="{85d347a6-a3f5-4dc9-bbfd-e4685ef874e0}" src="/virtual/leoclient2-vm/winXP/winXP.vbox"/>
-
-so wie in /etc/leoclient2/machines/winXP.conf
-
-Wieso tuts an der Schule eigentlich mit dem anderen Pfad? (leoclient1 übrigbleibsel)
-
-
 
 Todo:
 ----------------------------------------------------------------------
 
 bei langem rsync hinundhergehender Fortschrittsbalken anzeigen?
-
+ - nicht erforderlich
 
 Bugs important
 ------------------------------------------------
@@ -72,11 +61,8 @@ snapshot-store/standard/filesize.vdi.zipped
 
 Install snapshot and vms from stick
 
-Variablen umbenennen
-evtl. alles in ein Hash %var-> vm -> local -> ...
-                                  -> remote -> ...
 
-Bug: lokale snapshots (außer standard) werden nicht angezeigt
+Remote und lokale snapshots 
 - remote gucken, lokal gucken nach snapshots
   nur 1x anzeigen mit Hinweis (lokal).
   beim starten syncen und lokales startetn
@@ -88,7 +74,8 @@ image.conf in den snapshots auch umsetzen wie be vm's
 
 
 VEU:
-wenn eine Maschine gestartet wird und man geht in virtualbox und zum standard-snapshot zurück, dann werden die shared folders nicht gepatched
+wenn eine Maschine gestartet wird und man geht in virtualbox und zum 
+standard-snapshot zurück, dann werden die shared folders nicht gepatched
 
 
 
@@ -120,11 +107,6 @@ Sinnvolle Fehlermeldung absetzten (zenity) und trotzdem booten.
 
 Abgleichen/Überlegen
 ----------------------------------------------------------------------
-starten wie vorgefunden 
-Was soll da alle gelassen werden?
-Siehe "start VM with snapshot as found" im script
-
-Wie ist das wenn beim ausschalten "Zustand der virtuellen Maschine speichern gewählt wird"
 
 
 ältere Versionen haben win7/snapshot-store/standard/snapshot.zip angelegt
@@ -138,6 +120,16 @@ falls vorhanden: Warnung ausgeben diese umzubenennen in
 
 Sonstiges:
 ----------------------------------------------------------------------
+
+server headless autostart
+ - show headless command
+ - Datei autostart.conf
+   COMMAND=EXPORT ....VBoxManage startvm ubuntu-server --type headless
+   SHADED FOLDER
+Script, dass beim booten alle so markierten VM's startet
+Oder das hier benutzen:
+http://vboxtool.sourceforge.net/
+ 
 
 
 
@@ -194,6 +186,7 @@ default.conf einführen, ähnlich wie cache.conf
 - run-vm-printer2-spooler/splitter wird nicht gestartet
 
 - if VirtualBox.xml is not writeable, call sodoers script
+
 
 
 

@@ -211,7 +211,7 @@ my $host_gid=$host_entry[3];
 $all_vars{'host'}{'roomuidnumber'} = $host_entry[3];
 $all_vars{'host'}{'room'} = getgrgid($host_gid);
 
-#my ($host_room) = getgrgid($host_gid);
+
 
 # get username
 $all_vars{'user'}{'uid'} = getpwuid( $< );
