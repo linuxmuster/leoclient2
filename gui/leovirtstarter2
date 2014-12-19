@@ -112,7 +112,7 @@ my $server_popularity_log_file=".log-popularity";
 #************************************************************
 
 # which user,group,host,room can access the machine
-my %read_access_vm=();
+#my %read_access_vm=();
 
 # Contains information about snapshots
 my %snapshots=();
@@ -760,7 +760,7 @@ if ($dump==1){
     print "           -> all is ONE local followed by the remote(s)\n";
     print "user       -> Info about the user that has started leovirtstarter2\n";
     print "host       -> Info about the machine on which leovirtstarter2 runs\n";
-    print "machines   -> Info about ALL virtual machines available\n";
+    print "vms        -> Info about ALL virtual machines available\n";
     exit;
 }
 
@@ -1172,8 +1172,8 @@ sub check_sav_file {
     my $sav_dir=$path."/Snapshots";
     my $sav_file="none";
     # set to not seen
-    $all_vars{'machines'}{$machine}{'local'}{'sav_seen'}=0;
-    $all_vars{'machines'}{$machine}{'local'}{'sav'}=$sav_file;
+    $all_vars{'vms'}{$machine}{'local'}{'sav_seen'}=0;
+    $all_vars{'vms'}{$machine}{'local'}{'sav'}=$sav_file;
     opendir SAV, $sav_dir;
     foreach my $file (readdir SAV){
         if ($file eq "."){next};
@@ -1181,9 +1181,9 @@ sub check_sav_file {
         if ($file=~m/.sav$/){
             $sav_file=$sav_dir."/".$file;
             # abs path to *.sav file
-            $all_vars{'machines'}{$machine}{'local'}{'sav'}=$sav_file;
+            $all_vars{'vms'}{$machine}{'local'}{'sav'}=$sav_file;
             # encountered sav file 0|1
-            $all_vars{'machines'}{$machine}{'local'}{'sav_seen'}=1;
+            $all_vars{'vms'}{$machine}{'local'}{'sav_seen'}=1;
         }
     }
     closedir SAV;
@@ -1371,7 +1371,8 @@ sub sync_vm_to_local {
 
 sub read_access_vm {
     # which user,group,host,room can accessthe vm 
-    # fill the hash %read_access_vm
+#    # fill the hash %read_access_vm
+    # fill the hash all_vars{'vms'}{$VM}{'access'}
     my ($path,$machine)=@_;
     my $file=$path."/image.conf";
     if (not -e $file){
@@ -1393,7 +1394,8 @@ sub read_access_vm {
         my ($option,$data)=split(/=/);
         my @data=split(/,/,$data);
         foreach my $date (@data){
-            $read_access_vm{$machine}{$option}{$date}='access';
+#            $read_access_vm{$machine}{$option}{$date}='access';
+            $all_vars{'vms'}{$machine}{'access'}{$option}{$date}='access';
         }
 
     }
@@ -1409,19 +1411,24 @@ sub access_vm {
     # host-level acces
     my $host_level=0;
     # no host and no room
-    if (not exists $read_access_vm{$machine}{'host'} and 
-        not exists $read_access_vm{$machine}{'room'}){
+#    if (not exists $read_access_vm{$machine}{'host'} and 
+#        not exists $read_access_vm{$machine}{'room'}){
+    if (not exists $all_vars{'vms'}{$machine}{'access'}{'host'} and
+        not exists $all_vars{'vms'}{$machine}{'access'}{'room'}){
         # grant access
         $host_level=1;
     }
-    if (exists $read_access_vm{$machine}{'host'} and 
-        exists $read_access_vm{$machine}{'host'}{$hostname}){
+#    if (exists $read_access_vm{$machine}{'host'} and 
+#        exists $read_access_vm{$machine}{'host'}{$hostname}){
+    if (exists $all_vars{'vms'}{$machine}{'access'}{'host'} and 
+        exists $all_vars{'vms'}{$machine}{'access'}{'host'}{$hostname}){
         # grant access
         $host_level=1;
     }
-    if (exists $read_access_vm{$machine}{'room'} and 
-#        exists $read_access_vm{$machine}{'room'}{$host_room}){
-        exists $read_access_vm{$machine}{'room'}{$all_vars{'host'}{'room'}}){
+#    if (exists $read_access_vm{$machine}{'room'} and 
+#        exists $read_access_vm{$machine}{'room'}{$all_vars{'host'}{'room'}}){
+    if (exists $all_vars{'vms'}{$machine}{'access'}{'room'} and 
+        exists $all_vars{'vms'}{$machine}{'access'}{'room'}{$all_vars{'host'}{'room'}}){
         # grant access
         $host_level=1;
     }
@@ -1429,20 +1436,26 @@ sub access_vm {
     # user-level acces
     my $user_level=0;
     # no user and no group
-    if (not exists $read_access_vm{$machine}{'user'} and 
-        not exists $read_access_vm{$machine}{'group'}){
+#    if (not exists $read_access_vm{$machine}{'user'} and 
+#        not exists $read_access_vm{$machine}{'group'}){
+    if (not exists $all_vars{'vms'}{$machine}{'access'}{'user'} and 
+        not exists $all_vars{'vms'}{$machine}{'access'}{'group'}){
         # grant access
         $user_level=1;
     }
-    if (exists $read_access_vm{$machine}{'user'} and 
-        exists $read_access_vm{$machine}{'user'}{$all_vars{'user'}{'uid'}}){
+#    if (exists $read_access_vm{$machine}{'user'} and 
+#        exists $read_access_vm{$machine}{'user'}{$all_vars{'user'}{'uid'}}){
+    if (exists $all_vars{'vms'}{$machine}{'access'}{'user'} and 
+        exists $all_vars{'vms'}{$machine}{'access'}{'user'}{$all_vars{'user'}{'uid'}}){
         # grant access
         $user_level=1;
     }
-    if (exists $read_access_vm{$machine}{'group'}){
+#    if (exists $read_access_vm{$machine}{'group'}){
+    if (exists $all_vars{'vms'}{$machine}{'access'}{'group'}){
         # go through all groups
         while (my ($group,$gid) = each %{ $all_vars{'user'}{'gid'} }){
-            if (exists $read_access_vm{$machine}{'group'}){
+#            if (exists $read_access_vm{$machine}{'group'}){
+            if (exists $all_vars{'vms'}{$machine}{'access'}{'group'}){
                 # grant access
                 $user_level=1;
             }
@@ -2320,9 +2333,9 @@ sub create_radiobuttons {
         # Ignore "as used" button, when *.sav file was present
         if ($type eq "SYSTEM" # Buttonlist SYSTEM
              and $button eq $buttons_as_used # working on this button
-             and $all_vars{'machines'}{$vm}{'local'}{'sav_seen'}==1
+             and $all_vars{'vms'}{$vm}{'local'}{'sav_seen'}==1
            ){
-            print "No 'as used' button: Deleted $all_vars{'machines'}{$vm}{'local'}{'sav'}\n";
+            print "No 'as used' button: Deleted $all_vars{'vms'}{$vm}{'local'}{'sav'}\n";
             $selected{$type}=$snapshot_standard;
             next;
         }
