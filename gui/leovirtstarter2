@@ -117,7 +117,6 @@ my %read_access_vm=();
 # Contains information about snapshots
 my %snapshots=();
 
-#my $search_dir_local="";
 my $standard_snapshot_local_zipped="";
 # old snapshot.zip
 my $standard_snapshot_local_zipped_obsolete="";
@@ -125,14 +124,6 @@ my $standard_snapshot_local_zipped_obsolete="";
 
 ############################################################
 # new config
-
-
-# This will be read from /etc/leoclient2/servers.conf
-#my @snapshot_search_dirs=();
-#my @snapshot_search_dirs_remote=();
-#my @snapshot_search_dirs_local=();
-# this is double ??? should be removed
-my $snapshot_search_dir_client="";
 
 # Base image source is calculated
 my $base_image_source="";
@@ -370,7 +361,6 @@ while (<CONFFILE>){
    my ($option,$data)=split(/=/);
    if ($option eq "SERVERDIR"){
        push @{ $all_vars{'searchdirs'}{'remote'} }, $data;
-       #push @snapshot_search_dirs_remote, $data;
    }
 }
 close CONFFILE;
@@ -381,15 +371,12 @@ close CONFFILE;
 # --serverdir ...
 if (@serverdir){
     # option used, overwrite
-    #@snapshot_search_dirs_remote = @serverdir;
     @{ $all_vars{'searchdirs'}{'remote'} } = @serverdir;
 }
 
 
 # Set variables based on serverdirs
 # caches.conf must be in first serverdir (????? Look in all server dirs)
-#if (defined $snapshot_search_dirs_remote[0]){ 
-#    $conf_caches=$snapshot_search_dirs_remote[0]."/caches.conf";
 if (defined $all_vars{'searchdirs'}{'remote'}[0]){ 
     $conf_caches=$all_vars{'searchdirs'}{'remote'}[0]."/caches.conf";
 } else {
@@ -457,7 +444,6 @@ closedir CONFDIR;
 
 
 # read REMOTE vm's from SERVERDIR (excude local machines)
-#foreach my $serverdir (@snapshot_search_dirs_remote){
 foreach my $serverdir ( @{ $all_vars{'searchdirs'}{'remote'} } ){
     print "Looking for remote machines in: $serverdir\n";
     opendir SERVERDIR, $serverdir;
@@ -587,7 +573,6 @@ system("sudo /usr/bin/leovirtstarter2 --set-permissions");
 # List searchdirs (hide later, show only with --info ??????) 
 
 print "Configured SERVERDIR:\n";
-#foreach my $dir (@snapshot_search_dirs_remote){
 foreach my $dir ( @{ $all_vars{'searchdirs'}{'remote'} } ){
        print "  SERVERDIR: $dir\n";
 }
@@ -659,21 +644,11 @@ if (not exists $vm{$vm}){
 $vm_path_abs=$vm{$vm};
 my $vbox_uuid=&get_vbox_uuid($vm);
 print "UUID: $vbox_uuid\n";
-#$search_dir_local=$vm_path_abs;
-## remove last dir to fit to remote dirs
-#$search_dir_local=~s/\/$//g;
-#$search_dir_local=~s/\/${vm}$//g;
-
 $all_vars{'searchdirs'}{'local'}[0]=$vm_path_abs;
+## remove last dir to fit to remote dirs
 $all_vars{'searchdirs'}{'local'}[0]=~s/\/$//g;
 $all_vars{'searchdirs'}{'local'}[0]=~s/\/${vm}$//g;
-
-
-
-
-
 # Where is the zipped standard snaphot
-#foreach my $dir (@snapshot_search_dirs_remote){
 foreach my $dir (@{ $all_vars{'searchdirs'}{'remote'} }){
     # Remote data
     $vm_dir_remote_parent=$dir;
@@ -735,13 +710,10 @@ print "  * Local base snapshot: $standard_snapshot_local_zipped\n";
 # --local-snapshots
 if ($local_snapshots==1){
     # empty list of remote snapshots
-    #@snapshot_search_dirs_remote=();
     @{ $all_vars{'searchdirs'}{'remote'} }=();
 }
 
-#@snapshot_search_dirs=($search_dir_local,@snapshot_search_dirs_remote);
 @{ $all_vars{'searchdirs'}{'all'} }=($all_vars{'searchdirs'}{'local'}[0],@{ $all_vars{'searchdirs'}{'remote'} });;
-
 
 
 # Setting $VBOX_USER_HOME
@@ -937,8 +909,6 @@ my $gui3_snapshot_chooser = Gtk2::Window->new('toplevel');
 my $buttons_default="$vm Standard";
 my $buttons_as_used="$vm wie vorgefunden";
 
-#my @buttons=&get_snapshots($snapshot_search_dir_client);
-#my @buttons=&get_snapshots(@snapshot_search_dirs);
 my @buttons=&get_snapshots( @{ $all_vars{'searchdirs'}{'all'} } );
 
 
@@ -1235,7 +1205,6 @@ sub get_local_vm_path {
 
 
 sub zip_snapshots {
-#    my @snapshots=&get_snapshots(@snapshot_search_dirs);
     my @snapshots=&get_snapshots( @{ $all_vars{'searchdirs'}{'all'} } );
     @snapshots = ("standard",@snapshots);
     # all snaphots bit not base
@@ -1504,8 +1473,6 @@ sub read_network_conf {
         #return;
     } 
 
-#    if (defined $snapshot_search_dirs_remote[0]){
-#        my $conf_network_snapshot=$snapshot_search_dirs_remote[0]."/".
     if (defined $all_vars{'searchdirs'}{'remote'}[0]){
         my $conf_network_snapshot=$all_vars{'searchdirs'}{'remote'}[0]."/".
              $vm."/snapshot-store/".$snapshot_dir."/network.conf";
@@ -1677,7 +1644,6 @@ sub get_vbox_uuid {
         # ok
     } else {
         #print "$path not found\n";
-#        my $remote=$snapshot_search_dirs_remote[0]."/".$vm."/Snapshots";
         my $remote=$all_vars{'searchdirs'}{'remote'}[0]."/".$vm."/Snapshots";
         #print "checking remote $remote\n";
         if (-d $remote){
