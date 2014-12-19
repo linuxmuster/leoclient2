@@ -1,3 +1,15 @@
+vars to remove (commented vars, not used anymore)
+$search_dir_local -> serverdirs -> local
+snapshot_search_dirs_remote
+snapshot_search_dirs_local
+next: search_dir_local
+
+
+rsync commands throw errors, because snapshot-store and defaults and baseimage is not writeable
+--> fix this as root in --set-permissions
+--> remove $rsync_command1 and $rsync_command2
+
+
 leoclient2 und leoclient Pakete sollen nicht gemischt werden können
 (Paketsystem soll das verhindern)
 

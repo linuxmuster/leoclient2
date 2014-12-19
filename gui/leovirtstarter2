@@ -117,7 +117,7 @@ my %read_access_vm=();
 # Contains information about snapshots
 my %snapshots=();
 
-my $search_dir_local="";
+#my $search_dir_local="";
 my $standard_snapshot_local_zipped="";
 # old snapshot.zip
 my $standard_snapshot_local_zipped_obsolete="";
@@ -129,8 +129,8 @@ my $standard_snapshot_local_zipped_obsolete="";
 
 # This will be read from /etc/leoclient2/servers.conf
 my @snapshot_search_dirs=();
-my @snapshot_search_dirs_remote=();
-my @snapshot_search_dirs_local=();
+#my @snapshot_search_dirs_remote=();
+#my @snapshot_search_dirs_local=();
 # this is double ??? should be removed
 my $snapshot_search_dir_client="";
 
@@ -369,7 +369,8 @@ while (<CONFFILE>){
    print "servers.conf LINE:   $_\n";
    my ($option,$data)=split(/=/);
    if ($option eq "SERVERDIR"){
-       push @snapshot_search_dirs_remote, $data;
+       push @{ $all_vars{'searchdirs'}{'remote'} }, $data;
+       #push @snapshot_search_dirs_remote, $data;
    }
 }
 close CONFFILE;
@@ -380,14 +381,17 @@ close CONFFILE;
 # --serverdir ...
 if (@serverdir){
     # option used, overwrite
-    @snapshot_search_dirs_remote = @serverdir;
+    #@snapshot_search_dirs_remote = @serverdir;
+    @{ $all_vars{'searchdirs'}{'remote'} } = @serverdir;
 }
 
 
 # Set variables based on serverdirs
 # caches.conf must be in first serverdir (????? Look in all server dirs)
-if (defined $snapshot_search_dirs_remote[0]){ 
-    $conf_caches=$snapshot_search_dirs_remote[0]."/caches.conf";
+#if (defined $snapshot_search_dirs_remote[0]){ 
+#    $conf_caches=$snapshot_search_dirs_remote[0]."/caches.conf";
+if (defined $all_vars{'searchdirs'}{'remote'}[0]){ 
+    $conf_caches=$all_vars{'searchdirs'}{'remote'}[0]."/caches.conf";
 } else {
     # default cache
 }
@@ -453,7 +457,8 @@ closedir CONFDIR;
 
 
 # read REMOTE vm's from SERVERDIR (excude local machines)
-foreach my $serverdir (@snapshot_search_dirs_remote){
+#foreach my $serverdir (@snapshot_search_dirs_remote){
+foreach my $serverdir ( @{ $all_vars{'searchdirs'}{'remote'} } ){
     print "Looking for remote machines in: $serverdir\n";
     opendir SERVERDIR, $serverdir;
     foreach my $machine (readdir SERVERDIR){
@@ -487,10 +492,11 @@ foreach my $serverdir (@snapshot_search_dirs_remote){
 
 #print Dumper(\%read_access_vm);
 # --dump
-if ($dump==1){
-    print Dumper(\%all_vars);
-    exit;
-}
+#if ($dump==1){
+#    print Dumper(\%all_vars);
+#    print "@{ $all_vars{'searchdirs'}{'remote'}}";
+#    exit;
+#}
 
 @vm_local = sort @vm_local;
 @vm_remote = sort @vm_remote;
@@ -548,6 +554,11 @@ if ($set_permissions==1){
         print "$vm  --> local --> $path\n";
         # make sure root can change owners and permissions
         system("chmod -R 0755 $path");
+        # rsync commands run as root, to repair files, that will be owned by root:
+        # snapshot-store (recursive)
+        # defaults (recursive)
+        # vm.vdi (basefile)
+
         # fix permissions
         system("chown -R $ENV{SUDO_USER}.$permissive_group $path");
         my $defaults=$path."/defaults";
@@ -559,15 +570,7 @@ if ($set_permissions==1){
         my $base_image=$path."/".$vm.".vdi";
         chown 0, 0, $base_image;
         chmod 0555, $base_image;
-        #my $file=$path."/".$vm.".vbox";
-        #chmod 0777, $file;
-        #$file=$path."/".$vm.".vbox-prev";
-        #chmod 0777, $file;
-        #$file=$path."/VBoxSVC.log";
-        #chmod 0777, $file;
-        #my $dir=$path."/Logs";
-        #system("/bin/chmod 0777 -R $dir");
-        # remove file from save current state (at shutdown)
+
         my $file=&check_sav_file($path,$vm);
         if ($file ne "none"){
             unlink $file;
@@ -581,10 +584,11 @@ if ($set_permissions==1){
 system("sudo /usr/bin/leovirtstarter2 --set-permissions");
 
 
-# List serverdirs (hide later, show only with --info ??????) 
+# List searchdirs (hide later, show only with --info ??????) 
 
 print "Configured SERVERDIR:\n";
-foreach my $dir (@snapshot_search_dirs_remote){
+#foreach my $dir (@snapshot_search_dirs_remote){
+foreach my $dir ( @{ $all_vars{'searchdirs'}{'remote'} } ){
        print "  SERVERDIR: $dir\n";
 }
 
@@ -608,14 +612,7 @@ if ($prepare_remote_vm ne ""){
 
 
 if ($vm ne ""){
-    # start vm
-    #$vm_path_abs=$vm{$vm};
-    #$search_dir_local=$vm_path_abs;
-    ## remove last dir to fit to remote dirs
-    #$search_dir_local=~s/\/$//g;
-    #$search_dir_local=~s/\/${vm}$//g;
-    ##system("leovirtstarter2 --vm $vm");
-    ##exit;
+   # ???
 } elsif ($#vm==-1) {
     INFO "No machines found, aborting with gui Error\n";
     my $message="Es gibt keine Maschinen in $conf_machines!";
@@ -662,12 +659,22 @@ if (not exists $vm{$vm}){
 $vm_path_abs=$vm{$vm};
 my $vbox_uuid=&get_vbox_uuid($vm);
 print "UUID: $vbox_uuid\n";
-$search_dir_local=$vm_path_abs;
-# remove last dir to fit to remote dirs
-$search_dir_local=~s/\/$//g;
-$search_dir_local=~s/\/${vm}$//g;
+#$search_dir_local=$vm_path_abs;
+## remove last dir to fit to remote dirs
+#$search_dir_local=~s/\/$//g;
+#$search_dir_local=~s/\/${vm}$//g;
+
+$all_vars{'searchdirs'}{'local'}[0]=$vm_path_abs;
+$all_vars{'searchdirs'}{'local'}[0]=~s/\/$//g;
+$all_vars{'searchdirs'}{'local'}[0]=~s/\/${vm}$//g;
+
+
+
+
+
 # Where is the zipped standard snaphot
-foreach my $dir (@snapshot_search_dirs_remote){
+#foreach my $dir (@snapshot_search_dirs_remote){
+foreach my $dir (@{ $all_vars{'searchdirs'}{'remote'} }){
     # Remote data
     $vm_dir_remote_parent=$dir;
     $vm_dir_remote=$dir.
@@ -728,10 +735,12 @@ print "  * Local base snapshot: $standard_snapshot_local_zipped\n";
 # --local-snapshots
 if ($local_snapshots==1){
     # empty list of remote snapshots
-    @snapshot_search_dirs_remote=();
+    #@snapshot_search_dirs_remote=();
+    @{ $all_vars{'searchdirs'}{'remote'} }=();
 }
 
-@snapshot_search_dirs=($search_dir_local,@snapshot_search_dirs_remote);
+#@snapshot_search_dirs=($search_dir_local,@snapshot_search_dirs_remote);
+@snapshot_search_dirs=($all_vars{'searchdirs'}{'local'}[0],@{ $all_vars{'searchdirs'}{'remote'} });
 
 
 
@@ -769,6 +778,13 @@ if ($clean_log==1){
     exit;
 }
 
+
+#print Dumper(\%read_access_vm);
+# --dump
+if ($dump==1){
+    print Dumper(\%all_vars);
+    exit;
+}
 
 
 # --ignore-virtualbox
@@ -1481,8 +1497,10 @@ sub read_network_conf {
         #return;
     } 
 
-    if (defined $snapshot_search_dirs_remote[0]){
-        my $conf_network_snapshot=$snapshot_search_dirs_remote[0]."/".
+#    if (defined $snapshot_search_dirs_remote[0]){
+#        my $conf_network_snapshot=$snapshot_search_dirs_remote[0]."/".
+    if (defined $all_vars{'searchdirs'}{'remote'}[0]){
+        my $conf_network_snapshot=$all_vars{'searchdirs'}{'remote'}[0]."/".
              $vm."/snapshot-store/".$snapshot_dir."/network.conf";
         if (-e $conf_network_snapshot){
             # snapshot specific network.conf
@@ -1652,7 +1670,8 @@ sub get_vbox_uuid {
         # ok
     } else {
         #print "$path not found\n";
-        my $remote=$snapshot_search_dirs_remote[0]."/".$vm."/Snapshots";
+#        my $remote=$snapshot_search_dirs_remote[0]."/".$vm."/Snapshots";
+        my $remote=$all_vars{'searchdirs'}{'remote'}[0]."/".$vm."/Snapshots";
         #print "checking remote $remote\n";
         if (-d $remote){
             $path=$remote;
