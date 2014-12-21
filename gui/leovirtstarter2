@@ -181,7 +181,7 @@ my $conf_servers=$conf."/servers.conf";
 
 #my @vm=();
 # local machines
-my @vm_local=();
+#my @vm_local=();
 # machines in SERVERDIR, if allowed from local machine
 my @vm_remote=();
 
@@ -466,7 +466,7 @@ foreach my $machine (readdir CONFDIR){
         &read_access_vm($path,$machine);
         &check_sav_file($path,$machine);
         if (1==&access_vm($machine)){
-            push @vm_local, $machine;       
+#            push @vm_local, $machine;       
             push @{ $all_vars{'vms_ordered'}{'local'} }, $machine;
             my $vbox_uuid=&get_vbox_uuid($machine);
         }
@@ -533,7 +533,7 @@ foreach my $serverdir ( @{ $all_vars{'searchdirs'}{'remote'} } ){
 #    exit;
 #}
 
-@vm_local = sort @vm_local;
+#@vm_local = sort @vm_local;
 @vm_remote = sort @vm_remote;
 @{ $all_vars{'vms_ordered'}{'local'} } = sort @{ $all_vars{'vms_ordered'}{'local'} };
 @{ $all_vars{'vms_ordered'}{'remote'} } = sort @{ $all_vars{'vms_ordered'}{'remote'} };
