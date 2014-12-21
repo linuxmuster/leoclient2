@@ -16,13 +16,14 @@ what if searchdir->local are more than one (local vms in different places)?
 
 
 NEXT:
-vm_remote_local
+%vm_remote_local
 %vm_local
-
+%vm
 remove old sub get_vbox_uuid_old
 
 DONE
-@vm               @{ $all_vars{'vms_ordered'}{'all'}
+%vm_remote_local   $all_vars{'vms'}{$machine}{'local'}{'path'}
+@vm                @{ $all_vars{'vms_ordered'}{'all'}
 @vm_local          @{ $all_vars{'vms_ordered'}{'local'}      
 @vm_remote         @{ $all_vars{'vms_ordered'}{'remote'}
 

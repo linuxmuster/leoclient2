@@ -166,7 +166,7 @@ my $vm_dir_remote="";
 # vm -> abs_path
 my %vm=();
 my %vm_remote=(); # remote values of remote vm
-my %vm_remote_local=(); # local values of remote vm, empty for local vm
+#my %vm_remote_local=(); # local values of remote vm, empty for local vm
 my %vm_local=(); # local values of local vm
 #my %vm_uuid=();
 my $vm_path_abs="";
@@ -450,7 +450,7 @@ foreach my $machine (readdir CONFDIR){
         $machine=~s/.conf$//g;
 
         $vm_local{$machine}=$path;
-        $vm_remote_local{$machine}="-"; # Empty for local machines
+#        $vm_remote_local{$machine}="-"; # Empty for local machines
 #       #obsolete
 #        $vm_uuid{$machine}=$path;
 
@@ -505,7 +505,7 @@ foreach my $serverdir ( @{ $all_vars{'searchdirs'}{'remote'} } ){
             my $remote_path=$serverdir."/".$machine;
             $vm_remote{$machine}=$remote_path;
             my $local_path=&get_local_vm_path($machine,$vm_path_remote);
-            $vm_remote_local{$machine}=$local_path;
+#            $vm_remote_local{$machine}=$local_path;
             $all_vars{'vms'}{$machine}{'local'}{'path'}=$local_path;
             $all_vars{'vms'}{$machine}{'remote'}{'path'}=$remote_path;
 
@@ -596,6 +596,11 @@ if ($info==1){
 
 
 
+#while (my ($k,$v) = each %vm_remote_local){
+#    print "   ***** $k -> $v\n";
+#}
+#exit;
+
 
 # --set-permissions
 if ($set_permissions==1){
@@ -610,7 +615,8 @@ if ($set_permissions==1){
 #    foreach my $vm (@vm_remote){
     foreach my $vm ( @{ $all_vars{'vms_ordered'}{'remote'} } ){
         # local copy of remote VM's
-        $local_vm_dirs{$vm}="$vm_remote_local{$vm}";
+#        $local_vm_dirs{$vm}="$vm_remote_local{$vm}";
+        $local_vm_dirs{$vm}=$all_vars{'vms'}{$vm}{'local'}{'path'};
     }
     while (my ($vm,$path) = each %local_vm_dirs){
         print "$vm  --> local --> $path\n";
@@ -681,17 +687,22 @@ if ($vm ne ""){
 #       "--column='Beschreibung' --column='Pfad' ".
 #       "TRUE 'winxp' 'Windows XP' '/var/virtual/winxp' ".
 #       "FALSE win7 'Windows 7' '/var/virtual/winxp2'";
-    my $zenity_list="/usr/bin/zenity --list --width=800 --height=400 ".
+    my $zenity_list="/usr/bin/zenity --list --width=900 --height=400 ".
        "--radiolist --title='Virtuelle Maschine wählen!' ".
        "--column='' --column='Maschine' ".
-       "--column='Beschreibung' --column='Pfad' --column='Lokaler Pfad' ";
+       "--column='Beschreibung' --column='Remote path' --column='Local Path' ";
     # add items
     print "Virtual machines (VM):\n";
 #    foreach my $machine (@vm){
     foreach my $machine ( @{ $all_vars{'vms_ordered'}{'all'} } ){
         print "  $machine --> $vm{$machine}\n";    
+#        $zenity_list=$zenity_list.
+#           "FALSE '$machine' '$machine' '$vm{$machine}' '$vm_remote_local{$machine}' ";
         $zenity_list=$zenity_list.
-           "FALSE '$machine' '$machine' '$vm{$machine}' '$vm_remote_local{$machine}' ";    
+           "FALSE '$machine' ".
+           "'$machine' ".
+           "'$all_vars{'vms'}{$machine}{'remote'}{'path'}' ".
+           "'$all_vars{'vms'}{$machine}{'local'}{'path'}' ";
     }
     
     #print "$zenity_list\n";
@@ -784,19 +795,27 @@ if ($local_snapshots==1){
     @{ $all_vars{'searchdirs'}{'remote'} }=();
 }
 
-@{ $all_vars{'searchdirs'}{'all'} }=($all_vars{'searchdirs'}{'local'}[0],@{ $all_vars{'searchdirs'}{'remote'} });;
+@{ $all_vars{'searchdirs'}{'all'} } =
+    ($all_vars{'searchdirs'}{'local'}[0],
+    @{ $all_vars{'searchdirs'}{'remote'} });
 
 
 # Setting $VBOX_USER_HOME
-if ($vm_remote_local{$vm} eq "-"){
-    print "$vm needs local VBOX_USER_HOME\n";
-    $vm_path_export="export VBOX_USER_HOME=".$vm_local{$vm}."; ";
-    
-} else {
-    print "$vm needs remote VBOX_USER_HOME\n";
-    $vm_path_export="export VBOX_USER_HOME=".$vm_remote_local{$vm}."; ";
-}
+
+$vm_path_export="export VBOX_USER_HOME=".
+                $all_vars{'vms'}{$vm}{'local'}{'path'}.
+                "; ";
 print "VBOX_USER_HOME: $vm_path_export\n";
+
+
+#if ($vm_remote_local{$vm} eq "-"){
+#    print "$vm needs local VBOX_USER_HOME\n";
+#    $vm_path_export="export VBOX_USER_HOME=".$vm_local{$vm}."; ";
+#} else {
+#    print "$vm needs remote VBOX_USER_HOME\n";
+#    $vm_path_export="export VBOX_USER_HOME=".$vm_remote_local{$vm}."; ";
+#}
+#print "VBOX_USER_HOME: $vm_path_export\n";
 
 
 if ($clean_cache==1){
