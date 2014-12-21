@@ -164,7 +164,7 @@ my $vm_dir_remote="";
 
 # fill this hash with configs
 # vm -> abs_path
-my %vm=();
+#my %vm=();
 #my %vm_remote=(); # remote values of remote vm
 #my %vm_remote_local=(); # local values of remote vm, empty for local vm
 #my %vm_local=(); # local values of local vm
@@ -468,7 +468,7 @@ foreach my $machine (readdir CONFDIR){
         if (1==&access_vm($machine)){
 #            push @vm_local, $machine;       
             push @{ $all_vars{'vms_ordered'}{'local'} }, $machine;
-            my $vbox_uuid=&get_vbox_uuid($machine);
+            &save_vbox_uuid($machine);
         }
     }
 }
@@ -514,7 +514,7 @@ foreach my $serverdir ( @{ $all_vars{'searchdirs'}{'remote'} } ){
             if (1==&access_vm($machine)){
                 #push @vm_remote, $machine;
                 push @{ $all_vars{'vms_ordered'}{'remote'} }, $machine;
-                my $vbox_uuid=&get_vbox_uuid($machine);
+                &save_vbox_uuid($machine);
 
             }
 #        }
@@ -563,13 +563,9 @@ if ($info==1){
                "Name","Snapshot-file UUID","Local path";
     print "----------+------------------------------------+",
           "----------------------------\n";
-#    foreach my $machine (@vm_local){
     foreach my $machine ( @{ $all_vars{'vms_ordered'}{'local'} } ){
-        my $vbox_uuid=&get_vbox_uuid($machine);
         printf " %-9s|%-36s|%-20s\n",
                $machine,
-#               $vbox_uuid,
-#               $vm{$machine};
                $all_vars{'vms'}{$machine}{'uuid'},
                $all_vars{'vms'}{$machine}{'local'}{'path'};
     }
@@ -580,13 +576,9 @@ if ($info==1){
                "Name","Snapshot-file UUID","Local path";
     print "----------+------------------------------------+",
           "----------------------------\n";
-#    foreach my $machine (@vm_remote){
     foreach my $machine ( @{ $all_vars{'vms_ordered'}{'remote'} } ){
-        my $vbox_uuid=&get_vbox_uuid($machine);
         printf " %-9s|%-36s|%-20s\n",
                $machine,
-#               $vbox_uuid,
-#               $vm{$machine};
                $all_vars{'vms'}{$machine}{'uuid'},
                $all_vars{'vms'}{$machine}{'local'}{'path'};
     }
@@ -732,8 +724,10 @@ if (not exists $all_vars{'vms'}{$vm}){
 # local or remote ?????
 #$vm_path_abs=$vm{$vm};
 $vm_path_abs=$all_vars{'vms'}{$vm}{'local'}{'path'};
-my $vbox_uuid=&get_vbox_uuid($vm);
-print "UUID: $vbox_uuid\n";
+#my $vbox_uuid=&get_vbox_uuid($vm);
+#my $vbox_uuid=&get_vbox_uuid($vm);
+#print "UUID: $vbox_uuid\n";
+print "UUID: $all_vars{'vms'}{$vm}{'uuid'}\n";
 $all_vars{'searchdirs'}{'local'}[0]=$vm_path_abs;
 ## remove last dir to fit to remote dirs
 $all_vars{'searchdirs'}{'local'}[0]=~s/\/$//g;
@@ -762,20 +756,29 @@ if ($all_vars{'vms'}{$vm}{'type'} eq "remote" ){
     # settings for remote machines
     my $local_dir=&get_local_vm_path($vm,$vm_path_abs);
     $base_image_target=$local_dir."/".$vm.".vdi";
+#    $standard_snapshot_local_zipped=
+#        $local_dir."/snapshot-store/standard/{".$vbox_uuid."}.vdi.zip";
     $standard_snapshot_local_zipped=
-        $local_dir."/snapshot-store/standard/{".$vbox_uuid."}.vdi.zip";
+        $local_dir."/snapshot-store/standard/{".
+        $all_vars{'vms'}{$vm}{'uuid'}.
+        "}.vdi.zip";
     $snapshot_file_dir_local=$local_dir."/Snapshots";
 } else {
     # settings for local machines
     $base_image_target=$vm_path_abs."/".$vm.".vdi";
     $standard_snapshot_local_zipped_obsolete=
         $vm_path_abs."/snapshot-store/standard/snapshot.zip";
+#    $standard_snapshot_local_zipped=
+#        $vm_path_abs."/snapshot-store/standard/{".$vbox_uuid."}.vdi.zip";
     $standard_snapshot_local_zipped=
-        $vm_path_abs."/snapshot-store/standard/{".$vbox_uuid."}.vdi.zip";
+        $vm_path_abs."/snapshot-store/standard/{".
+        $all_vars{'vms'}{$vm}{'uuid'}.
+        "}.vdi.zip";
     $snapshot_file_dir_local=$vm_path_abs."/Snapshots";
 }
 $conf_network_vm=$vm_path_abs."/network.conf";
-$snapshot_file_name="{$vbox_uuid}.vdi";
+#$snapshot_file_name="{$vbox_uuid}.vdi";
+$snapshot_file_name="{".$all_vars{'vms'}{$vm}{'uuid'}."}.vdi";
 $local_standard_snapshot_abs=$snapshot_file_dir_local."/".$snapshot_file_name;
 print "Setting paths for $vm\n";
 print "  * vm_dir_remote:   $vm_dir_remote\n";
@@ -904,7 +907,8 @@ if ($prepare_remote_vm ne ""){
 
 
 INFO "Starting leovirtstarter2 on $hostname";
-INFO "UUID: $vbox_uuid (Max RAM: $max_guest_ram)";
+#INFO "UUID: $vbox_uuid (Max RAM: $max_guest_ram)";
+INFO "UUID: $all_vars{'vms'}{$vm}{'uuid'} (Max RAM: $max_guest_ram)";
 my @unused=@ram_steps;
 # Abhängigkeiten von Paketen: 
 # libfilesys-df-perl (ubuntu 10.04)
@@ -1442,8 +1446,12 @@ sub sync_vm_to_local {
     # BIG files are downloaded later with progressbar
     my $excludes="--exclude ${vm}.vdi ".
        "--exclude snapshot-store/base/${vm}.vdi.zip ";
-    my $snapshot_as_used=$target."/Snapshots/{".$vbox_uuid."}.vdi";
-    $excludes=$excludes."--exclude Snapshots/{".$vbox_uuid."}.vdi ";
+#    my $snapshot_as_used=$target."/Snapshots/{".$vbox_uuid."}.vdi";
+#    $excludes=$excludes."--exclude Snapshots/{".$vbox_uuid."}.vdi ";
+    my $snapshot_as_used=$target."/Snapshots/{".
+         $all_vars{'vms'}{$vm}{'uuid'}."}.vdi";
+    $excludes=$excludes."--exclude Snapshots/{".
+         $all_vars{'vms'}{$vm}{'uuid'}."}.vdi ";
     $excludes=$excludes."--exclude snapshot-store/* ";
     my $mkdir_command="mkdir -p ${target}";
     if (-d ${vm_dir_remote}){
@@ -1748,7 +1756,7 @@ sub set_vm_network {
 }
 
 
-sub get_vbox_uuid {
+sub save_vbox_uuid {
     my ($vm) = @_;
     my $vbox_uuid="";
     my $success=0;
@@ -1778,44 +1786,6 @@ sub get_vbox_uuid {
     }
 }
 
-
-sub get_vbox_uuid_old {
-    my ($vm) = @_;
-    my $path=$vm{$vm};
-    
-    $path=$path."/Snapshots";
-    my $file=$path."/Snapshots/*.vdi";
-    my $vbox_uuid="";
-    my $success=0;
-    if (-d $path and -e $file){
-        # ok
-    } else {
-        #print "$path not found\n";
-        my $remote=$all_vars{'searchdirs'}{'remote'}[0]."/".$vm."/Snapshots";
-        #print "checking remote $remote\n";
-        if (-d $remote){
-            $path=$remote;
-        }
-    }
-    print "$vm PATH: $path\n\n";
-    opendir SNAP, $path;
-    foreach my $machine (readdir SNAP){
-        if ($machine eq "."){next};
-        if ($machine eq ".."){next};
-        $machine=~s/}.vdi$//g;
-        $machine=~s/^{//g;
-        $vbox_uuid=$machine;
-        $success=1;
-    }
-    closedir SNAP;
-    if ($success==0){
-        # try remote dir
-        return "???";
-    } else {
-        $all_vars{'vms'}{$vm}{'uuid'}=$vbox_uuid;
-        return $vbox_uuid;
-    }
-}
 
 
 sub fix_vbox_permissions {

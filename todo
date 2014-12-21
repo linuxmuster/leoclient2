@@ -15,9 +15,11 @@ what if searchdir->local are more than one (local vms in different places)?
 
 
 NEXT: 
-remove old sub get_vbox_uuid_old
 
 DONE
+
+renamed get_vbos_uuid to save_vbox_uuid
+
 %vm_remote  $all_vars{'vms'}{$machine}{'remote'}{'path'}
 %vm_local
 %vm
