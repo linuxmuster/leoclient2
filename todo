@@ -6,7 +6,7 @@ $search_dir_local -> serverdirs -> local
 snapshot_search_dirs_remote
 snapshot_search_dirs_local
 snapshot_search_dirs
-
+shared_home_abs
 
 rsync commands throw errors, because snapshot-store and defaults and baseimage is not writeable
 --> fix this as root in --set-permissions

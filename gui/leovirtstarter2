@@ -168,7 +168,9 @@ my %vm_local=(); # local values of local vm
 my %vm_uuid=();
 my $vm_path_abs="";
 
+
 ##### servers.conf ##### Server settings on the clients
+##### do not change this #####
 my $conf="/etc/leoclient2";
 my $conf_machines=$conf."/machines";
 my $conf_servers=$conf."/servers.conf";
@@ -185,11 +187,15 @@ my $vm_path_export="";
 
 # which filepath is used for the shared home folder
 my $home = $ENV{'HOME'};
-my $shared_home_abs=$home."/Home_auf_Server";
-if (not -d $shared_home_abs){
-    $shared_home_abs="~";
+#my $shared_home_abs=$home."/Home_auf_Server";
+$all_vars{'user'}{'shared-home'} = $home."/Home_auf_Server";
+
+#if (not -d $shared_home_abs){
+if (not -d $all_vars{'user'}{'shared-home'}){
+    #$shared_home_abs="~";
+    $all_vars{'user'}{'shared-home'} = $home; 
 }
-print "Using $shared_home_abs for shared home folder\n";
+print "Using $all_vars{'user'}{'shared-home'} for shared home folder\n";
 
 
 ############################################################
@@ -1897,9 +1903,12 @@ sub start_button {
                "/usr/bin/VBoxManage sharedfolder remove $vm --name home";
             INFO "$remove_shared_folder";
             system($remove_shared_folder);
+#            my $add_shared_folder=$vm_path_export.
+#               "/usr/bin/VBoxManage sharedfolder add $vm ".
+#               "--name home --hostpath $shared_home_abs";
             my $add_shared_folder=$vm_path_export.
                "/usr/bin/VBoxManage sharedfolder add $vm ".
-               "--name home --hostpath $shared_home_abs";
+               "--name home --hostpath $all_vars{'user'}{'shared-home'}";
             INFO "$add_shared_folder";
             system($add_shared_folder);
             my $command_mod = $vm_path_export.
@@ -2021,9 +2030,12 @@ sub unzip_timeout {
                 "/usr/bin/VBoxManage sharedfolder remove $vm --name home";
             INFO "$remove_shared_folder";
             system($remove_shared_folder);
+#            my $add_shared_folder=$vm_path_export.
+#               "/usr/bin/VBoxManage sharedfolder add $vm ".
+#               "--name home --hostpath $shared_home_abs";
             my $add_shared_folder=$vm_path_export.
                "/usr/bin/VBoxManage sharedfolder add $vm ".
-               "--name home --hostpath $shared_home_abs";
+               "--name home --hostpath $all_vars{'user'}{'shared-home'}";
             INFO "$add_shared_folder";
             system($add_shared_folder);
             my $command_mod = $vm_path_export.
