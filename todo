@@ -1,3 +1,8 @@
+SCHULE: caches.conf anpassen auf richtiges Format, siehe Beispieldatei in ./conf
+
+
+what if searchdir->local are more than one (local vms in different places)?
+
 
 
 DONE
@@ -7,6 +12,12 @@ snapshot_search_dirs_remote
 snapshot_search_dirs_local
 snapshot_search_dirs
 shared_home_abs
+
+# check if the following works before removing lists
+@cache_dirs
+@cache_dirs_size
+
+
 
 rsync commands throw errors, because snapshot-store and defaults and baseimage is not writeable
 --> fix this as root in --set-permissions

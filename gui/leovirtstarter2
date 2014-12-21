@@ -134,10 +134,13 @@ my $base_image_target="";
 ##### caches.conf ##### Caches on the clients
 # path to caches.conf is calculated:
 my $conf_caches="";
+# set var for caches to nonexisting
+$all_vars{'caches'}{'exist'} = 0;
+
 # path to the caches from caches.conf:
-my @cache_dirs=();
+#my @cache_dirs=();
 # size of the caches in MB from caches.conf:
-my @cache_dirs_size=();
+#my @cache_dirs_size=();
 
 ##### defaults.conf ##### Server settings on the clients
 my $conf_defaults="";
@@ -210,8 +213,12 @@ my $host_uid = getpwnam($hostname);
 if (not defined $host_uid){
     # no host group (no linuxmuster-base client)
     print "No host account found (this is likely no linuxmuster.net client)\n";
+    $all_vars{'host'}{'linuxmuster-client'} = 0; 
     $host_uid=0;
+} else {
+    $all_vars{'host'}{'linuxmuster-client'} = 1; 
 }
+
 my @host_entry= getpwuid($host_uid);
 my $host_gid=$host_entry[3];
 $all_vars{'host'}{'roomuidnumber'} = $host_entry[3];
@@ -292,8 +299,8 @@ my $testopt=GetOptions(
 # Prüfen, ob Optionen erkannt wurden, sonst Abbruch
 &check_options($testopt);
 
-# exit with warning if user is NOT in group vboxusers
-# (only vboxusers are allowed to use passwordless sudo to change permissions of a machine)
+# exit with warning if user is NOT in group vboxusers (only vboxusers are allowed to 
+# use passwordless sudo to change permissions of a machine)
 if ($all_vars{'user'}{'uid'} ne "root"){
     if (not exists $all_vars{'user'}{'gid'}{$permissive_group}){
         # user in not in permissive group
@@ -412,8 +419,14 @@ while (<CACHECONFFILE>){
        print "  CACHE_SIZE:      $cache_size\n";
        print "  CACHE_RANGE:     $range\n";
        print "  CACHE_PARAMETER: $parameter\n";
-       push @cache_dirs, $cache_path;
-       push @cache_dirs_size, $cache_size;
+       #push @cache_dirs, $cache_path;
+       push @{ $all_vars{'caches'}{'ordered'} }, $cache_path;
+       $all_vars{'caches'}{'exist'} = 1;
+       #push @cache_dirs_size, $cache_size;
+       $all_vars{'caches'}{$cache_path}{'size'} = $cache_size;
+       $all_vars{'caches'}{$cache_path}{'range'} = $range;
+       $all_vars{'caches'}{$cache_path}{'parameter'} = $parameter;
+
    } 
 }
 close CACHECONFFILE;
@@ -585,13 +598,6 @@ foreach my $dir ( @{ $all_vars{'searchdirs'}{'remote'} } ){
 
 
 
-# List caches (hide later, show only with --info ??????) 
-my $cache_count=0;
-foreach my $dir (@cache_dirs){
-    print "Cache dir: $dir\n";
-    print "     Size: $cache_dirs_size[$cache_count] MB\n";
-    $cache_count++;
-}
 
 # --prepare-remote-vm  set the $vm
 if ($prepare_remote_vm ne ""){
@@ -737,7 +743,8 @@ print "VBOX_USER_HOME: $vm_path_export\n";
 if ($clean_cache==1){
     INFO "Starting leovirtstarter2 --clean-cache on $hostname";
     INFO "Cleaning the cache";
-    foreach my $cache (@cache_dirs){
+#    foreach my $cache (@cache_dirs){
+    foreach my $cache ( @{ $all_vars{'caches'}{'ordered'} } ){
         INFO "Removing recursively $cache";
         if (-d $cache){
             system("rm -rf $cache || sudo rm -rf $cache");
@@ -957,7 +964,8 @@ foreach my $size (@ram_sizes){
 
 
 # make sure all cache dirs exist
-foreach my $dir (@cache_dirs){
+#foreach my $dir (@cache_dirs){
+foreach my $dir ( @{ $all_vars{'caches'}{'ordered'} } ){
     if (not -e $dir){
             system("mkdir -p $dir || sudo mkdir -p $dir");
             system("chmod -R 777 $dir || sudo -R chmod 777 $dir");
@@ -2142,7 +2150,8 @@ sub get_zipped_snapshot {
     my $filesize_correct_mb=int((1.1*$filesize_correct)/(1024*1024));
 
     # snapshot is only local
-    if($#cache_dirs==-1){
+#    if($#cache_dirs==-1){
+    if($all_vars{'caches'}{'exist'}==0){
         my $local_dir=&get_local_vm_path($vm,$vm_path_abs);
         my $zip_file_local=$local_dir.
            "/snapshot-store/".$snapshot."/".$snapshot_file_name.".zip";
@@ -2153,7 +2162,8 @@ sub get_zipped_snapshot {
 
     INFO "Wanted in cache with size $filesize_correct:\n   $file_zipped";
     # is snapshot in cache already and size OK?
-    foreach my $dir (@cache_dirs){
+#    foreach my $dir (@cache_dirs){
+    foreach my $dir ( @{ $all_vars{'caches'}{'ordered'} } ){
         my $file=$dir."/".$snapshot."/".$snapshot_file_name.".zip";
         my $target_dir = $dir."/".$snapshot;
         my $target=$target_dir."/".$snapshot_file_name.".zip";
@@ -2176,8 +2186,9 @@ sub get_zipped_snapshot {
     # snapshot is not in cache
 
     # copy snapshot into cache
-    my $count=0;
-    foreach my $dir (@cache_dirs){
+#    my $count=0;
+#    foreach my $dir (@cache_dirs){
+    foreach my $dir (@{ $all_vars{'caches'}{'ordered'} } ){
         # go through all caches, check if there is enough space left
         my $target_dir = $dir."/".$snapshot;
         my $target=$target_dir."/".$snapshot_file_name.".zip";
@@ -2190,15 +2201,18 @@ sub get_zipped_snapshot {
         my $cache=$cache_used+int($filesize_correct/(1024*1024));
         my ($space_left_mb) = &get_space_left($dir);
 
+#        INFO "*** Cache limit:                ",
+#             "$cache_dirs_size[$count] MB";
         INFO "*** Cache limit:                ",
-             "$cache_dirs_size[$count] MB";
+             "$all_vars{'caches'}{$dir}{'size'} MB";
         INFO "*** Cache used so far:            $cache_used MB";
         INFO "*** Cache needed with new file:   $cache MB";
         INFO "*** Space left :                  $space_left_mb MB";
         INFO "*** Zip-file (incl 10\% reserve): $filesize_correct_mb MB";
 
         # check available space
-        while ($cache >= $cache_dirs_size[$count]
+#        while ($cache >= $cache_dirs_size[$count]
+        while ($cache >= $all_vars{'caches'}{$dir}{'size'}
                or $filesize_correct_mb >= $space_left_mb){
             INFO "*** --> cache files must be deleted";
             my @oldest_in_cache = &oldest_in_cache($dir);
@@ -2215,8 +2229,10 @@ sub get_zipped_snapshot {
                 $cache=$cache_used+int($filesize_correct/(1024*1024));
                 ($space_left_mb) = &get_space_left($dir);
 
+#                INFO "*** Cache limit:                ",
+#                     "$cache_dirs_size[$count] MB";
                 INFO "*** Cache limit:                ",
-                     "$cache_dirs_size[$count] MB";
+                     "$all_vars{'caches'}{$dir}{'size'} MB";
                 INFO "*** Cache used so far:            $cache_used MB";
                 INFO "*** Cache needed with new file:   $cache MB";
                 INFO "*** Space left :                  $space_left_mb MB";
@@ -2264,7 +2280,7 @@ sub get_zipped_snapshot {
         } else {
             INFO "Could not find space to cache $file";
         }# end if $space_left_mb > 10+int ...
-        $count++;
+#        $count++;
     }
 }
 
