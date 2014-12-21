@@ -489,7 +489,7 @@ foreach my $serverdir ( @{ $all_vars{'searchdirs'}{'remote'} } ){
         if (not -e $vm_path_remote."/".$machine.".vdi"){next};
 #        if (exists $vm_local{$machine}){
         # analyse type of vm
-        if ($all_vars{'vms'}{$machine}{'type'} eq "local"){
+        if (exists $all_vars{'vms'}{$machine}{'type'} and $all_vars{'vms'}{$machine}{'type'} eq "local"){
             # local AND remote = mixed
             $all_vars{'vms'}{$machine}{'type'}="mixed";
             my $remote_path=$serverdir."/".$machine;
@@ -553,30 +553,40 @@ foreach my $serverdir ( @{ $all_vars{'searchdirs'}{'remote'} } ){
 # steht in $all_vars{'vms_ordered'}{'local'} bzw $all_vars{'vms_ordered'}{'remote'}
 %vm = (%vm_local, %vm_remote);
 
-
+# --info
 if ($info==1){
     # list machines alphabetically
     print "\nLocal VM's listed in ${conf_machines}:\n";
         printf " %-9s| %-35s| %-19s\n",
-               "Name","Snapshot-file UUID","Path";
+               "Name","Snapshot-file UUID","Local path";
     print "----------+------------------------------------+",
           "----------------------------\n";
-    foreach my $machine (@vm_local){
+#    foreach my $machine (@vm_local){
+    foreach my $machine ( @{ $all_vars{'vms_ordered'}{'local'} } ){
         my $vbox_uuid=&get_vbox_uuid($machine);
         printf " %-9s|%-36s|%-20s\n",
-               $machine,$vbox_uuid,$vm{$machine};
+               $machine,
+#               $vbox_uuid,
+#               $vm{$machine};
+               $all_vars{'vms'}{$machine}{'uuid'},
+               $all_vars{'vms'}{$machine}{'local'}{'path'};
     }
     print "----------+-----------------------------------------+",
           "-----------------------\n";
     print "\nRemote machines in SERVERDIR:\n";
         printf " %-9s| %-35s| %-19s\n",
-               "Name","Snapshot-file UUID","Path";
+               "Name","Snapshot-file UUID","Local path";
     print "----------+------------------------------------+",
           "----------------------------\n";
-    foreach my $machine (@vm_remote){
+#    foreach my $machine (@vm_remote){
+    foreach my $machine ( @{ $all_vars{'vms_ordered'}{'remote'} } ){
         my $vbox_uuid=&get_vbox_uuid($machine);
         printf " %-9s|%-36s|%-20s\n",
-               $machine,$vbox_uuid,$vm{$machine};
+               $machine,
+#               $vbox_uuid,
+#               $vm{$machine};
+               $all_vars{'vms'}{$machine}{'uuid'},
+               $all_vars{'vms'}{$machine}{'local'}{'path'};
     }
     print "----------+-----------------------------------------+",
           "-----------------------\n";
@@ -635,11 +645,11 @@ system("sudo /usr/bin/leovirtstarter2 --set-permissions");
 
 
 # List searchdirs (hide later, show only with --info ??????) 
-
-print "Configured SERVERDIR:\n";
-foreach my $dir ( @{ $all_vars{'searchdirs'}{'remote'} } ){
-       print "  SERVERDIR: $dir\n";
-}
+#
+#print "Configured SERVERDIR:\n";
+#foreach my $dir ( @{ $all_vars{'searchdirs'}{'remote'} } ){
+#       print "  SERVERDIR: $dir\n";
+#}
 
 
 
@@ -1716,7 +1726,6 @@ sub get_vbox_uuid {
     foreach my $path (@paths){
         $path=$path."/Snapshots";
         my $file=$path."/Snapshots/*.vdi";
-        print "XXPATH=$file\n";
         if (-d $path){
             # ok
         } else {
@@ -1730,7 +1739,6 @@ sub get_vbox_uuid {
              $file=~s/^{//g;
              $vbox_uuid=$file;
              $success=1;
-             print "UUID=$vbox_uuid\n";
          }
          closedir SNAP;
         $all_vars{'vms'}{$vm}{'uuid'}=$vbox_uuid;
