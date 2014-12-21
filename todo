@@ -19,11 +19,12 @@ NEXT:
 vm_remote         @{ $all_vars{'vms_ordered'}{'remote'}
 vm_remote_local
 vm_local          @{ $all_vars{'vms_ordered'}{'local'}      
-@vm               @{ $all_vars{'vms_ordered'}{'all'}
 
 remove old sub get_vbox_uuid_old
 
 DONE
+@vm               @{ $all_vars{'vms_ordered'}{'all'}
+
 vars to remove (commented vars, not used anymore)
 $search_dir_local -> serverdirs -> local
 snapshot_search_dirs_remote

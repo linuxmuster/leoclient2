@@ -50,9 +50,9 @@ $hash{'OS'}{'win'}{'8.1'}="1";
 # dump the hash
 print Dumper(\%hash);
 
-
+print "\n";
 print "Show the subarray:\n";
-print "   * List: @{ $hash{'ordered'} }\n";
+print "   * List: @{ $hash{'ordered'} }\n\n";
 
 ############################################################
 # ARRAY
@@ -63,10 +63,17 @@ foreach my $item ( @{ $hash{$subarray} } ){
     print "   * $item  \n";
 
 }
+print "\n";
+
+print "The subarray contains the elements 0 to $#{ $hash{$subarray} } \n";
+my $number=$#{ $hash{$subarray} }+1;
+print "(That is ".$number." elements!) \n\n";
+
+
+
 
 
 # sort the Array
-print "Iterate through all elements of the subarray:\n";
 @{ $hash{$subarray} } = sort @{ $hash{$subarray} };
 
 
@@ -76,7 +83,7 @@ foreach my $item ( @{ $hash{$subarray} } ){
     print "   * $item  \n";
 
 }
-
+print "\n";
 
 
 ############################################################
@@ -90,7 +97,7 @@ print "Iterate through all elements of the subhash $subhash:\n";
 for my $key ( keys %{ $hash{$subhash} } ) {
     print "   * $key --> $hash{$subhash}{$key} \n";
 }
-
+print "\n";
 
 # SUBSUBHASH using each
 $subhash="OS";

@@ -179,7 +179,7 @@ my $conf_machines=$conf."/machines";
 my $conf_servers=$conf."/servers.conf";
 
 
-my @vm=();
+#my @vm=();
 # local machines
 my @vm_local=();
 # machines in SERVERDIR, if allowed from local machine
@@ -541,7 +541,7 @@ foreach my $serverdir ( @{ $all_vars{'searchdirs'}{'remote'} } ){
    ( @{ $all_vars{'vms_ordered'}{'local'} }, @{ $all_vars{'vms_ordered'}{'remote'} } );
 
 # jetzt all
-@vm = (@vm_local,@vm_remote);
+#@vm = (@vm_local,@vm_remote);
 #while (my ($k,$v) = each %vm_local){
 #    print "   **#**$k -> $v\n";
 #}
@@ -602,7 +602,8 @@ if ($set_permissions==1){
     # this can be called as root
     my %local_vm_dirs=();
     print "--set-permissions called as $all_vars{'user'}{'uid'} by sudo from $ENV{SUDO_USER}\n";
-    foreach my $vm (@vm_local){
+#    foreach my $vm (@vm_local){
+    foreach my $vm ( @{ $all_vars{'vms_ordered'}{'local'} } ){
         # local VM's
         $local_vm_dirs{$vm}="$vm_local{$vm}";
     }
@@ -665,7 +666,8 @@ if ($prepare_remote_vm ne ""){
 
 if ($vm ne ""){
    # ???
-} elsif ($#vm==-1) {
+#} elsif ($#vm==-1) {
+} elsif ( $#{ $all_vars{'vms_ordered'}{'all'} }==-1 ) {
     INFO "No machines found, aborting with gui Error\n";
     my $message="Es gibt keine Maschinen in $conf_machines!";
     system("/usr/bin/zenity --warning --text='$message'");
@@ -684,7 +686,8 @@ if ($vm ne ""){
        "--column='Beschreibung' --column='Pfad' --column='Lokaler Pfad' ";
     # add items
     print "Virtual machines (VM):\n";
-    foreach my $machine (@vm){
+#    foreach my $machine (@vm){
+    foreach my $machine ( @{ $all_vars{'vms_ordered'}{'all'} } ){
         print "  $machine --> $vm{$machine}\n";    
         $zenity_list=$zenity_list.
            "FALSE '$machine' '$machine' '$vm{$machine}' '$vm_remote_local{$machine}' ";    
