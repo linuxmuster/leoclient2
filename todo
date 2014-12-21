@@ -18,7 +18,7 @@ NEXT:
 
 DONE
 
-renamed get_vbos_uuid to save_vbox_uuid
+renamed get_vbox_uuid to save_vbox_uuid
 
 %vm_remote  $all_vars{'vms'}{$machine}{'remote'}{'path'}
 %vm_local

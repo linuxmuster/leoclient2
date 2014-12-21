@@ -667,6 +667,30 @@ if ($prepare_remote_vm ne ""){
 }
 
 
+if ($clean_cache==1){
+    print "Starting leovirtstarter2 --clean-cache on $hostname\n";
+    print "##################### Cleaning the cache ##########################\n";
+    foreach my $cache ( @{ $all_vars{'caches'}{'ordered'} } ){
+        print "Removing recursively $cache\n";
+        if (-d $cache){
+            system("rm -rf $cache || sudo rm -rf $cache");
+        }
+    }
+    print "########################## Exiting ###############################\n";
+    exit;
+}
+
+
+if ($clean_log==1){
+    system("echo '' > $log");
+    print "################### Cleaning the logfiles ########################\n";
+    print "Previous logfiles cleaned by leovirtstarter2 --clean-log\n";
+    print "########################## Exiting ###############################\n";
+    exit;
+}
+
+
+
 if ($vm ne ""){
    # ???
 #} elsif ($#vm==-1) {
@@ -830,27 +854,8 @@ print "VBOX_USER_HOME: $vm_path_export\n";
 #print "VBOX_USER_HOME: $vm_path_export\n";
 
 
-if ($clean_cache==1){
-    INFO "Starting leovirtstarter2 --clean-cache on $hostname";
-    INFO "Cleaning the cache";
-#    foreach my $cache (@cache_dirs){
-    foreach my $cache ( @{ $all_vars{'caches'}{'ordered'} } ){
-        INFO "Removing recursively $cache";
-        if (-d $cache){
-            system("rm -rf $cache || sudo rm -rf $cache");
-        }
-    }
-    INFO "########################## Exiting ###############################";
-    exit;
-}
 
 
-if ($clean_log==1){
-    system("echo '' > $log");
-    INFO "Previous logfiles cleaned by leovirtstarter2 --clean-log";
-    INFO "########################## Exiting ###############################";
-    exit;
-}
 
 
 #print Dumper(\%read_access_vm);
