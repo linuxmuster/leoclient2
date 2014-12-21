@@ -3,6 +3,8 @@
 
 SCHULE: caches.conf anpassen auf richtiges Format, siehe Beispieldatei in ./conf
 
+uuid in has dazu, von allen mashinen (oder nur der gewählten?)
+
 
 was ist besser: bei einer nur remoten Maschine den lokalen pfad in
 local -> path (wie bei lokaler maschine)
@@ -18,6 +20,8 @@ vm_remote         @{ $all_vars{'vms_ordered'}{'remote'}
 vm_remote_local
 vm_local          @{ $all_vars{'vms_ordered'}{'local'}      
 @vm               @{ $all_vars{'vms_ordered'}{'all'}
+
+remove old sub get_vbox_uuid_old
 
 DONE
 vars to remove (commented vars, not used anymore)

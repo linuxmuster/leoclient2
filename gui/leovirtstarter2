@@ -415,10 +415,10 @@ while (<CACHECONFFILE>){
    if($range eq "ALLHOSTS"){
        # add a cache dir
        $cache_path=$cache_path."/cache";
-       print "  CACHE_PATH:      $cache_path\n";
-       print "  CACHE_SIZE:      $cache_size\n";
-       print "  CACHE_RANGE:     $range\n";
-       print "  CACHE_PARAMETER: $parameter\n";
+#       print "  CACHE_PATH:      $cache_path\n";
+#       print "  CACHE_SIZE:      $cache_size\n";
+#       print "  CACHE_RANGE:     $range\n";
+#       print "  CACHE_PARAMETER: $parameter\n";
        #push @cache_dirs, $cache_path;
        #push @cache_dirs_size, $cache_size;
        push @{ $all_vars{'caches'}{'ordered'} }, $cache_path;
@@ -468,6 +468,7 @@ foreach my $machine (readdir CONFDIR){
         if (1==&access_vm($machine)){
             push @vm_local, $machine;       
             push @{ $all_vars{'vms_ordered'}{'local'} }, $machine;
+            my $vbox_uuid=&get_vbox_uuid($machine);
         }
     }
 }
@@ -490,7 +491,9 @@ foreach my $serverdir ( @{ $all_vars{'searchdirs'}{'remote'} } ){
         # analyse type of vm
         if ($all_vars{'vms'}{$machine}{'type'} eq "local"){
             # local AND remote = mixed
-            $all_vars{'vms'}{$machine}{'type'}="mixed"
+            $all_vars{'vms'}{$machine}{'type'}="mixed";
+            my $remote_path=$serverdir."/".$machine;
+            $all_vars{'vms'}{$machine}{'remote'}{'path'}=$remote_path;
         } else {
             # remote machine (no mixed machine)
             $all_vars{'vms'}{$machine}{'type'}="remote";
@@ -511,6 +514,8 @@ foreach my $serverdir ( @{ $all_vars{'searchdirs'}{'remote'} } ){
             if (1==&access_vm($machine)){
                 push @vm_remote, $machine;
                 push @{ $all_vars{'vms_ordered'}{'remote'} }, $machine;
+                my $vbox_uuid=&get_vbox_uuid($machine);
+
             }
 #        }
     }
@@ -1701,8 +1706,40 @@ sub set_vm_network {
 }
 
 
-
 sub get_vbox_uuid {
+    my ($vm) = @_;
+    my $vbox_uuid="";
+    my $success=0;
+    # paths to check
+    my @paths=($all_vars{'vms'}{$vm}{'local'}{'path'}, 
+                $all_vars{'vms'}{$vm}{'remote'}{'path'});
+    foreach my $path (@paths){
+        $path=$path."/Snapshots";
+        my $file=$path."/Snapshots/*.vdi";
+        print "XXPATH=$file\n";
+        if (-d $path){
+            # ok
+        } else {
+            next;
+        }
+         opendir SNAP, $path;
+         foreach my $file (readdir SNAP){
+             if ($file eq "."){next};
+             if ($file eq ".."){next};
+             $file=~s/}.vdi$//g;
+             $file=~s/^{//g;
+             $vbox_uuid=$file;
+             $success=1;
+             print "UUID=$vbox_uuid\n";
+         }
+         closedir SNAP;
+        $all_vars{'vms'}{$vm}{'uuid'}=$vbox_uuid;
+        return $vbox_uuid;
+    }
+}
+
+
+sub get_vbox_uuid_old {
     my ($vm) = @_;
     my $path=$vm{$vm};
     
@@ -1720,7 +1757,7 @@ sub get_vbox_uuid {
             $path=$remote;
         }
     }
-    #print "PATH: $path\n\n";
+    print "$vm PATH: $path\n\n";
     opendir SNAP, $path;
     foreach my $machine (readdir SNAP){
         if ($machine eq "."){next};
@@ -1735,6 +1772,7 @@ sub get_vbox_uuid {
         # try remote dir
         return "???";
     } else {
+        $all_vars{'vms'}{$vm}{'uuid'}=$vbox_uuid;
         return $vbox_uuid;
     }
 }
