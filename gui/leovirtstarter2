@@ -32,6 +32,11 @@ use POSIX qw(getgroups);
 #           -> remote -> ...
 
 my %all_vars=();
+# get username
+$all_vars{'user'}{'uid'} = getpwuid( $< );
+if ($all_vars{'user'}{'uid'} eq "root"){
+    print "SUDOERS START\n";
+}
 
 #************************************************************
 #************************************************************
@@ -198,7 +203,6 @@ if (not -d $all_vars{'user'}{'shared_home'}){
     #$shared_home_abs="~";
     $all_vars{'user'}{'shared_home'} = $home; 
 }
-print "Using $all_vars{'user'}{'shared_home'} for shared home folder\n";
 
 
 ############################################################
@@ -212,7 +216,9 @@ my $host_group="";
 my $host_uid = getpwnam($hostname);
 if (not defined $host_uid){
     # no host group (no linuxmuster-base client)
-    print "No host account found (this is likely no linuxmuster.net client)\n";
+    if ($all_vars{'user'}{'uid'} ne "root"){
+        print "  * No host account (this is no linuxmuster.net client)\n";
+    }
     $all_vars{'host'}{'linuxmuster-client'} = 0; 
     $host_uid=0;
 } else {
@@ -226,8 +232,6 @@ $all_vars{'host'}{'room'} = getgrgid($host_gid);
 
 
 
-# get username
-$all_vars{'user'}{'uid'} = getpwuid( $< );
 
 # get list of the current groups for this process
 my @gidlist=getgroups();
@@ -309,7 +313,7 @@ if ($all_vars{'user'}{'uid'} ne "root"){
         system("/usr/bin/zenity --warning --text='$message'");
         exit;
     } else {
-        print "OK: $all_vars{'user'}{'uid'} is in group $permissive_group\n";
+        print "  * OK: $all_vars{'user'}{'uid'} is in group $permissive_group\n";
     }
 }
 
@@ -358,7 +362,9 @@ Non-Server use:
 
 
 # read config file /etc/leoclient2/servers.conf
-print "Reading servers.conf in: $conf_servers\n";
+if ($all_vars{'user'}{'uid'} ne "root"){
+    print "  * Reading servers.conf from $conf_servers\n";
+}
 if (-f $conf_servers){
 open (CONFFILE, $conf_servers);
 while (<CONFFILE>){
@@ -370,7 +376,7 @@ while (<CONFFILE>){
    if($_ eq ""){
        next;
    }
-   print "servers.conf LINE:   $_\n";
+   #print "servers.conf LINE:   $_\n";
    my ($option,$data)=split(/=/);
    if ($option eq "SERVERDIR"){
        push @{ $all_vars{'searchdirs'}{'remote'} }, $data;
@@ -398,7 +404,9 @@ if (defined $all_vars{'searchdirs'}{'remote'}[0]){
 
 
 # read config file /etc/leoclient2/caches.conf
-print "  * Reading caches.conf in: $conf_caches\n";
+if ($all_vars{'user'}{'uid'} ne "root"){
+    print "  * Reading caches.conf from $conf_caches\n";
+}
 if (-f $conf_caches){
 open (CACHECONFFILE, $conf_caches);
 while (<CACHECONFFILE>){
@@ -410,7 +418,7 @@ while (<CACHECONFFILE>){
    if($_ eq ""){
        next;
    }
-   print "caches.conf LINE: $_\n";
+   #print "caches.conf LINE: $_\n";
    my ($cache_path,$cache_size,$range,$parameter)=split(/::/);
    if($range eq "ALLHOSTS"){
        # add a cache dir
@@ -478,7 +486,9 @@ closedir CONFDIR;
 
 # read REMOTE vm's from SERVERDIR (exclude local machines)
 foreach my $serverdir ( @{ $all_vars{'searchdirs'}{'remote'} } ){
-    print "Looking for remote machines in: $serverdir\n";
+    if ($all_vars{'user'}{'uid'} ne "root"){
+        print "  * Reading remote machines from $serverdir\n";
+    }
     opendir SERVERDIR, $serverdir;
     foreach my $machine (readdir SERVERDIR){
         my $vm_path_remote=$serverdir."/".$machine;
@@ -601,7 +611,7 @@ if ($info==1){
 if ($set_permissions==1){
     # this can be called as root
     my %local_vm_dirs=();
-    print "--set-permissions called as $all_vars{'user'}{'uid'} by sudo from $ENV{SUDO_USER}\n";
+    print "  --set-permissions called as $all_vars{'user'}{'uid'} by sudo from $ENV{SUDO_USER}\n";
 #    foreach my $vm (@vm_local){
     foreach my $vm ( @{ $all_vars{'vms_ordered'}{'local'} } ){
         # local VM's
@@ -615,7 +625,7 @@ if ($set_permissions==1){
         $local_vm_dirs{$vm}=$all_vars{'vms'}{$vm}{'local'}{'path'};
     }
     while (my ($vm,$path) = each %local_vm_dirs){
-        print "$vm  --> local --> $path\n";
+        #print "$vm  --> local --> $path\n";
         # make sure root can change owners and permissions
         system("chmod -R 0755 $path");
         # rsync commands run as root, to repair files, that will be owned by root:
@@ -639,6 +649,9 @@ if ($set_permissions==1){
         if ($file ne "none"){
             unlink $file;
         }
+    }
+    if ($all_vars{'user'}{'uid'} eq "root"){
+        print "SUDOERS END\n";
     }
     exit;
 }
@@ -668,7 +681,6 @@ if ($prepare_remote_vm ne ""){
 
 
 if ($clean_cache==1){
-    print "Starting leovirtstarter2 --clean-cache on $hostname\n";
     print "##################### Cleaning the cache ##########################\n";
     foreach my $cache ( @{ $all_vars{'caches'}{'ordered'} } ){
         print "Removing recursively $cache\n";
@@ -712,11 +724,11 @@ if ($vm ne ""){
        "--column='' --column='Maschine' ".
        "--column='Beschreibung' --column='Remote path' --column='Local Path' ";
     # add items
-    print "Virtual machines (VM):\n";
+#    print "Virtual machines (VM):\n";
 #    foreach my $machine (@vm){
     foreach my $machine ( @{ $all_vars{'vms_ordered'}{'all'} } ){
 #        print "  $machine --> $vm{$machine}\n";    
-        print "  $machine -->> $all_vars{'vms'}{$machine}{'remote'}{'path'}\n";    
+#        print "  $machine -->> $all_vars{'vms'}{$machine}{'remote'}{'path'}\n";    
 #        $zenity_list=$zenity_list.
 #           "FALSE '$machine' '$machine' '$vm{$machine}' '$vm_remote_local{$machine}' ";
         $zenity_list=$zenity_list.
@@ -729,7 +741,7 @@ if ($vm ne ""){
     #print "$zenity_list\n";
     my $zenity_return=`$zenity_list`;
     chomp($zenity_return);
-    print "Selected VM: $zenity_return\n";
+    print "  * Selected VM: $zenity_return\n";
     if ($zenity_return eq ""){
         #  canceled
         exit;
@@ -750,8 +762,6 @@ if (not exists $all_vars{'vms'}{$vm}){
 $vm_path_abs=$all_vars{'vms'}{$vm}{'local'}{'path'};
 #my $vbox_uuid=&get_vbox_uuid($vm);
 #my $vbox_uuid=&get_vbox_uuid($vm);
-#print "UUID: $vbox_uuid\n";
-print "UUID: $all_vars{'vms'}{$vm}{'uuid'}\n";
 $all_vars{'searchdirs'}{'local'}[0]=$vm_path_abs;
 ## remove last dir to fit to remote dirs
 $all_vars{'searchdirs'}{'local'}[0]=~s/\/$//g;
@@ -770,7 +780,6 @@ foreach my $dir (@{ $all_vars{'searchdirs'}{'remote'} }){
         "/$vm/filesize.vdi";
     $base_image_source_filesize_zipped = $dir.
         "/$vm/snapshot-store/base/filesize.vdi.zipped";
-    print "CHECK: $base_image_source\n";
     if (-e $base_image_source){
         last;
     }
@@ -804,7 +813,7 @@ $conf_network_vm=$vm_path_abs."/network.conf";
 #$snapshot_file_name="{$vbox_uuid}.vdi";
 $snapshot_file_name="{".$all_vars{'vms'}{$vm}{'uuid'}."}.vdi";
 $local_standard_snapshot_abs=$snapshot_file_dir_local."/".$snapshot_file_name;
-print "Setting paths for $vm\n";
+print "Setting paths for selected VM $vm\n";
 print "  * vm_dir_remote:   $vm_dir_remote\n";
 print "  * base_image_source:   $base_image_source\n";
 print "  * base_image_target:   $base_image_target\n";
@@ -841,7 +850,7 @@ if ($local_snapshots==1){
 $vm_path_export="export VBOX_USER_HOME=".
                 $all_vars{'vms'}{$vm}{'local'}{'path'}.
                 "; ";
-print "VBOX_USER_HOME: $vm_path_export\n";
+print "  * VBOX_USER_HOME: $vm_path_export\n";
 
 
 #if ($vm_remote_local{$vm} eq "-"){
@@ -1495,7 +1504,9 @@ sub read_access_vm {
     if (not -e $file){
         return;
     }
-    print "Reading $file for access rules to the vm\n";
+    if ($all_vars{'user'}{'uid'} ne "root"){
+        print "  * Reading access rules of $vm from $file\n";
+    }
     open (ACCESS, $file);
     while (<ACCESS>){
         s/^ //g; # Leerzeichen am Zeilenangfang entfernen
@@ -1506,7 +1517,7 @@ sub read_access_vm {
         if($_ eq ""){
            next;
         }
-        print "   ACCESS-LINE: $_\n";
+        #print "   ACCESS-LINE: $_\n";
         s/ //g; # Leerzeichen entfernen
         my ($option,$data)=split(/=/);
         my @data=split(/,/,$data);
@@ -2636,18 +2647,19 @@ sub ram_sizes {
 
 
 sub  check_options{
-   my ($parse_ergebnis) = @_;
-   if (not $parse_ergebnis==1){
-      my @list = split(/\//,$0);
-      my $scriptname = pop @list;
-      print "\nYou have made a mistake, when specifying options.\n"; 
-      print "See error message above. \n\n";
-      print "... $scriptname is terminating.\n\n";
-      exit;
-   } else {
-      print "All options  were recognized.\n";
-   }
-
+    my ($parse_ergebnis) = @_;
+    if (not $parse_ergebnis==1){
+        my @list = split(/\//,$0);
+        my $scriptname = pop @list;
+        print "\nYou have made a mistake, when specifying options.\n"; 
+        print "See error message above. \n\n";
+        print "... $scriptname is terminating.\n\n";
+        exit;
+    } else {
+        if ($all_vars{'user'}{'uid'} ne "root"){
+            print "  * All options were recognized.\n";
+        }
+    }
 }
 
 

@@ -15,6 +15,21 @@ what if searchdir->local are more than one (local vms in different places)?
 
 
 NEXT: 
+Before --set-permissions:
+  save rsync paths (rsync -> default -> source 
+                    rsync -> default -> target)
+sync them for ALL machines with --set-permissions
+-> always sync from remote to local (server wins)
+
+
+Setting path for selected vm: 
+put this into the all_vars hash 
+  vms->name-> selected -> ...
+
+strip down printout comments
+strip down log file
+
+
 
 DONE
 
