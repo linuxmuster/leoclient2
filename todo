@@ -3,8 +3,7 @@
 
 SCHULE: caches.conf anpassen auf richtiges Format, siehe Beispieldatei in ./conf
 
-uuid in has dazu, von allen mashinen (oder nur der gewählten?)
-
+get_local_vm_path ist nicht mehr erforderlich -> %all_vars
 
 was ist besser: bei einer nur remoten Maschine den lokalen pfad in
 local -> path (wie bei lokaler maschine)
@@ -15,13 +14,13 @@ local -> local_path (andere name)
 what if searchdir->local are more than one (local vms in different places)?
 
 
-NEXT:
-%vm_remote_local
-%vm_local
-%vm
+NEXT: 
 remove old sub get_vbox_uuid_old
 
 DONE
+%vm_remote  $all_vars{'vms'}{$machine}{'remote'}{'path'}
+%vm_local
+%vm
 %vm_remote_local   $all_vars{'vms'}{$machine}{'local'}{'path'}
 @vm                @{ $all_vars{'vms_ordered'}{'all'}
 @vm_local          @{ $all_vars{'vms_ordered'}{'local'}      

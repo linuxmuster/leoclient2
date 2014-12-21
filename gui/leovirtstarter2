@@ -165,9 +165,9 @@ my $vm_dir_remote="";
 # fill this hash with configs
 # vm -> abs_path
 my %vm=();
-my %vm_remote=(); # remote values of remote vm
+#my %vm_remote=(); # remote values of remote vm
 #my %vm_remote_local=(); # local values of remote vm, empty for local vm
-my %vm_local=(); # local values of local vm
+#my %vm_local=(); # local values of local vm
 #my %vm_uuid=();
 my $vm_path_abs="";
 
@@ -449,7 +449,7 @@ foreach my $machine (readdir CONFDIR){
         my $path=&get_machine_path($machine);
         $machine=~s/.conf$//g;
 
-        $vm_local{$machine}=$path;
+#        $vm_local{$machine}=$path;
 #        $vm_remote_local{$machine}="-"; # Empty for local machines
 #       #obsolete
 #        $vm_uuid{$machine}=$path;
@@ -503,7 +503,7 @@ foreach my $serverdir ( @{ $all_vars{'searchdirs'}{'remote'} } ){
 #            print "   * Remote VM: $machine\n";
             # check if machine is accessible
             my $remote_path=$serverdir."/".$machine;
-            $vm_remote{$machine}=$remote_path;
+#            $vm_remote{$machine}=$remote_path;
             my $local_path=&get_local_vm_path($machine,$vm_path_remote);
 #            $vm_remote_local{$machine}=$local_path;
             $all_vars{'vms'}{$machine}{'local'}{'path'}=$local_path;
@@ -551,7 +551,9 @@ foreach my $serverdir ( @{ $all_vars{'searchdirs'}{'remote'} } ){
 
 #exit;
 # steht in $all_vars{'vms_ordered'}{'local'} bzw $all_vars{'vms_ordered'}{'remote'}
-%vm = (%vm_local, %vm_remote);
+#%vm = (%vm_local, %vm_remote);
+#%vm = (%vm_local, %{ $all_vars{'vms'}{'remote'}{'path'} } );
+#%vm = (%{ $all_vars{'vms'}{''}{'path'} } );
 
 # --info
 if ($info==1){
@@ -596,8 +598,9 @@ if ($info==1){
 
 
 
-#while (my ($k,$v) = each %vm_remote_local){
+#while (my ($k,$v) = each %vm_remote){
 #    print "   ***** $k -> $v\n";
+#    print "   **H** $all_vars{'vms'}{$k}{'remote'}{'path'}\n";
 #}
 #exit;
 
@@ -610,7 +613,8 @@ if ($set_permissions==1){
 #    foreach my $vm (@vm_local){
     foreach my $vm ( @{ $all_vars{'vms_ordered'}{'local'} } ){
         # local VM's
-        $local_vm_dirs{$vm}="$vm_local{$vm}";
+#        $local_vm_dirs{$vm}="$vm_local{$vm}";
+        $local_vm_dirs{$vm}=$all_vars{'vms'}{$vm}{'remote'}{'path'};
     }
 #    foreach my $vm (@vm_remote){
     foreach my $vm ( @{ $all_vars{'vms_ordered'}{'remote'} } ){
@@ -695,7 +699,8 @@ if ($vm ne ""){
     print "Virtual machines (VM):\n";
 #    foreach my $machine (@vm){
     foreach my $machine ( @{ $all_vars{'vms_ordered'}{'all'} } ){
-        print "  $machine --> $vm{$machine}\n";    
+#        print "  $machine --> $vm{$machine}\n";    
+        print "  $machine -->> $all_vars{'vms'}{$machine}{'remote'}{'path'}\n";    
 #        $zenity_list=$zenity_list.
 #           "FALSE '$machine' '$machine' '$vm{$machine}' '$vm_remote_local{$machine}' ";
         $zenity_list=$zenity_list.
@@ -719,11 +724,14 @@ if ($vm ne ""){
 
 
 # vm is chosen --> setting paths for VM
-if (not exists $vm{$vm}){
+#if (not exists $vm{$vm}){
+if (not exists $all_vars{'vms'}{$vm}){
     print "ERROR: Could not find VM $vm \n";
     exit;
 }
-$vm_path_abs=$vm{$vm};
+# local or remote ?????
+#$vm_path_abs=$vm{$vm};
+$vm_path_abs=$all_vars{'vms'}{$vm}{'local'}{'path'};
 my $vbox_uuid=&get_vbox_uuid($vm);
 print "UUID: $vbox_uuid\n";
 $all_vars{'searchdirs'}{'local'}[0]=$vm_path_abs;
@@ -749,7 +757,8 @@ foreach my $dir (@{ $all_vars{'searchdirs'}{'remote'} }){
         last;
     }
 }
-if (exists $vm_remote{$vm}){
+#if (exists $vm_remote{$vm}){
+if ($all_vars{'vms'}{$vm}{'type'} eq "remote" ){
     # settings for remote machines
     my $local_dir=&get_local_vm_path($vm,$vm_path_abs);
     $base_image_target=$local_dir."/".$vm.".vdi";
@@ -1446,7 +1455,7 @@ sub sync_vm_to_local {
     if ($result==0){
         # OK
     } else {
-        print "\nERROR: Cold not create $target ",
+        print "\nERROR: Could not create $target ",
               "for local copy of remote machine\n\n";
         exit;
     }
