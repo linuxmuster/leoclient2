@@ -168,7 +168,7 @@ my %vm=();
 my %vm_remote=(); # remote values of remote vm
 my %vm_remote_local=(); # local values of remote vm, empty for local vm
 my %vm_local=(); # local values of local vm
-my %vm_uuid=();
+#my %vm_uuid=();
 my $vm_path_abs="";
 
 
@@ -191,14 +191,14 @@ my $vm_path_export="";
 # which filepath is used for the shared home folder
 my $home = $ENV{'HOME'};
 #my $shared_home_abs=$home."/Home_auf_Server";
-$all_vars{'user'}{'shared-home'} = $home."/Home_auf_Server";
+$all_vars{'user'}{'shared_home'} = $home."/Home_auf_Server";
 
 #if (not -d $shared_home_abs){
-if (not -d $all_vars{'user'}{'shared-home'}){
+if (not -d $all_vars{'user'}{'shared_home'}){
     #$shared_home_abs="~";
-    $all_vars{'user'}{'shared-home'} = $home; 
+    $all_vars{'user'}{'shared_home'} = $home; 
 }
-print "Using $all_vars{'user'}{'shared-home'} for shared home folder\n";
+print "Using $all_vars{'user'}{'shared_home'} for shared home folder\n";
 
 
 ############################################################
@@ -420,9 +420,10 @@ while (<CACHECONFFILE>){
        print "  CACHE_RANGE:     $range\n";
        print "  CACHE_PARAMETER: $parameter\n";
        #push @cache_dirs, $cache_path;
-       push @{ $all_vars{'caches'}{'ordered'} }, $cache_path;
-       $all_vars{'caches'}{'exist'} = 1;
        #push @cache_dirs_size, $cache_size;
+       push @{ $all_vars{'caches'}{'ordered'} }, $cache_path;
+       # set var to show caches exist
+       $all_vars{'caches'}{'exist'} = 1;
        $all_vars{'caches'}{$cache_path}{'size'} = $cache_size;
        $all_vars{'caches'}{$cache_path}{'range'} = $range;
        $all_vars{'caches'}{$cache_path}{'parameter'} = $parameter;
@@ -447,14 +448,26 @@ foreach my $machine (readdir CONFDIR){
     if ($machine=~m/.conf$/){
         my $path=&get_machine_path($machine);
         $machine=~s/.conf$//g;
+
         $vm_local{$machine}=$path;
         $vm_remote_local{$machine}="-"; # Empty for local machines
-        $vm_uuid{$machine}=$path;
+#       #obsolete
+#        $vm_uuid{$machine}=$path;
+
+        $all_vars{'vms'}{$machine}{'local'}{'path'}=$path;
+        $all_vars{'vms'}{$machine}{'type'}="local";
+        # set to local, remote not checked
+        $all_vars{'vms'}{$machine}{'remote'}{'path'}="-";
+#       # obsolete
+#        $all_vars{'vms'}{$machine}{'uuid'}=$path;
+
+
         # check if machine is accessible
         &read_access_vm($path,$machine);
         &check_sav_file($path,$machine);
         if (1==&access_vm($machine)){
-            push @vm_local, $machine;
+            push @vm_local, $machine;       
+            push @{ $all_vars{'vms_ordered'}{'local'} }, $machine;
         }
     }
 }
@@ -462,7 +475,7 @@ closedir CONFDIR;
 
 
 
-# read REMOTE vm's from SERVERDIR (excude local machines)
+# read REMOTE vm's from SERVERDIR (exclude local machines)
 foreach my $serverdir ( @{ $all_vars{'searchdirs'}{'remote'} } ){
     print "Looking for remote machines in: $serverdir\n";
     opendir SERVERDIR, $serverdir;
@@ -471,24 +484,36 @@ foreach my $serverdir ( @{ $all_vars{'searchdirs'}{'remote'} } ){
         if ($machine eq "."){next};
         if ($machine eq ".."){next};
         if (not -d $vm_path_remote){next};
-        # List only if the base image *.vdi can be seen
+        # Continue only if the base image *.vdi can be seen
         if (not -e $vm_path_remote."/".$machine.".vdi"){next};
-        if (exists $vm_local{$machine}){
-            # use the local machine, ignore the remote
-            print "   * Local VM:  $machine\n";
+#        if (exists $vm_local{$machine}){
+        # analyse type of vm
+        if ($all_vars{'vms'}{$machine}{'type'} eq "local"){
+            # local AND remote = mixed
+            $all_vars{'vms'}{$machine}{'type'}="mixed"
         } else {
-            print "   * Remote VM: $machine\n";
+            # remote machine (no mixed machine)
+            $all_vars{'vms'}{$machine}{'type'}="remote";
+#            # use the local machine, ignore the remote
+#            print "   * Local VM:  $machine\n";
+#        } else {
+#            print "   * Remote VM: $machine\n";
             # check if machine is accessible
             my $remote_path=$serverdir."/".$machine;
             $vm_remote{$machine}=$remote_path;
             my $local_path=&get_local_vm_path($machine,$vm_path_remote);
             $vm_remote_local{$machine}=$local_path;
-            print "LOKAL von $vm: $local_path\n";
+            $all_vars{'vms'}{$machine}{'local'}{'path'}=$local_path;
+            $all_vars{'vms'}{$machine}{'remote'}{'path'}=$remote_path;
+
+            #print "LOKAL von $vm: $local_path\n";
             &read_access_vm($remote_path,$machine);
             if (1==&access_vm($machine)){
                 push @vm_remote, $machine;
+                push @{ $all_vars{'vms_ordered'}{'remote'} }, $machine;
             }
-        }
+#        }
+    }
 
     }
     closedir SERVERDIR;
@@ -505,7 +530,22 @@ foreach my $serverdir ( @{ $all_vars{'searchdirs'}{'remote'} } ){
 
 @vm_local = sort @vm_local;
 @vm_remote = sort @vm_remote;
+@{ $all_vars{'vms_ordered'}{'local'} } = sort @{ $all_vars{'vms_ordered'}{'local'} };
+@{ $all_vars{'vms_ordered'}{'remote'} } = sort @{ $all_vars{'vms_ordered'}{'remote'} };
+@{ $all_vars{'vms_ordered'}{'all'} } = 
+   ( @{ $all_vars{'vms_ordered'}{'local'} }, @{ $all_vars{'vms_ordered'}{'remote'} } );
+
+# jetzt all
 @vm = (@vm_local,@vm_remote);
+#while (my ($k,$v) = each %vm_local){
+#    print "   **#**$k -> $v\n";
+#}
+#while (my ($k,$v) = each %vm_remote){
+#    print "   ***** $k -> $v\n";
+#}
+
+#exit;
+# steht in $all_vars{'vms_ordered'}{'local'} bzw $all_vars{'vms_ordered'}{'remote'}
 %vm = (%vm_local, %vm_remote);
 
 
@@ -774,6 +814,9 @@ if ($dump==1){
     print "user       -> Info about the user that has started leovirtstarter2\n";
     print "host       -> Info about the machine on which leovirtstarter2 runs\n";
     print "vms        -> Info about ALL virtual machines available\n";
+    print "  type -> local: only local, no backup in serverdirs\n";
+    print "       -> remote: only remote, local data might exist\n";
+    print "       -> mixed: local, backup in serverdirs exist\n";
     exit;
 }
 
@@ -1916,7 +1959,7 @@ sub start_button {
 #               "--name home --hostpath $shared_home_abs";
             my $add_shared_folder=$vm_path_export.
                "/usr/bin/VBoxManage sharedfolder add $vm ".
-               "--name home --hostpath $all_vars{'user'}{'shared-home'}";
+               "--name home --hostpath $all_vars{'user'}{'shared_home'}";
             INFO "$add_shared_folder";
             system($add_shared_folder);
             my $command_mod = $vm_path_export.
@@ -2043,7 +2086,7 @@ sub unzip_timeout {
 #               "--name home --hostpath $shared_home_abs";
             my $add_shared_folder=$vm_path_export.
                "/usr/bin/VBoxManage sharedfolder add $vm ".
-               "--name home --hostpath $all_vars{'user'}{'shared-home'}";
+               "--name home --hostpath $all_vars{'user'}{'shared_home'}";
             INFO "$add_shared_folder";
             system($add_shared_folder);
             my $command_mod = $vm_path_export.

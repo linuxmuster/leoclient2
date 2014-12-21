@@ -1,9 +1,23 @@
+
+
+
 SCHULE: caches.conf anpassen auf richtiges Format, siehe Beispieldatei in ./conf
+
+
+was ist besser: bei einer nur remoten Maschine den lokalen pfad in
+local -> path (wie bei lokaler maschine)
+oder
+local -> local_path (andere name)
 
 
 what if searchdir->local are more than one (local vms in different places)?
 
 
+NEXT:
+vm_remote         @{ $all_vars{'vms_ordered'}{'remote'}
+vm_remote_local
+vm_local          @{ $all_vars{'vms_ordered'}{'local'}      
+@vm               @{ $all_vars{'vms_ordered'}{'all'}
 
 DONE
 vars to remove (commented vars, not used anymore)
@@ -12,6 +26,7 @@ snapshot_search_dirs_remote
 snapshot_search_dirs_local
 snapshot_search_dirs
 shared_home_abs
+vm_uuid (not necessary)
 
 # check if the following works before removing lists
 @cache_dirs
