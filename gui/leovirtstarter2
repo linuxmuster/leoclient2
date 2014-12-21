@@ -183,7 +183,7 @@ my $conf_servers=$conf."/servers.conf";
 # local machines
 #my @vm_local=();
 # machines in SERVERDIR, if allowed from local machine
-my @vm_remote=();
+#my @vm_remote=();
 
 # shell export variable for the machine
 my $vm_path_export="";
@@ -512,7 +512,7 @@ foreach my $serverdir ( @{ $all_vars{'searchdirs'}{'remote'} } ){
             #print "LOKAL von $vm: $local_path\n";
             &read_access_vm($remote_path,$machine);
             if (1==&access_vm($machine)){
-                push @vm_remote, $machine;
+                #push @vm_remote, $machine;
                 push @{ $all_vars{'vms_ordered'}{'remote'} }, $machine;
                 my $vbox_uuid=&get_vbox_uuid($machine);
 
@@ -534,7 +534,7 @@ foreach my $serverdir ( @{ $all_vars{'searchdirs'}{'remote'} } ){
 #}
 
 #@vm_local = sort @vm_local;
-@vm_remote = sort @vm_remote;
+#@vm_remote = sort @vm_remote;
 @{ $all_vars{'vms_ordered'}{'local'} } = sort @{ $all_vars{'vms_ordered'}{'local'} };
 @{ $all_vars{'vms_ordered'}{'remote'} } = sort @{ $all_vars{'vms_ordered'}{'remote'} };
 @{ $all_vars{'vms_ordered'}{'all'} } = 
@@ -607,7 +607,8 @@ if ($set_permissions==1){
         # local VM's
         $local_vm_dirs{$vm}="$vm_local{$vm}";
     }
-    foreach my $vm (@vm_remote){
+#    foreach my $vm (@vm_remote){
+    foreach my $vm ( @{ $all_vars{'vms_ordered'}{'remote'} } ){
         # local copy of remote VM's
         $local_vm_dirs{$vm}="$vm_remote_local{$vm}";
     }
