@@ -606,7 +606,7 @@ if ($set_permissions==1){
     foreach my $vm ( @{ $all_vars{'vms_ordered'}{'local'} } ){
         # local VM's
 #        $local_vm_dirs{$vm}="$vm_local{$vm}";
-        $local_vm_dirs{$vm}=$all_vars{'vms'}{$vm}{'remote'}{'path'};
+        $local_vm_dirs{$vm}=$all_vars{'vms'}{$vm}{'local'}{'path'};
     }
 #    foreach my $vm (@vm_remote){
     foreach my $vm ( @{ $all_vars{'vms_ordered'}{'remote'} } ){
