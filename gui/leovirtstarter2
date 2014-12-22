@@ -468,6 +468,10 @@ foreach my $machine (readdir CONFDIR){
         $all_vars{'vms'}{$machine}{'remote'}{'path'}="-";
 #       # obsolete
 #        $all_vars{'vms'}{$machine}{'uuid'}=$path;
+ 
+        # rsync_root, local target
+        $all_vars{'vms'}{$machine}{'rsync_root'}{'defaults'}{'target'}=
+           $path."/defaults/";
 
 
         # check if machine is accessible
@@ -504,6 +508,10 @@ foreach my $serverdir ( @{ $all_vars{'searchdirs'}{'remote'} } ){
             $all_vars{'vms'}{$machine}{'type'}="mixed";
             my $remote_path=$serverdir."/".$machine;
             $all_vars{'vms'}{$machine}{'remote'}{'path'}=$remote_path;
+            $all_vars{'vms'}{$machine}{'rsync_root'}{'defaults'}{'source'}=
+              $remote_path."/defaults/";
+            $all_vars{'vms'}{$machine}{'rsync_root'}{'snapshot-store'}{'source'}=
+              $remote_path."/snapshot-store/";
         } else {
             # remote machine (no mixed machine)
             $all_vars{'vms'}{$machine}{'type'}="remote";
@@ -518,6 +526,17 @@ foreach my $serverdir ( @{ $all_vars{'searchdirs'}{'remote'} } ){
 #            $vm_remote_local{$machine}=$local_path;
             $all_vars{'vms'}{$machine}{'local'}{'path'}=$local_path;
             $all_vars{'vms'}{$machine}{'remote'}{'path'}=$remote_path;
+
+            # rsync_root, remote source
+            $all_vars{'vms'}{$machine}{'rsync_root'}{'defaults'}{'target'}=
+              $local_path."/defaults/";
+            $all_vars{'vms'}{$machine}{'rsync_root'}{'defaults'}{'source'}=
+              $remote_path."/defaults/";
+
+            $all_vars{'vms'}{$machine}{'rsync_root'}{'snapshot-store'}{'target'}=
+              $local_path."/snapshot-store/";
+            $all_vars{'vms'}{$machine}{'rsync_root'}{'snapshot-store'}{'source'}=
+              $remote_path."/snapshot-store/";
 
             #print "LOKAL von $vm: $local_path\n";
             &read_access_vm($remote_path,$machine);
@@ -611,7 +630,8 @@ if ($info==1){
 if ($set_permissions==1){
     # this can be called as root
     my %local_vm_dirs=();
-    print "  --set-permissions called as $all_vars{'user'}{'uid'} by sudo from $ENV{SUDO_USER}\n";
+    print "  --set-permissions called as $all_vars{'user'}{'uid'} by ".
+          "sudo from $ENV{SUDO_USER}\n";
 #    foreach my $vm (@vm_local){
     foreach my $vm ( @{ $all_vars{'vms_ordered'}{'local'} } ){
         # local VM's
@@ -626,24 +646,44 @@ if ($set_permissions==1){
     }
     while (my ($vm,$path) = each %local_vm_dirs){
         #print "$vm  --> local --> $path\n";
-        # make sure root can change owners and permissions
-        system("chmod -R 0755 $path");
+
+        if (-e $path){
+            system("chmod -R 0755 $path");
+        }
+
         # rsync commands run as root, to repair files, that will be owned by root:
-        # snapshot-store (recursive)
+        system("mkdir -p $all_vars{'vms'}{$vm}{'local'}{'path'}");
+
         # defaults (recursive)
-        # vm.vdi (basefile)
+        if (exists $all_vars{'vms'}{$vm}{'rsync_root'}{'defaults'}{'source'} and 
+            -d $all_vars{'vms'}{$vm}{'rsync_root'}{'defaults'}{'source'} ){
+            my $command="rsync -a ".
+               "$all_vars{'vms'}{$vm}{'rsync_root'}{'defaults'}{'source'} ".
+               "$all_vars{'vms'}{$vm}{'rsync_root'}{'defaults'}{'target'}";
+            #print "$command\n";
+            system($command);
+        }
+        # vm.vdi (basefile) #ignored here
+
+        ## snapshot-store (recursive)
+        #$command="rsync -a ".
+        #   "$all_vars{'vms'}{$vm}{'rsync_root'}{'snapshot-store'}{'source'} ".
+        #   "$all_vars{'vms'}{$vm}{'rsync_root'}{'snapshot-store'}{'target'}";
+        ##print "$command\n";
+        #system($command);
 
         # fix permissions
+        # make sure root can change owners and permissions
         system("chown -R $ENV{SUDO_USER}.$permissive_group $path");
         my $defaults=$path."/defaults";
         system("chown -R root.root $defaults");
         system("chmod -R 0555 $defaults");
-        my $snapshot_store=$path."/snapshot-store";
-        system("chown -R root.root $snapshot_store");
-        system("chmod -R 0555 $snapshot_store");
-        my $base_image=$path."/".$vm.".vdi";
-        chown 0, 0, $base_image;
-        chmod 0555, $base_image;
+        #my $snapshot_store=$path."/snapshot-store";
+        #system("chown -R root.root $snapshot_store");
+        #system("chmod -R 0555 $snapshot_store");
+        #my $base_image=$path."/".$vm.".vdi";
+        #chown 0, 0, $base_image;
+        #chmod 0555, $base_image;
 
         my $file=&check_sav_file($path,$vm);
         if ($file ne "none"){
@@ -827,6 +867,8 @@ print "  * Local base snapshot: $standard_snapshot_local_zipped\n";
    "/usr/bin/vboxmanage modifyvm $vm --nic3 null --nic3 none",
    "/usr/bin/vboxmanage modifyvm $vm --nic4 null --nic4 none",
 );
+
+
 
 
 
@@ -1296,6 +1338,9 @@ sub check_sav_file {
     # set to not seen
     $all_vars{'vms'}{$machine}{'local'}{'sav_seen'}=0;
     $all_vars{'vms'}{$machine}{'local'}{'sav'}=$sav_file;
+    if (not -d $sav_dir){
+        return $sav_file;
+    }
     opendir SAV, $sav_dir;
     foreach my $file (readdir SAV){
         if ($file eq "."){next};
@@ -1467,11 +1512,12 @@ sub sync_vm_to_local {
     $excludes=$excludes."--exclude Snapshots/{".
          $all_vars{'vms'}{$vm}{'uuid'}."}.vdi ";
     $excludes=$excludes."--exclude snapshot-store/* ";
+    $excludes=$excludes."--exclude defaults ";
     my $mkdir_command="mkdir -p ${target}";
     if (-d ${vm_dir_remote}){
-    print "Syncing vm $vm $vm_path_abs\n";
-    print "   to $target\n";
-    print "$mkdir_command\n";
+    print "  * Syncing vm $vm $vm_path_abs\n";
+    print "    to $target\n";
+    #print "$mkdir_command\n";
     my $result=system($mkdir_command);
     #print "RESULT: $result\n";
     if ($result==0){
@@ -1482,13 +1528,13 @@ sub sync_vm_to_local {
         exit;
     }
     # get small stuff
-    my $rsync_command1="rsync $option -av $excludes ${vm_dir_remote}/ ${target}/";
-    print "$rsync_command1\n";
+    my $rsync_command1="rsync $option -a $excludes ${vm_dir_remote}/ ${target}/";
+    #print "$rsync_command1\n";
     system($rsync_command1);
     # get standard snapshot alone
-    my $rsync_command2="rsync -av ${vm_dir_remote}/snapshot-store/standard ".
+    my $rsync_command2="rsync -a ${vm_dir_remote}/snapshot-store/standard ".
                                   "${target}/snapshot-store";
-    print "$rsync_command2\n";
+    #print "$rsync_command2\n";
     system($rsync_command2);
     }
 }
@@ -1825,7 +1871,7 @@ sub get_machine_path {
 sub check_base_image {
     my ($vm) = @_;
     INFO "Checking base image of $vm";
-    print "Checking local base image of VM $vm at $base_image_target\n";
+    print "  * Checking local base image of VM $vm at $base_image_target\n";
     my $get_it=0;
     my $target_dir = dirname($base_image_target);
     if (-e "$base_image_target"){
@@ -1838,8 +1884,8 @@ sub check_base_image {
         }
 
         chomp($remote_size);
-        print "   Local size:  $local_size\n";
-        print "   Remote size: $remote_size\n";
+        print "     Local size:  $local_size\n";
+        print "     Remote size: $remote_size\n";
         if ($local_size ne $remote_size
             and $remote_size ne "none"){
             &get_base_image();
@@ -2717,7 +2763,7 @@ sub get_snapshots {
             print "WARNING: Nonexisting Snapshot search dir: $get_dir\n";
             return @snapshots;
         }
-        print "Searching for  Snapshots in: $get_dir\n";
+        print "  * Searching for  Snapshots in: $get_dir\n";
         opendir (DIR, $get_dir) || die $!;
         while( (my $dirname = readdir(DIR))){
             if ($dirname eq "." or $dirname eq ".." ){
