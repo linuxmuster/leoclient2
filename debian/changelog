@@ -1,3 +1,9 @@
+leoclient2 (0.5.0-1) trusty-testing; urgency=medium
+
+  * New upstream. New datastructure added (partly)
+
+ -- bz <bz@overpower>  Mon, 16 Feb 2015 11:54:37 +0100
+
 leoclient2 (0.4.7-2) trusty; urgency=medium
 
   * Added dependency from virtualbox
