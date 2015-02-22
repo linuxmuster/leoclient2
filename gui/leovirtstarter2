@@ -493,6 +493,10 @@ foreach my $serverdir ( @{ $all_vars{'searchdirs'}{'remote'} } ){
     if ($all_vars{'user'}{'uid'} ne "root"){
         print "  * Reading remote machines from $serverdir\n";
     }
+    if (not -d $serverdir){
+        print "\nERROR: SERVERDIR $serverdir does not exist\n\n";
+        exit;
+    }
     opendir SERVERDIR, $serverdir;
     foreach my $machine (readdir SERVERDIR){
         my $vm_path_remote=$serverdir."/".$machine;
