@@ -407,40 +407,43 @@ if (defined $all_vars{'searchdirs'}{'remote'}[0]){
 if ($all_vars{'user'}{'uid'} ne "root"){
     print "  * Reading caches.conf from $conf_caches\n";
 }
+
 if (-f $conf_caches){
-open (CACHECONFFILE, $conf_caches);
-while (<CACHECONFFILE>){
-   s/^ //g; # Leerzeichen am Zeilenangfang entfernen
-   if(/^\#/){ # # am Anfang bedeutet Kommentarzeile
-       next;
-   }
-   chomp();
-   if($_ eq ""){
-       next;
-   }
-   #print "caches.conf LINE: $_\n";
-   my ($cache_path,$cache_size,$range,$parameter)=split(/::/);
-   if($range eq "ALLHOSTS"){
-       # add a cache dir
-       $cache_path=$cache_path."/cache";
+    open (CACHECONFFILE, $conf_caches);
+    while (<CACHECONFFILE>){
+        s/^ //g; # Leerzeichen am Zeilenangfang entfernen
+        if(/^\#/){ # # am Anfang bedeutet Kommentarzeile
+            next;
+        }
+        chomp();
+        if($_ eq ""){
+            next;
+        }
+        #print "caches.conf LINE: $_\n";
+        my ($cache_path,$cache_size,$range,$parameter)=split(/::/);
+        if($range eq "ALLHOSTS"){
+            # add a cache dir
+            $cache_path=$cache_path."/cache";
 #       print "  CACHE_PATH:      $cache_path\n";
 #       print "  CACHE_SIZE:      $cache_size\n";
 #       print "  CACHE_RANGE:     $range\n";
 #       print "  CACHE_PARAMETER: $parameter\n";
        #push @cache_dirs, $cache_path;
        #push @cache_dirs_size, $cache_size;
-       push @{ $all_vars{'caches'}{'ordered'} }, $cache_path;
-       # set var to show caches exist
-       $all_vars{'caches'}{'exist'} = 1;
-       $all_vars{'caches'}{$cache_path}{'size'} = $cache_size;
-       $all_vars{'caches'}{$cache_path}{'range'} = $range;
-       $all_vars{'caches'}{$cache_path}{'parameter'} = $parameter;
-
-   } 
-}
-close CACHECONFFILE;
+            push @{ $all_vars{'caches'}{'ordered'} }, $cache_path;
+            # set var to show caches exist
+            $all_vars{'caches'}{'exist'} = 1;
+            $all_vars{'caches'}{$cache_path}{'size'} = $cache_size;
+            $all_vars{'caches'}{$cache_path}{'range'} = $range;
+            $all_vars{'caches'}{$cache_path}{'parameter'} = $parameter;
+        } 
+    }
+    close CACHECONFFILE;
 } else {
-    print "    * WARNING: nonexisting $conf_caches\n";
+    if ($all_vars{'user'}{'uid'} ne "root"){
+        print "  * WARNING: nonexisting CACHE\n";
+        print "             No caches.conf found at $conf_caches\n";
+    }
 }
 
 
@@ -487,7 +490,14 @@ foreach my $machine (readdir CONFDIR){
 closedir CONFDIR;
 
 
-
+# Exit if no SERVERDIR is configured
+if ( $#{ $all_vars{'searchdirs'}{'remote'} }==-1 ){
+        print "\n";
+        print "ERROR: No SERVERDIR configured\n";
+        print "       You must configure a possibly empty, existing SERVERDIR\n\n";
+        exit;
+   
+}
 # read REMOTE vm's from SERVERDIR (exclude local machines)
 foreach my $serverdir ( @{ $all_vars{'searchdirs'}{'remote'} } ){
     if ($all_vars{'user'}{'uid'} ne "root"){
@@ -497,6 +507,7 @@ foreach my $serverdir ( @{ $all_vars{'searchdirs'}{'remote'} } ){
         print "\nERROR: SERVERDIR $serverdir does not exist\n\n";
         exit;
     }
+
     opendir SERVERDIR, $serverdir;
     foreach my $machine (readdir SERVERDIR){
         my $vm_path_remote=$serverdir."/".$machine;
@@ -568,8 +579,14 @@ foreach my $serverdir ( @{ $all_vars{'searchdirs'}{'remote'} } ){
 
 #@vm_local = sort @vm_local;
 #@vm_remote = sort @vm_remote;
-@{ $all_vars{'vms_ordered'}{'local'} } = sort @{ $all_vars{'vms_ordered'}{'local'} };
-@{ $all_vars{'vms_ordered'}{'remote'} } = sort @{ $all_vars{'vms_ordered'}{'remote'} };
+# sort the vms (if arrays are not empty)
+if ( not  $#{ $all_vars{'vms_ordered'}{'local'} }==-1 ){
+    @{ $all_vars{'vms_ordered'}{'local'} } = sort @{ $all_vars{'vms_ordered'}{'local'} };
+}
+if ( not  $#{ $all_vars{'vms_ordered'}{'remote'} }==-1 ){
+    @{ $all_vars{'vms_ordered'}{'remote'} } = sort @{ $all_vars{'vms_ordered'}{'remote'} };
+}
+# concatenate the vms
 @{ $all_vars{'vms_ordered'}{'all'} } = 
    ( @{ $all_vars{'vms_ordered'}{'local'} }, @{ $all_vars{'vms_ordered'}{'remote'} } );
 
