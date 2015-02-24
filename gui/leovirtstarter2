@@ -246,6 +246,7 @@ foreach my $gid (@gidlist){
 
 # create VM, snapshots
 my $prepare_remote_vm="";
+my $clean_local_vm="";
 
 
 
@@ -293,6 +294,7 @@ my $testopt=GetOptions(
            "virtualbox|vbox" => \$virtualbox,
            "local-snapshots" => \$local_snapshots,
            "prepare-remote-vm=s" => \$prepare_remote_vm,
+           "clean-local-vm=s" => \$clean_local_vm,
            "serverdir=s" => \@serverdir,
            "clean|clean-cache" => \$clean_cache,
            "clean-log" => \$clean_log,
@@ -341,6 +343,8 @@ Power User:
 Preparing VM or Snapshot:
   --prepare-remote-vm VM
 
+Cleaning a local VM (Deleting needless files):
+  --clean-local-vm VM
 
 Development:
   --clean-cache   (clean all caches)
@@ -730,12 +734,19 @@ system("sudo /usr/bin/leovirtstarter2 --set-permissions");
 #}
 
 
-
-
-# --prepare-remote-vm  set the $vm
+# --prepare-remote-vm
 if ($prepare_remote_vm ne ""){
     # set vm name
     $vm=$prepare_remote_vm;
+    # use only local snapshots
+    $local_snapshots=1;
+}
+
+
+# --clean-local-vm
+if ($clean_local_vm ne ""){
+    # set vm name
+    $vm=$clean_local_vm;
     # use only local snapshots
     $local_snapshots=1;
 }
@@ -969,6 +980,13 @@ if ($prepare_remote_vm ne ""){
     print "Preparing virtual machine $vm:\n";
     &zip_image($base_image_target,"base");
     &zip_snapshots();
+    #&clean_vm($vm_path_abs); 
+    exit;
+}
+
+# --clean-local-vm
+if ($clean_local_vm ne ""){
+    print "Cleaning up virtual machine $vm:\n";
     &clean_vm($vm_path_abs); 
     exit;
 }
@@ -1431,9 +1449,19 @@ sub zip_snapshots {
 sub clean_vm {
     my ($dir) = @_;
     print "######## Cleaning VM in $dir ########\n";
-    print "   * Removing Logs\n";
+    print "   * Removing Logs directory\n";
     my $logdir=$dir."/Logs";
     system("rm -rf $logdir");
+    print "   * Removing Log-files VBoxSVC.log\n";
+    system("rm -f $dir/VBoxSVC.log*");
+    print "   * Removing Log-files selectorwindow.log\n";
+    system("rm -f $dir/selectorwindow.log*");
+    my $file=$dir."/".$vm.".vbox-prev";
+    print "   * Removing file $file\n";
+    system("rm -f $file");
+    $file=$dir."/VirtualBox.xml-prev";
+    print "   * Removing file $file\n";
+    system("rm -f $file");
     # ??? removing more stuff
 }
 

@@ -1,8 +1,5 @@
 
 
-
-SCHULE: caches.conf anpassen auf richtiges Format, siehe Beispieldatei in ./conf
-
 get_local_vm_path ist nicht mehr erforderlich -> %all_vars
 
 was ist besser: bei einer nur remoten Maschine den lokalen pfad in
