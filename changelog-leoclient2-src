@@ -3,7 +3,9 @@
 
 ============LEOCLIENT2 CHANGELOG ====================================
 
-0.4.8-1 (2014-12-xx)
+0.5.1-1 (2015-02-26)
+    - show what has to be configured (instead of errors) when 
+      starting without serverdir, cache, ...
     - put more vars into %all_vars that can be dumped with --dump
 
 0.4.7-2 (2014-12-12)
