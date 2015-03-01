@@ -977,7 +977,7 @@ if ($pid_string ne "" and $ignore_virtualbox==0){
 
 # --prepare-remote-vm
 if ($prepare_remote_vm ne ""){
-    print "Preparing virtual machine $vm:\n";
+    print "######## Preparing virtual machine $vm: ########\n";
     &zip_image($base_image_target,"base");
     &zip_snapshots();
     #&clean_vm($vm_path_abs); 
@@ -1415,11 +1415,11 @@ sub zip_snapshots {
     @snapshots = ("standard",@snapshots);
     # all snaphots bit not base
     foreach my $snapshot (@snapshots){
-        print "Processing Snapshot: $snapshot \n";
+        print "   ##### Processing snapshot: $snapshot #####\n";
         my $file="";
         if ($snapshot ne "standard"){
             $file=$snapshots{$snapshot}{'abs_path'};
-            print "   * File: $file $snapshot\n";
+            #print "   * File: $file $snapshot\n";
             &zip_image($file,$snapshot);
         } else {
             # standard
@@ -1470,15 +1470,15 @@ sub zip_image {
     my ($file,$type) = @_;
     # $type is base or other
     if (-e $file){
-        print "######## Zipping $type ########\n";
-        print "   * Image:   $file\n";
+        print "    * Zipping $type:\n";
+        print "      * Image:   $file\n";
         my $dirname = dirname($file);
         my $filename = basename($file);
         my $file_zipped="";
         if ($type eq "base"){
             $file_zipped=$dirname."/snapshot-store/base/".$filename.".zip";
-        } elsif ($type eq "standard"){
-            $file_zipped=$file;
+#        } elsif ($type eq "standard"){
+#            $file_zipped=$file;
         } else {
             $file_zipped=$dirname."/".$filename.".zip";
         }
@@ -1495,28 +1495,31 @@ sub zip_image {
         my $zipped_filesize=0;
         my $zipped_filesize_file=$dirname_zipped."/filesize.vdi.zipped";
 
-        print "   * Dir:     $dirname\n";
-        print "   * File:    $filename\n";
-        print "   * Zipped:  $file_zipped\n";
-        print "   * Newsize vdi: $filesize\n";
-        print "   * Oldsize vdi: $old_filesize\n";
-        print "   * filesize file zip: $zipped_filesize_file\n";
+        print "      * Dir:     $dirname\n";
+        print "      * File:    $filename\n";
+        print "      * Zipped:  $file_zipped\n";
+        print "      * Newsize vdi: $filesize\n";
+        print "      * Oldsize vdi: $old_filesize\n";
+        print "      * filesize file zip: $zipped_filesize_file\n";
         if ($old_filesize==$filesize 
               and -e $file_zipped
               and -e $zipped_filesize_file){
-            print "   * Nothing to zip!\n";
+            print "      * Nothing to zip!\n";
         } else {
-            if ($type ne "standard"){
+
+#            if ($type ne "standard"){
                 # ??? wenn Datei *.vdi existiert???
-                print "   * Zipping ... (This can Take a while ...)\n";
+                print "      * Zipping ... (This can Take a while ...)\n";
                 system("mkdir -p $dirname_zipped");
                 my $zip_command="cd '$dirname'; zip $file_zipped $filename";
                 print "$zip_command\n";
                 system($zip_command);
-                print "   * ... Zipping done!\n";
-            } else {
-                print "Standard needs not be zipped";
-            }
+                print "      * ... Zipping done!\n";
+#            } else {
+#                print "Standard needs not be zipped";
+#            }
+
+
             # file zipped
             $zipped_filesize = -s $file_zipped;
 
@@ -2812,13 +2815,13 @@ sub get_snapshots {
             print "WARNING: Nonexisting Snapshot search dir: $get_dir\n";
             return @snapshots;
         }
-        print "  * Searching for  Snapshots in: $get_dir\n";
+        print "   ##### Listing snapshots in: $get_dir #####\n";
         opendir (DIR, $get_dir) || die $!;
         while( (my $dirname = readdir(DIR))){
             if ($dirname eq "." or $dirname eq ".." ){
 	        next;
             }
-            print "  * Processing snapshot: $dirname\n";
+            print "      * Adding snapshot: $dirname\n";
             my $abs_path=$get_dir."/".
                          $dirname."/".$snapshot_file_name;
             if (not -e $abs_path){
@@ -2848,7 +2851,7 @@ sub get_snapshots {
 		#print "DIRNAME: $dirname\n";
                 push @snapshots, $dirname;
             } else {
-		print "IGNORING: $dirname\n";
+		print "      * Skipping snapshot $dirname (is in the snapshot list by default).\n";
             }
 
             # read image.conf
