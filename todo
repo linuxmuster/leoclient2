@@ -1,4 +1,20 @@
 
+Rainer:
+-----
+1) STATT in snapshot-store/standard das gezippte Snapshots/{...}.vdi zu
+kopieren, wird das NICHT gezippte Snapshots/{...}.vdi hineinkopiert
+
+2) Um snapshot-store/standard/{...}.vdi zippen wird
+    leovirtstarter2 --prepare-remote-vm MASCHINENNAME
+Außerdem werden dort filsize.vdi und filesize.vdi.zipped mit dem
+korrekten Inhalt erzeugt.
+
+Ebenso:
+ leoclient2-base-snapshot-renew
+ leoclient2-vm-move
+----
+
+
 
 get_local_vm_path ist nicht mehr erforderlich -> %all_vars
 
