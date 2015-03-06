@@ -1425,7 +1425,10 @@ sub zip_snapshots {
             } 
         }
         #$file=$[snapshots}{$snapshot}{'abs_path'};
-        &zip_image(${snapshots}{$snapshot}{'abs_path'},$snapshot);
+        
+        # ????? changed
+        #&zip_image(${snapshots}{$snapshot}{'abs_path'},$snapshot);
+        &zip_image(${all_vars}{'snapshots'}{$snapshot}{'remote'}{'file'},$snapshot);
 
 #        if ($snapshot ne "standard"){
 #            $file=${snapshots}{$snapshot}{'abs_path'};
@@ -2223,7 +2226,9 @@ sub start_zipped_snaphot {
         system("$command_unzip");
         
         my $unzipped_actual_size=0;
-        my $unzipped_size=${snapshots}{$selected{'SYSTEM'}}{'filesize_vdi'};
+        # ????? changed
+        #my $unzipped_size=${snapshots}{$selected{'SYSTEM'}}{'filesize_vdi'};
+        my $unzipped_size=${all_vars}{'snapshots'}{$selected{'SYSTEM'}}{'remote'}{'size_expected'}{'vdi'};
     } else {
 
     }
@@ -2234,7 +2239,11 @@ sub start_zipped_snaphot {
 
 sub unzip_timeout {
     my $actual_size;
-    my $unzipped_size=${snapshots}{$selected{'SYSTEM'}}{'filesize_vdi'};
+
+    # ????? changed
+    #my $unzipped_size=${snapshots}{$selected{'SYSTEM'}}{'filesize_vdi'};
+    my $unzipped_size=${all_vars}{'snapshots'}{$selected{'SYSTEM'}}{'remote'}{'size_expected'}{'vdi'};
+
     my $unzipped_size_mb=int($unzipped_size/1024/1024);
     my $file=$snapshot_file_dir_local."/".$snapshot_file_name;
     my $progress_bar = shift;
@@ -2317,7 +2326,11 @@ sub unzip_timeout {
 
 sub getzip_timeout {
     my $actual_size;
-    my $zipped_size=${snapshots}{$selected{'SYSTEM'}}{'filesize_zipped'};
+
+    # ????? changed
+    #my $zipped_size=${snapshots}{$selected{'SYSTEM'}}{'filesize_zipped'};
+    my $zipped_size=${all_vars}{'snapshots'}{$selected{'SYSTEM'}}{'remote'}{'size_expected'}{'vdi_zipped'};
+
     my $zipped_size_mb=int($zipped_size/1024/1024);
 
     my $target = $selected{'CACHE-ZIP'};
@@ -2369,14 +2382,22 @@ sub get_zipped_snapshot {
         #my $started=&start_zipped_snaphot($selected{'CACHE-ZIP'});
         #my $started=&start_zipped_snaphot("___NOSNAPSHOT___");
         #return "___NOSNAPSHOT___";  
-    } elsif (not defined ${snapshots}{$snapshot}{'abs_path'}){
+    # ????? changed
+    #} elsif (not defined ${snapshots}{$snapshot}{'abs_path'}){
+    } elsif (not defined ${all_vars}{'snapshots'}{$snapshot}{'remote'}{'file'}){
         
     }
 
     # zipped snapshot must be fetched
     # generate paths
+
+    # ?????
     my $file=${snapshots}{$snapshot}{'abs_path'};
-    my $dir =${snapshots}{$snapshot}{'abs_dir'};
+    #my $file=${all_vars}{'snapshots'}{$snapshot}{'remote'}{'file'}
+    # ?????
+    #my $dir =${snapshots}{$snapshot}{'abs_dir'};
+    my $dir=${all_vars}{'snapshots'}{$snapshot}{'remote'}{'dir'};
+
     my $file_zipped=$file.".zip";
     my $filesize_file_zipped = $dir."/filesize.vdi.zipped";
 
@@ -2603,32 +2624,51 @@ sub create_radiobuttons {
             next;
         }
 
-        if (exists ${snapshots}{$button}{'name'}){
- 	    INFO "   * Name:       ",${snapshots}{$button}{'name'};
-            $displayname=${snapshots}{$button}{'name'};
+        # ????? changed
+        #if (exists ${snapshots}{$button}{'name'}){
+ 	#    INFO "   * Name:       ",${snapshots}{$button}{'name'};
+        #    $displayname=${snapshots}{$button}{'name'};
+        if (exists ${all_vars}{'snapshots'}{$button}{'conf'}{'name'}){
+ 	    INFO "   * Name:       ",${all_vars}{'snapshots'}{$button}{'conf'}{'name'};
+            $displayname=${all_vars}{'snapshots'}{$button}{'conf'}{'name'};
         } else {
             $displayname=$button;
         }
-        if (exists ${snapshots}{$button}{'maintainer'}){
+        # ????? changed
+        #if (exists ${snapshots}{$button}{'maintainer'}){
+ 	#    INFO "   * Maintainer: ",
+        #         ${snapshots}{$button}{'maintainer'};
+        #    $displayname=$displayname.
+        #        " (".${snapshots}{$button}{'maintainer'}.")";
+        #}
+        if (exists ${all_vars}{'snapshots'}{$button}{'conf'}{'maintainer'}){
  	    INFO "   * Maintainer: ",
-                 ${snapshots}{$button}{'maintainer'};
+                 ${all_vars}{'snapshots'}{$button}{'conf'}{'maintainer'};
             $displayname=$displayname.
-                " (".${snapshots}{$button}{'maintainer'}.")";
+                " (".${all_vars}{'snapshots'}{$button}{'conf'}{'maintainer'}.")";
         }
-        if (exists ${snapshots}{$button}{'host'}){
-            $host_string=${snapshots}{$button}{'host'};
+        # ????? changed
+        #if (exists ${snapshots}{$button}{'host'}){
+        if (exists ${all_vars}{'snapshots'}{$button}{'conf'}{'host'}){
+            # ????? changed
+            #$host_string=${snapshots}{$button}{'host'};
+            $host_string=${all_vars}{'snapshots'}{$button}{'conf'}{'host'};
             $host_check=1; # check for hosts later
  	    INFO "   * Hosts allowed:";
             my @hosts = split(/,/,$host_string);
             foreach my $host (@hosts){
     	        INFO "      * $host";
-                ${snapshots}{$button}{'hosts'}{$host}="OK";
                 # ?????
+                ${snapshots}{$button}{'hosts'}{$host}="OK";
                 ${all_vars}{'snapshots'}{$button}{'access'}{'hosts'}{$host}="OK";
             }
         }
-        if (exists ${snapshots}{$button}{'room'}){
-            $room_string=${snapshots}{$button}{'room'};
+        # ????? changed
+        #if (exists ${snapshots}{$button}{'room'}){
+        if (exists ${all_vars}{'snapshots'}{$button}{'conf'}{'room'}){
+            # ????? changed
+            #$room_string=${snapshots}{$button}{'room'};
+            $room_string=${all_vars}{'snapshots'}{$button}{'conf'}{'room'};
             $room_check=1; # check for rooms later
             my @rooms = split(/,/,$room_string);
     	        INFO "   * Rooms allowed";
@@ -2649,11 +2689,15 @@ sub create_radiobuttons {
 
         if ($room_check==1){
 #          if (exists ${snapshots}{$button}{'rooms'}{$host_room}){
-          if (exists ${snapshots}{$button}{'rooms'}{$all_vars{'host'}{'room'}}){
+          # ????? changed
+          #if (exists ${snapshots}{$button}{'rooms'}{$all_vars{'host'}{'room'}}){
+          if (exists ${all_vars}{'snapshots'}{$button}{'access'}{'rooms'}{$all_vars{'host'}{'room'}}){
 #	      INFO "Room $host_room is ",
 #                   "${snapshots}{$button}{'rooms'}{$host_room}";
 	      INFO "Room $all_vars{'host'}{'room'} is ",
-                   ${snapshots}{$button}{'rooms'}{$all_vars{'host'}{'room'}};
+                   # ????? changed
+                   #${snapshots}{$button}{'rooms'}{$all_vars{'host'}{'room'}};
+                   ${all_vars}{'snapshots'}{$button}{'rooms'}{$all_vars{'host'}{'room'}};
           } else {
 #              INFO "Room >$host_room< not found as allowed room";
               INFO "Room >$all_vars{'host'}{'room'}< not found as allowed room";
@@ -2666,12 +2710,19 @@ sub create_radiobuttons {
           # when synchronizing has failed
 	  my $alternate_linbo_hostname=$hostname;
           $alternate_linbo_hostname=~s/-w$//g;
-          if (exists ${snapshots}{$button}{'hosts'}{$hostname}
-                  or ${snapshots}{$button}{'hosts'}{$alternate_linbo_hostname}){
+          # ????? changed
+          #if (exists ${snapshots}{$button}{'hosts'}{$hostname}
+          #        or ${snapshots}{$button}{'hosts'}{$alternate_linbo_hostname}){
+	  #    INFO "Host $hostname is ",
+          #         ${snapshots}{$button}{'hosts'}{$hostname};
+	  #    INFO "Linbo Host $alternate_linbo_hostname is ",
+          #         ${snapshots}{$button}{'hosts'}{$alternate_linbo_hostname};
+          if (exists ${all_vars}{'snapshots'}{$button}{'access'}{'hosts'}{$hostname}
+                  or ${all_vars}{'snapshots'}{$button}{'access'}{'hosts'}{$alternate_linbo_hostname}){
 	      INFO "Host $hostname is ",
-                   ${snapshots}{$button}{'hosts'}{$hostname};
+                   ${all_vars}{'snapshots'}{$button}{'access'}{'hosts'}{$hostname};
 	      INFO "Linbo Host $alternate_linbo_hostname is ",
-                   ${snapshots}{$button}{'hosts'}{$alternate_linbo_hostname};
+                   ${all_vars}{'snapshots'}{$button}{'access'}{'hosts'}{$alternate_linbo_hostname};
           } else {
               INFO "Host >$hostname< not found as allowed host";
               INFO "Linbo Host >$alternate_linbo_hostname< not found as allowed host";
@@ -2912,6 +2963,7 @@ sub get_snapshots {
                     $value=~s/\303\234/\334/g;# Ue
                     $value=~s/\303\237/\337/g;# ss
 
+                    # ?????
                     ${snapshots}{$dirname}{$key}="$value";
                     ${all_vars}{'snapshots'}{$dirname}{'conf'}{$key}="$value";
 
