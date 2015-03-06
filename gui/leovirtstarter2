@@ -120,7 +120,7 @@ my $server_popularity_log_file=".log-popularity";
 #my %read_access_vm=();
 
 # Contains information about snapshots
-my %snapshots=();
+#my %snapshots=();
 
 my $standard_snapshot_local_zipped="";
 # old snapshot.zip
@@ -2101,8 +2101,8 @@ sub destroy_progress {
 
 sub dump_all {
     my ($string) = @_;
-    print "########## $string:  %snapshots\n";
-    print Dumper(\%snapshots);
+    #print "########## $string:  %snapshots\n";
+    #print Dumper(\%snapshots);
     print "########## $string:  %all_vars\n";
     print Dumper(\%all_vars);
     print "Explanation of VARS:\n";
@@ -2392,8 +2392,8 @@ sub get_zipped_snapshot {
     # generate paths
 
     # ?????
-    my $file=${snapshots}{$snapshot}{'abs_path'};
-    #my $file=${all_vars}{'snapshots'}{$snapshot}{'remote'}{'file'}
+    #my $file=${snapshots}{$snapshot}{'abs_path'};
+    my $file=${all_vars}{'snapshots'}{$snapshot}{'remote'}{'file'};
     # ?????
     #my $dir =${snapshots}{$snapshot}{'abs_dir'};
     my $dir=${all_vars}{'snapshots'}{$snapshot}{'remote'}{'dir'};
@@ -2659,7 +2659,7 @@ sub create_radiobuttons {
             foreach my $host (@hosts){
     	        INFO "      * $host";
                 # ?????
-                ${snapshots}{$button}{'hosts'}{$host}="OK";
+                #####${snapshots}{$button}{'hosts'}{$host}="OK";
                 ${all_vars}{'snapshots'}{$button}{'access'}{'hosts'}{$host}="OK";
             }
         }
@@ -2674,8 +2674,8 @@ sub create_radiobuttons {
     	        INFO "   * Rooms allowed";
             foreach my $room (@rooms){
     	        INFO "      * $room";
-                ${snapshots}{$button}{'rooms'}{$room}="OK";
                 # ?????
+                #####${snapshots}{$button}{'rooms'}{$room}="OK";
                 ${all_vars}{'snapshots'}{$button}{'access'}{'rooms'}{$room}="OK";
             }
         }
@@ -2694,10 +2694,10 @@ sub create_radiobuttons {
           if (exists ${all_vars}{'snapshots'}{$button}{'access'}{'rooms'}{$all_vars{'host'}{'room'}}){
 #	      INFO "Room $host_room is ",
 #                   "${snapshots}{$button}{'rooms'}{$host_room}";
-	      INFO "Room $all_vars{'host'}{'room'} is ",
                    # ????? changed
                    #${snapshots}{$button}{'rooms'}{$all_vars{'host'}{'room'}};
-                   ${all_vars}{'snapshots'}{$button}{'rooms'}{$all_vars{'host'}{'room'}};
+	      INFO "Room $all_vars{'host'}{'room'} is ",
+                   ${all_vars}{'snapshots'}{$button}{'access'}{'rooms'}{$all_vars{'host'}{'room'}};
           } else {
 #              INFO "Room >$host_room< not found as allowed room";
               INFO "Room >$all_vars{'host'}{'room'}< not found as allowed room";
@@ -2913,12 +2913,12 @@ sub get_snapshots {
                 next;
             }
             # ??????
-            ${snapshots}{$dirname}{'abs_path'}=$abs_path;
+            #####${snapshots}{$dirname}{'abs_path'}=$abs_path;
             ${all_vars}{'snapshots'}{$dirname}{'remote'}{'file'}=$abs_path;
             my $abs_dir = $get_dir."/".
                           $dirname;
             # ??????
-            ${snapshots}{$dirname}{'abs_dir'}=$abs_dir;
+            #####${snapshots}{$dirname}{'abs_dir'}=$abs_dir;
             ${all_vars}{'snapshots'}{$dirname}{'remote'}{'dir'}=$abs_dir;
 
             # filesizes
@@ -2932,10 +2932,10 @@ sub get_snapshots {
             #print "SIZE of $file_zipped_size is $filesize_zipped\n";
 
             # ??????
-            ${snapshots}{$dirname}{'filesize_vdi'}=$filesize_vdi;
+            #####${snapshots}{$dirname}{'filesize_vdi'}=$filesize_vdi;
             ${all_vars}{'snapshots'}{$dirname}{'remote'}{'size_expected'}{'vdi'}=$filesize_vdi;
             # ??????
-            ${snapshots}{$dirname}{'filesize_zipped'}=$filesize_zipped;
+            #####${snapshots}{$dirname}{'filesize_zipped'}=$filesize_zipped;
             ${all_vars}{'snapshots'}{$dirname}{'remote'}{'size_expected'}{'vdi_zipped'}=$filesize_zipped;
 
             if ($dirname ne $snapshot_standard){
@@ -2964,7 +2964,7 @@ sub get_snapshots {
                     $value=~s/\303\237/\337/g;# ss
 
                     # ?????
-                    ${snapshots}{$dirname}{$key}="$value";
+                    #####${snapshots}{$dirname}{$key}="$value";
                     ${all_vars}{'snapshots'}{$dirname}{'conf'}{$key}="$value";
 
                     #print "   * Key: $key  --> Value: $value\n";
