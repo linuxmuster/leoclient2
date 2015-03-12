@@ -240,8 +240,11 @@ else
 fi
 cd $VMPATH/$MACHINENAME/Snapshots
 SNAPSHOTDATEI=`ls *.vdi`
-zip -9 $SNAPSHOTDATEI.zip $SNAPSHOTDATEI
-mv $SNAPSHOTDATEI.zip $VMPATH/$MACHINENAME/snapshot-store/standard/
+# gezippt wird nun mit 'leovirtstarter2 --prepare-remote-vm MACHINENAME'
+#alt#zip -9 $SNAPSHOTDATEI.zip $SNAPSHOTDATEI
+#alt#mv $SNAPSHOTDATEI.zip $VMPATH/$MACHINENAME/snapshot-store/standard/
+cp $SNAPSHOTDATEI $VMPATH/$MACHINENAME/snapshot-store/standard/
+leovirtstarter2 --prepare-remote-vm $MACHINENAME
 
 chmod -R 777 $VMPATH/$MACHINENAME
 chmod -R 755 $VMPATH/$MACHINENAME/snapshot-store/standard
