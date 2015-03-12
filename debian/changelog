@@ -1,3 +1,9 @@
+leoclient2 (0.5.2-3) trusty-testing; urgency=medium
+
+  * Korrektur leoclient2-vm-move
+
+ -- Rainer Roessler <rainer@linuxmuster.net>  Thu, 12 Mar 2015 22:50:46 +0100
+
 leoclient2 (0.5.2-2) trusty-testing; urgency=medium
 
   * snapshot-zip beim erstellen und erneuern der vm durch 
