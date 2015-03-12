@@ -168,12 +168,12 @@ then
 fi
 
 # Konfigurationsdatei VirtualBox.xml anpassen
-cat $VMPATH/$MACHINENAME/VirtualBox.xml | sed -e "s#$VMPATH#$VMPATHNEW#g" > $VMPATHNEW/$MACHINENAME/VirtualBox.xml-temp
+cat $VMPATH/$MACHINENAME/VirtualBox.xml | sed -e "s#$VMPATH#$VMPATHNEW#g" > $VMPATH/$MACHINENAME/VirtualBox.xml-temp
 mv $VMPATH/$MACHINENAME/VirtualBox.xml-temp $VMPATH/$MACHINENAME/VirtualBox.xml
 chmod 777 $VMPATH/$MACHINENAME/VirtualBox.xml
 
 # Maschine verschieben
-mv $VMPATH/$MACHINENAME $VMPATHNEW/$MACHINENAME
+mv $VMPATH/$MACHINENAME $VMPATHNEW/
 
 # Konfigurationsdatei für die virtuelle Maschie erstellen
 if [ -d /etc/leoclient2/machines ]
@@ -184,5 +184,9 @@ else
 fi
 
 echo $VMPATHNEW/$MACHINENAME > /etc/leoclient2/machines/$MACHINENAME.conf
+
+# Verzeichnis in dem die VM liegen muss in Verzeichnis der 
+# Maschine ablegen als MACHINENAME.conf
+cp /etc/leoclient2/machines/$MACHINENAME.conf $VMPATH/$MACHINENAME/
 
 exit 0
