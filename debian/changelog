@@ -1,3 +1,9 @@
+leoclient2 (0.5.3-2) trusty-testing; urgency=medium
+
+  * Added empty dir for SERVERDIR mountpoint
+
+ -- Ruediger Beck <bz@j1009p16.bszleo.de>  Tue, 17 Mar 2015 13:16:41 +0100
+
 leoclient2 (0.5.3-1) trusty-testing; urgency=medium
 
   * Erweiterung von %all_vars
