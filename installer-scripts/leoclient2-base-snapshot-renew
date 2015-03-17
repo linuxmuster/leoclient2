@@ -182,8 +182,12 @@ else
   mkdir -p $VMPATH/$MACHINENAME/snapshot-store/standard
 fi
 cd $VMPATH/$MACHINENAME/Snapshots
-zip -9 snapshot.zip *
-mv snapshot.zip $VMPATH/$MACHINENAME/snapshot-store/standard/
+SNAPSHOTDATEI=`ls *.vdi`
+# gezippt wird nun mit 'leovirtstarter2 --prepare-remote-vm MACHINENAME'
+#alt#zip -9 $SNAPSHOTDATEI.zip $SNAPSHOTDATEI
+#alt#mv $SNAPSHOTDATEI.zip $VMPATH/$MACHINENAME/snapshot-store/standard/
+cp $SNAPSHOTDATEI $VMPATH/$MACHINENAME/snapshot-store/standard/
+leovirtstarter2 --prepare-remote-vm $MACHINENAME
 
 chmod -R 777 $VMPATH/$MACHINENAME
 chmod -R 755 $VMPATH/$MACHINENAME/defaults
@@ -193,12 +197,13 @@ chmod 755 $VMPATH/$MACHINENAME/$MACHINENAME.vdi
 echo
 echo "Die Konfiguationsdateien und der Snapshot wurden gesichert."
 echo "Die Rechte der Dateien wurden angepasst." 
-
-echo
 echo "Die virtuelle Maschine kann nun mit dem Snapshotstarter benutzt werden."
 echo 
 echo "Wenn Sie die Basis für die virtuelle Maschine und den Snapshot neu"
 echo "erzeugen wollen, starten Sie das Script 'leoclient2-base-snapshot-renew'."
+echo
+echo "Wenn Sie die vollständige virtuelle Maschine in ein anderes Verzeichnis"
+echo "umziehen wollen, starten Sie das Script 'leoclient2-vm-move'."
 echo
 
 exit 0

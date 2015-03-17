@@ -156,24 +156,29 @@ then
  echo
  exit 0
 else 
- mkdir -p $VMPATHNEW/$MACHINENAME
- chmod 777 $VMPATHNEW/$MACHINENAME
+# mkdir -p $VMPATHNEW/$MACHINENAME
+# chmod 777 $VMPATHNEW/$MACHINENAME
+ mkdir -p $VMPATHNEW
+ chmod 777 $VMPATHNEW
 fi
 
 if [ -f /etc/leoclient2/machines/$MACHINENAME.conf ]
 then
  echo
- echo "Die Konfigurationsdatei für diese Maschine gibt es schon. ABBRUCH!"
+ echo "Die Konfigurationsdatei für diese Maschine gibt es schon. "
+ echo "Wenn die VM auf diesem Rechner schon vorhanden war, dann die alte"
+ echo "Konfigurationsdatei löschen unter /etc/leoclient2/machines/ ."
+ echo "ABBRUCH!"
  exit 0
 fi
 
 # Konfigurationsdatei VirtualBox.xml anpassen
-cat $VMPATH/$MACHINENAME/VirtualBox.xml | sed -e "s#$VMPATH#$VMPATHNEW#g" > $VMPATHNEW/$MACHINENAME/VirtualBox.xml-temp
+cat $VMPATH/$MACHINENAME/VirtualBox.xml | sed -e "s#$VMPATH#$VMPATHNEW#g" > $VMPATH/$MACHINENAME/VirtualBox.xml-temp
+cp $VMPATH/$MACHINENAME/VirtualBox.xml-temp $VMPATH/$MACHINENAME/defaults/VirtualBox.xml
 mv $VMPATH/$MACHINENAME/VirtualBox.xml-temp $VMPATH/$MACHINENAME/VirtualBox.xml
-chmod 777 $VMPATH/$MACHINENAME/VirtualBox.xml
 
 # Maschine verschieben
-mv $VMPATH/$MACHINENAME $VMPATHNEW/$MACHINENAME
+mv $VMPATH/$MACHINENAME $VMPATHNEW/
 
 # Konfigurationsdatei für die virtuelle Maschie erstellen
 if [ -d /etc/leoclient2/machines ]
@@ -184,5 +189,9 @@ else
 fi
 
 echo $VMPATHNEW/$MACHINENAME > /etc/leoclient2/machines/$MACHINENAME.conf
+
+# Verzeichnis in dem die VM liegen muss in Verzeichnis der 
+# Maschine ablegen als MACHINENAME.conf
+cp /etc/leoclient2/machines/$MACHINENAME.conf $VMPATHNEW/$MACHINENAME/
 
 exit 0
