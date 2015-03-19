@@ -1,8 +1,9 @@
-leoclient2 (0.5.3-6) trusty-testing; urgency=medium
+leoclient2 (0.5.4-1) trusty-testing; urgency=medium
 
+  * removed tmp/heimatverzeichnis stuff
   * Added empty dir for SERVERDIR mountpoint in postinst
 
- -- Ruediger Beck <bz@j1009p16.bszleo.de>  Tue, 17 Mar 2015 14:49:16 +0100
+ -- Ruediger Beck <bz@j1009p16.bszleo.de>  Thu, 19 Mar 2015 18:01:13 +0100
 
 leoclient2 (0.5.3-1) trusty-testing; urgency=medium
 
