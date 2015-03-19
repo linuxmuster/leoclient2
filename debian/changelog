@@ -1,14 +1,8 @@
-leoclient2 (0.5.3-3) trusty-testing; urgency=medium
+leoclient2 (0.5.3-6) trusty-testing; urgency=medium
 
-  * Changed permissions for SERVERDIR mountpoint to 0777
+  * Added empty dir for SERVERDIR mountpoint in postinst
 
- -- Ruediger Beck <bz@j1009p16.bszleo.de>  Tue, 17 Mar 2015 14:01:24 +0100
-
-leoclient2 (0.5.3-2) trusty-testing; urgency=medium
-
-  * Added empty dir for SERVERDIR mountpoint
-
- -- Ruediger Beck <bz@j1009p16.bszleo.de>  Tue, 17 Mar 2015 13:16:41 +0100
+ -- Ruediger Beck <bz@j1009p16.bszleo.de>  Tue, 17 Mar 2015 14:49:16 +0100
 
 leoclient2 (0.5.3-1) trusty-testing; urgency=medium
 

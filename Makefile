@@ -16,7 +16,6 @@ DESKTOP=$(DESTDIR)/usr/share/applications
 ICON=$(DESTDIR)/usr/share/pixmaps
 INIT=$(DESTDIR)/etc/init.d
 ETC=$(DESTDIR)/etc/sudoers.d
-MOUNTPOINT=$(DESTDIR)/media/leoclient2-vm
 
 help:
 	@echo ' '
@@ -67,8 +66,6 @@ leoclient2-leovirtstarter-client:
 	@echo '   * Installing icon'
 	@install -d -m0755 -oroot -groot $(ICON)
 	@install -oroot -groot --mode=0644 gui/leovirtstarter2.png $(ICON)
-	@echo '   * Installing serverdir mount point'
-	@install -d -m0777 -oroot -groot $(MOUNTPOINT)
 
 
 leoclient2-leovirtstarter-server:
