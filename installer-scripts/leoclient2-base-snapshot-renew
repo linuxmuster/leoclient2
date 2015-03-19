@@ -110,20 +110,6 @@ else
 fi
 echo
 
-cd ~
-
-HEIMAT=`pwd`
- 
-if [ -f /tmp/heimatverzeichnis ]
-then
-  HEIMATTMP=`cat /tmp/heimatverzeichnis`
-else
-  HEIMATTMP="NEU"
-fi
-
-echo $HEIMAT > /tmp/heimatverzeichnis
-chmod 777 /tmp/heimatverzeichnis
-
 
 # Umgebungsvariable für virtuelle Maschine im Verzeichnis setzen
 export VBOX_USER_HOME=$VMPATH/$MACHINENAME/
