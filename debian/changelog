@@ -10,6 +10,12 @@ leoclient2 (0.5.3-1) trusty-testing; urgency=medium
 
  -- Ruediger Beck <bz@j1009p16.bszleo.de>  Tue, 17 Mar 2015 12:40:10 +0100
 
+leoclient2 (0.5.2-4) trusty-testing; urgency=medium
+
+  * Korrektur für default bei leoclient2-vm-move
+
+ -- Rainer Roessler <rainer@linuxmuster.net>  Fri, 13 Mar 2015 00:01:48 +0100
+
 leoclient2 (0.5.2-3) trusty-testing; urgency=medium
 
   * Korrektur leoclient2-vm-move
