@@ -1,3 +1,21 @@
+leoclient2 (0.5.3-3) trusty-testing; urgency=medium
+
+  * Changed permissions for SERVERDIR mountpoint to 0777
+
+ -- Ruediger Beck <bz@j1009p16.bszleo.de>  Tue, 17 Mar 2015 14:01:24 +0100
+
+leoclient2 (0.5.3-2) trusty-testing; urgency=medium
+
+  * Added empty dir for SERVERDIR mountpoint
+
+ -- Ruediger Beck <bz@j1009p16.bszleo.de>  Tue, 17 Mar 2015 13:16:41 +0100
+
+leoclient2 (0.5.3-1) trusty-testing; urgency=medium
+
+  * Erweiterung von %all_vars
+
+ -- Ruediger Beck <bz@j1009p16.bszleo.de>  Tue, 17 Mar 2015 12:40:10 +0100
+
 leoclient2 (0.5.2-4) trusty-testing; urgency=medium
 
   * Korrektur für default bei leoclient2-vm-move
