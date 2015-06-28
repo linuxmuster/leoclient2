@@ -186,6 +186,8 @@ falls vorhanden: Warnung ausgeben diese umzubenennen in
 Sonstiges:
 ----------------------------------------------------------------------
 
+SERVER mit Virtualbox verwalten
+
 server headless autostart
  - show headless command
  - Datei autostart.conf
@@ -194,8 +196,26 @@ server headless autostart
 Script, dass beim booten alle so markierten VM's startet
 Oder das hier benutzen:
 http://vboxtool.sourceforge.net/
- 
 
+server netzwerkconfig
+if-then-else-configuration:
+wenn die Netzwerkkarten (Hardware) eine bestimmte MAC haben,
+   dann -> so konfigurieren: ... nutze diese NIC (bridge, ...)
+   sonst so konfigirieren: ... erstelle virtuelle NIC ins testenetz xyz
+
+Beispiele:
+
+A) virtuelle Maschine macht dhcp, der soll aber nicht ins schulnetz gehen, 
+   sondern gebridged auf eine NIC mit der MAC xyz (falls vorhanden)
+   
+   # Echter Server (mit ZusatzNIC) 
+   falls auf host xyz, UND MAC klm vorhanden, bridge auf diese
+
+   # Testrechner
+   falls auf host xyz2 dann mache Rechnerinternes Netz mit name abc 
+   und mache dahinein dhcp
+   
+   Netzname sollte mit imagename korrespondieren
 
 
 
