@@ -17,7 +17,6 @@ ICON=$(DESTDIR)/usr/share/pixmaps
 INIT=$(DESTDIR)/etc/init.d
 ETC=$(DESTDIR)/etc/sudoers.d
 
-
 help:
 	@echo ' '
 	@echo 'Most common options of this Makefile:'

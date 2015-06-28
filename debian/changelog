@@ -1,3 +1,35 @@
+leoclient2 (0.5.4-1) trusty-testing; urgency=medium
+
+  * removed tmp/heimatverzeichnis stuff
+  * Added empty dir for SERVERDIR mountpoint in postinst
+
+ -- Ruediger Beck <bz@j1009p16.bszleo.de>  Thu, 19 Mar 2015 18:01:13 +0100
+
+leoclient2 (0.5.3-1) trusty-testing; urgency=medium
+
+  * Erweiterung von %all_vars
+
+ -- Ruediger Beck <bz@j1009p16.bszleo.de>  Tue, 17 Mar 2015 12:40:10 +0100
+
+leoclient2 (0.5.2-4) trusty-testing; urgency=medium
+
+  * Korrektur für default bei leoclient2-vm-move
+
+ -- Rainer Roessler <rainer@linuxmuster.net>  Fri, 13 Mar 2015 00:01:48 +0100
+
+leoclient2 (0.5.2-3) trusty-testing; urgency=medium
+
+  * Korrektur leoclient2-vm-move
+
+ -- Rainer Roessler <rainer@linuxmuster.net>  Thu, 12 Mar 2015 22:50:46 +0100
+
+leoclient2 (0.5.2-2) trusty-testing; urgency=medium
+
+  * snapshot-zip beim erstellen und erneuern der vm durch 
+	leovirtstarter2 --prepare-remote-vm $MACHINENAME 
+
+ -- Rainer Roessler <rainer@linuxmuster.net>  Thu, 12 Mar 2015 20:21:16 +0100
+
 leoclient2 (0.5.2-1) trusty-testing; urgency=medium
 
   * New upstream release

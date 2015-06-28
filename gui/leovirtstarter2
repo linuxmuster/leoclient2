@@ -120,7 +120,7 @@ my $server_popularity_log_file=".log-popularity";
 #my %read_access_vm=();
 
 # Contains information about snapshots
-my %snapshots=();
+#my %snapshots=();
 
 my $standard_snapshot_local_zipped="";
 # old snapshot.zip
@@ -573,13 +573,6 @@ foreach my $serverdir ( @{ $all_vars{'searchdirs'}{'remote'} } ){
 }
 
 
-#print Dumper(\%read_access_vm);
-# --dump
-#if ($dump==1){
-#    print Dumper(\%all_vars);
-#    print "@{ $all_vars{'searchdirs'}{'remote'}}";
-#    exit;
-#}
 
 #@vm_local = sort @vm_local;
 #@vm_remote = sort @vm_remote;
@@ -822,7 +815,7 @@ if ($vm ne ""){
         exit;
     }
 
-    print Dumper(\%all_vars);
+    #print Dumper(\%all_vars);
 
     if ($zenity_return eq ""){
         #  canceled
@@ -948,25 +941,10 @@ print "  * VBOX_USER_HOME: $vm_path_export\n";
 
 
 
-
-
-
-#print Dumper(\%read_access_vm);
-# --dump
 if ($dump==1){
-    print Dumper(\%all_vars);
-    print "Explanation of VARS:\n";
-    print "searchdirs -> local is THE exactly ONE dir of the local machine\n";
-    print "           -> remote are the dir(s) in SERVERDIR\n";
-    print "           -> all is ONE local followed by the remote(s)\n";
-    print "user       -> Info about the user that has started leovirtstarter2\n";
-    print "host       -> Info about the machine on which leovirtstarter2 runs\n";
-    print "vms        -> Info about ALL virtual machines available\n";
-    print "  type -> local: only local, no backup in serverdirs\n";
-    print "       -> remote: only remote, local data might exist\n";
-    print "       -> mixed: local, backup in serverdirs exist\n";
-    exit;
+    &dump_all("After VM selection");
 }
+
 
 
 # --ignore-virtualbox
@@ -1172,6 +1150,8 @@ foreach my $dir ( @{ $all_vars{'caches'}{'ordered'} } ){
 }
 
 
+
+
 INFO "Starting leovirtstarter2 GUI on $hostname";
 
 ############################################################
@@ -1362,6 +1342,12 @@ $ram_v_stock->set_border_width(15);
 $hardware_ram->add($ram_v_stock);
 $vbox_hardware->show_all();
 
+            if ($dump==1){
+                &dump_all("Before boot of snapshot");
+                exit;
+            }
+
+
 # rows, columns, homogeneous
 my $table = Gtk2::Table->new(2, 3, FALSE);
 $vbox->pack_start($table, FALSE, TRUE, 0);
@@ -1438,11 +1424,14 @@ sub zip_snapshots {
                 exit;
             } 
         }
-        #$file=$snapshots{$snapshot}{'abs_path'};
-        &zip_image($snapshots{$snapshot}{'abs_path'},$snapshot);
+        #$file=$[snapshots}{$snapshot}{'abs_path'};
+        
+        # ????? changed
+        #&zip_image(${snapshots}{$snapshot}{'abs_path'},$snapshot);
+        &zip_image(${all_vars}{'snapshots'}{$snapshot}{'remote'}{'file'},$snapshot);
 
 #        if ($snapshot ne "standard"){
-#            $file=$snapshots{$snapshot}{'abs_path'};
+#            $file=${snapshots}{$snapshot}{'abs_path'};
 #            #print "   * File: $file $snapshot\n";
 #            &zip_image($file,$snapshot);
 #        } else {
@@ -2110,6 +2099,24 @@ sub destroy_progress {
 }
 
 
+sub dump_all {
+    my ($string) = @_;
+    #print "########## $string:  %snapshots\n";
+    #print Dumper(\%snapshots);
+    print "########## $string:  %all_vars\n";
+    print Dumper(\%all_vars);
+    print "Explanation of VARS:\n";
+    print "searchdirs -> local is THE exactly ONE dir of the local machine\n";
+    print "           -> remote are the dir(s) in SERVERDIR\n";
+    print "           -> all is ONE local followed by the remote(s)\n";
+    print "user       -> Info about the user that has started leovirtstarter2\n";
+    print "host       -> Info about the machine on which leovirtstarter2 runs\n";
+    print "vms        -> Info about ALL virtual machines available\n";
+    print "  type -> local: only local, no backup in serverdirs\n";
+    print "       -> remote: only remote, local data might exist\n";
+    print "       -> mixed: local, backup in serverdirs exist\n";
+}
+
 
 # The big start button
 sub start_button {
@@ -2159,6 +2166,8 @@ sub start_button {
             #&set_vm_network();
             my $start_vm = $vm_path_export.
                            "/usr/bin/VBoxManage startvm $vm --type gui";
+
+
             INFO "$start_vm";
             system("$start_vm");
             INFO "Snapshot started in other window: Terminating here!";
@@ -2217,7 +2226,9 @@ sub start_zipped_snaphot {
         system("$command_unzip");
         
         my $unzipped_actual_size=0;
-        my $unzipped_size=$snapshots{$selected{'SYSTEM'}}{'filesize_vdi'};
+        # ????? changed
+        #my $unzipped_size=${snapshots}{$selected{'SYSTEM'}}{'filesize_vdi'};
+        my $unzipped_size=${all_vars}{'snapshots'}{$selected{'SYSTEM'}}{'remote'}{'size_expected'}{'vdi'};
     } else {
 
     }
@@ -2228,7 +2239,11 @@ sub start_zipped_snaphot {
 
 sub unzip_timeout {
     my $actual_size;
-    my $unzipped_size=$snapshots{$selected{'SYSTEM'}}{'filesize_vdi'};
+
+    # ????? changed
+    #my $unzipped_size=${snapshots}{$selected{'SYSTEM'}}{'filesize_vdi'};
+    my $unzipped_size=${all_vars}{'snapshots'}{$selected{'SYSTEM'}}{'remote'}{'size_expected'}{'vdi'};
+
     my $unzipped_size_mb=int($unzipped_size/1024/1024);
     my $file=$snapshot_file_dir_local."/".$snapshot_file_name;
     my $progress_bar = shift;
@@ -2311,7 +2326,11 @@ sub unzip_timeout {
 
 sub getzip_timeout {
     my $actual_size;
-    my $zipped_size=$snapshots{$selected{'SYSTEM'}}{'filesize_zipped'};
+
+    # ????? changed
+    #my $zipped_size=${snapshots}{$selected{'SYSTEM'}}{'filesize_zipped'};
+    my $zipped_size=${all_vars}{'snapshots'}{$selected{'SYSTEM'}}{'remote'}{'size_expected'}{'vdi_zipped'};
+
     my $zipped_size_mb=int($zipped_size/1024/1024);
 
     my $target = $selected{'CACHE-ZIP'};
@@ -2363,14 +2382,22 @@ sub get_zipped_snapshot {
         #my $started=&start_zipped_snaphot($selected{'CACHE-ZIP'});
         #my $started=&start_zipped_snaphot("___NOSNAPSHOT___");
         #return "___NOSNAPSHOT___";  
-    } elsif (not defined $snapshots{$snapshot}{'abs_path'}){
+    # ????? changed
+    #} elsif (not defined ${snapshots}{$snapshot}{'abs_path'}){
+    } elsif (not defined ${all_vars}{'snapshots'}{$snapshot}{'remote'}{'file'}){
         
     }
 
     # zipped snapshot must be fetched
     # generate paths
-    my $file=$snapshots{$snapshot}{'abs_path'};
-    my $dir =$snapshots{$snapshot}{'abs_dir'};
+
+    # ?????
+    #my $file=${snapshots}{$snapshot}{'abs_path'};
+    my $file=${all_vars}{'snapshots'}{$snapshot}{'remote'}{'file'};
+    # ?????
+    #my $dir =${snapshots}{$snapshot}{'abs_dir'};
+    my $dir=${all_vars}{'snapshots'}{$snapshot}{'remote'}{'dir'};
+
     my $file_zipped=$file.".zip";
     my $filesize_file_zipped = $dir."/filesize.vdi.zipped";
 
@@ -2597,37 +2624,59 @@ sub create_radiobuttons {
             next;
         }
 
-        if (exists $snapshots{$button}{'name'}){
- 	    INFO "   * Name:       ",
-                 "$snapshots{$button}{'name'}";
-            $displayname=$snapshots{$button}{'name'};
+        # ????? changed
+        #if (exists ${snapshots}{$button}{'name'}){
+ 	#    INFO "   * Name:       ",${snapshots}{$button}{'name'};
+        #    $displayname=${snapshots}{$button}{'name'};
+        if (exists ${all_vars}{'snapshots'}{$button}{'conf'}{'name'}){
+ 	    INFO "   * Name:       ",${all_vars}{'snapshots'}{$button}{'conf'}{'name'};
+            $displayname=${all_vars}{'snapshots'}{$button}{'conf'}{'name'};
         } else {
             $displayname=$button;
         }
-        if (exists $snapshots{$button}{'maintainer'}){
+        # ????? changed
+        #if (exists ${snapshots}{$button}{'maintainer'}){
+ 	#    INFO "   * Maintainer: ",
+        #         ${snapshots}{$button}{'maintainer'};
+        #    $displayname=$displayname.
+        #        " (".${snapshots}{$button}{'maintainer'}.")";
+        #}
+        if (exists ${all_vars}{'snapshots'}{$button}{'conf'}{'maintainer'}){
  	    INFO "   * Maintainer: ",
-                 "$snapshots{$button}{'maintainer'}";
+                 ${all_vars}{'snapshots'}{$button}{'conf'}{'maintainer'};
             $displayname=$displayname.
-                " (".$snapshots{$button}{'maintainer'}.")";
+                " (".${all_vars}{'snapshots'}{$button}{'conf'}{'maintainer'}.")";
         }
-        if (exists $snapshots{$button}{'host'}){
-            $host_string=$snapshots{$button}{'host'};
+        # ????? changed
+        #if (exists ${snapshots}{$button}{'host'}){
+        if (exists ${all_vars}{'snapshots'}{$button}{'conf'}{'host'}){
+            # ????? changed
+            #$host_string=${snapshots}{$button}{'host'};
+            $host_string=${all_vars}{'snapshots'}{$button}{'conf'}{'host'};
             $host_check=1; # check for hosts later
  	    INFO "   * Hosts allowed:";
             my @hosts = split(/,/,$host_string);
             foreach my $host (@hosts){
     	        INFO "      * $host";
-                $snapshots{$button}{'hosts'}{$host}="OK";
+                # ?????
+                #####${snapshots}{$button}{'hosts'}{$host}="OK";
+                ${all_vars}{'snapshots'}{$button}{'access'}{'hosts'}{$host}="OK";
             }
         }
-        if (exists $snapshots{$button}{'room'}){
-            $room_string=$snapshots{$button}{'room'};
+        # ????? changed
+        #if (exists ${snapshots}{$button}{'room'}){
+        if (exists ${all_vars}{'snapshots'}{$button}{'conf'}{'room'}){
+            # ????? changed
+            #$room_string=${snapshots}{$button}{'room'};
+            $room_string=${all_vars}{'snapshots'}{$button}{'conf'}{'room'};
             $room_check=1; # check for rooms later
             my @rooms = split(/,/,$room_string);
     	        INFO "   * Rooms allowed";
             foreach my $room (@rooms){
     	        INFO "      * $room";
-                $snapshots{$button}{'rooms'}{$room}="OK";
+                # ?????
+                #####${snapshots}{$button}{'rooms'}{$room}="OK";
+                ${all_vars}{'snapshots'}{$button}{'access'}{'rooms'}{$room}="OK";
             }
         }
 
@@ -2639,12 +2688,16 @@ sub create_radiobuttons {
         my $host_check_ok=1; # default: display
 
         if ($room_check==1){
-#          if (exists $snapshots{$button}{'rooms'}{$host_room}){
-          if (exists $snapshots{$button}{'rooms'}{$all_vars{'host'}{'room'}}){
+#          if (exists ${snapshots}{$button}{'rooms'}{$host_room}){
+          # ????? changed
+          #if (exists ${snapshots}{$button}{'rooms'}{$all_vars{'host'}{'room'}}){
+          if (exists ${all_vars}{'snapshots'}{$button}{'access'}{'rooms'}{$all_vars{'host'}{'room'}}){
 #	      INFO "Room $host_room is ",
-#                   "$snapshots{$button}{'rooms'}{$host_room}";
+#                   "${snapshots}{$button}{'rooms'}{$host_room}";
+                   # ????? changed
+                   #${snapshots}{$button}{'rooms'}{$all_vars{'host'}{'room'}};
 	      INFO "Room $all_vars{'host'}{'room'} is ",
-                   "$snapshots{$button}{'rooms'}{$all_vars{'host'}{'room'}}";
+                   ${all_vars}{'snapshots'}{$button}{'access'}{'rooms'}{$all_vars{'host'}{'room'}};
           } else {
 #              INFO "Room >$host_room< not found as allowed room";
               INFO "Room >$all_vars{'host'}{'room'}< not found as allowed room";
@@ -2657,12 +2710,19 @@ sub create_radiobuttons {
           # when synchronizing has failed
 	  my $alternate_linbo_hostname=$hostname;
           $alternate_linbo_hostname=~s/-w$//g;
-          if (exists $snapshots{$button}{'hosts'}{$hostname}
-                  or $snapshots{$button}{'hosts'}{$alternate_linbo_hostname}){
+          # ????? changed
+          #if (exists ${snapshots}{$button}{'hosts'}{$hostname}
+          #        or ${snapshots}{$button}{'hosts'}{$alternate_linbo_hostname}){
+	  #    INFO "Host $hostname is ",
+          #         ${snapshots}{$button}{'hosts'}{$hostname};
+	  #    INFO "Linbo Host $alternate_linbo_hostname is ",
+          #         ${snapshots}{$button}{'hosts'}{$alternate_linbo_hostname};
+          if (exists ${all_vars}{'snapshots'}{$button}{'access'}{'hosts'}{$hostname}
+                  or ${all_vars}{'snapshots'}{$button}{'access'}{'hosts'}{$alternate_linbo_hostname}){
 	      INFO "Host $hostname is ",
-                   "$snapshots{$button}{'hosts'}{$hostname}";
+                   ${all_vars}{'snapshots'}{$button}{'access'}{'hosts'}{$hostname};
 	      INFO "Linbo Host $alternate_linbo_hostname is ",
-                   "$snapshots{$button}{'hosts'}{$alternate_linbo_hostname}";
+                   ${all_vars}{'snapshots'}{$button}{'access'}{'hosts'}{$alternate_linbo_hostname};
           } else {
               INFO "Host >$hostname< not found as allowed host";
               INFO "Linbo Host >$alternate_linbo_hostname< not found as allowed host";
@@ -2852,10 +2912,14 @@ sub get_snapshots {
                 # no snapshot file found/no access to snapshot file 
                 next;
             }
-            ${snapshots}{$dirname}{'abs_path'}=$abs_path;
+            # ??????
+            #####${snapshots}{$dirname}{'abs_path'}=$abs_path;
+            ${all_vars}{'snapshots'}{$dirname}{'remote'}{'file'}=$abs_path;
             my $abs_dir = $get_dir."/".
                           $dirname;
-            ${snapshots}{$dirname}{'abs_dir'}=$abs_dir;
+            # ??????
+            #####${snapshots}{$dirname}{'abs_dir'}=$abs_dir;
+            ${all_vars}{'snapshots'}{$dirname}{'remote'}{'dir'}=$abs_dir;
 
             # filesizes
             my $file_vdi_size=$abs_dir."/filesize.vdi";
@@ -2866,8 +2930,13 @@ sub get_snapshots {
             chomp($filesize_zipped);
             #print "SIZE of $file_vdi_size is $filesize_vdi\n";
             #print "SIZE of $file_zipped_size is $filesize_zipped\n";
-            ${snapshots}{$dirname}{'filesize_vdi'}=$filesize_vdi;
-            ${snapshots}{$dirname}{'filesize_zipped'}=$filesize_zipped;
+
+            # ??????
+            #####${snapshots}{$dirname}{'filesize_vdi'}=$filesize_vdi;
+            ${all_vars}{'snapshots'}{$dirname}{'remote'}{'size_expected'}{'vdi'}=$filesize_vdi;
+            # ??????
+            #####${snapshots}{$dirname}{'filesize_zipped'}=$filesize_zipped;
+            ${all_vars}{'snapshots'}{$dirname}{'remote'}{'size_expected'}{'vdi_zipped'}=$filesize_zipped;
 
             if ($dirname ne $snapshot_standard){
                 # jump over the default snapshot 
@@ -2894,7 +2963,10 @@ sub get_snapshots {
                     $value=~s/\303\234/\334/g;# Ue
                     $value=~s/\303\237/\337/g;# ss
 
-                    ${snapshots}{$dirname}{$key}="$value";
+                    # ?????
+                    #####${snapshots}{$dirname}{$key}="$value";
+                    ${all_vars}{'snapshots'}{$dirname}{'conf'}{$key}="$value";
+
                     #print "   * Key: $key  --> Value: $value\n";
 	        }
                 close FILE;

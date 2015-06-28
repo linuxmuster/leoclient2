@@ -23,6 +23,13 @@ case "$1" in
     dpkg-maintscript-helper rm_conffile /etc/linuxmuster-client/post-mount.d/011-leoclient2-set-permissions 0.2.7-1 -- "$@"
     dpkg-maintscript-helper rm_conffile  /etc/linuxmuster-client/pre-umount.d/011-leoclient2-set-permissions 0.2.7-1 -- "$@"
     dpkg-maintscript-helper rm_conffile  /etc/sudoers.d/leoclient2 0.4.2-1 -- "$@"
+    if [ -d /media/leoclient2-vm ]
+    then
+        echo "/media/leoclient2-vm exists"
+    else 
+        mkdir -p /media/leoclient2-vm
+        chmod 0777 /media/leoclient2-vm
+    fi
     ;;
 
     abort-upgrade|abort-remove|abort-deconfigure)
