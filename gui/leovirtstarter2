@@ -2,6 +2,7 @@
 # This Script (leovirtstarter2) was created by Rüdiger Beck
 # It is released under the GPL Version 3
 # For Bugs send mail to (jeffbeck-at-web.de)
+# Version August 2015
 
 use strict;
 use Glib qw/TRUE FALSE/;
@@ -1687,6 +1688,7 @@ sub access_vm {
     if (exists $all_vars{'vms'}{$machine}{'access'}{'user'} and 
         exists $all_vars{'vms'}{$machine}{'access'}{'user'}{$all_vars{'user'}{'uid'}}){
         # grant access
+        print "    -> Access granted to user $all_vars{'user'}{'uid'}\n";
         $user_level=1;
     }
 #    if (exists $read_access_vm{$machine}{'group'}){
@@ -1694,8 +1696,9 @@ sub access_vm {
         # go through all groups
         while (my ($group,$gid) = each %{ $all_vars{'user'}{'gid'} }){
 #            if (exists $read_access_vm{$machine}{'group'}){
-            if (exists $all_vars{'vms'}{$machine}{'access'}{'group'}){
+            if (exists $all_vars{'vms'}{$machine}{'access'}{'group'}{$group}){
                 # grant access
+                print "    -> Access granted to group $group\n";
                 $user_level=1;
             }
         }
@@ -1703,10 +1706,10 @@ sub access_vm {
     # connect access by lgical AND
     if ($host_level==1 and $user_level==1){
 	return 1;
-        print "Access granted\n";
+        print "  -> Access granted\n";
     } else {
         return 0;
-        print "Access denied\n";
+        print "  -> Access denied\n";
     }
 }
 
@@ -1714,16 +1717,23 @@ sub read_network_conf {
     my ($snapshot_dir)=@_;
     my $file="";
     print "Reading network.conf:\n";
-
-    if (-e $conf_network_vm){
-        # VM specific network.conf
-        $file = $conf_network_vm;
-        print "network.conf for VM found: $file\n";
-    } else {
-        # no network conf found
-        print "   * No file $conf_network_vm\n";
-        #return;
-    } 
+    print "Reading Snapshot $snapshot_dir \n";
+    my $conf_network_local=$vm_path_abs."/snapshot-store/".$snapshot_dir."/network.conf";
+    if (-e $conf_network_local) {
+           $file = $conf_network_local; 
+           print "local network.conf for Snapshot found: $file\n";
+       } else {
+       print "   * No file $conf_network_local\n";
+       if (-e $conf_network_vm){
+           # VM specific network.conf
+           $file = $conf_network_vm;
+           print "network.conf for VM found: $file\n";
+       } else {
+          # no network conf found
+          print "   * No file $conf_network_vm\n";
+          #return;
+       }
+    }
 
     if (defined $all_vars{'searchdirs'}{'remote'}[0]){
         my $conf_network_snapshot=$all_vars{'searchdirs'}{'remote'}[0]."/".
@@ -1731,7 +1741,7 @@ sub read_network_conf {
         if (-e $conf_network_snapshot){
             # snapshot specific network.conf
             $file = $conf_network_snapshot;
-            print "network.conf for Snapshot found: $file\n";
+            print "remote network.conf for Snapshot found: $file\n";
         } else {
             print "   * No file $conf_network_snapshot\n";
         }
@@ -2648,11 +2658,13 @@ sub create_radiobuttons {
                 " (".${all_vars}{'snapshots'}{$button}{'conf'}{'maintainer'}.")";
         }
         # ????? changed
+
         #if (exists ${snapshots}{$button}{'host'}){
         if (exists ${all_vars}{'snapshots'}{$button}{'conf'}{'host'}){
             # ????? changed
             #$host_string=${snapshots}{$button}{'host'};
             $host_string=${all_vars}{'snapshots'}{$button}{'conf'}{'host'};
+            
             $host_check=1; # check for hosts later
  	    INFO "   * Hosts allowed:";
             my @hosts = split(/,/,$host_string);
@@ -2661,6 +2673,7 @@ sub create_radiobuttons {
                 # ?????
                 #####${snapshots}{$button}{'hosts'}{$host}="OK";
                 ${all_vars}{'snapshots'}{$button}{'access'}{'hosts'}{$host}="OK";
+                # print "OK-Host:   $host \n";
             }
         }
         # ????? changed
@@ -2686,7 +2699,10 @@ sub create_radiobuttons {
         ########################################
         my $room_check_ok=1; # default: display 
         my $host_check_ok=1; # default: display
-
+        if (($room_check==1) or ($host_check==1)) {
+             $room_check_ok=0;
+             $host_check_ok=0;
+        }
         if ($room_check==1){
 #          if (exists ${snapshots}{$button}{'rooms'}{$host_room}){
           # ????? changed
@@ -2698,10 +2714,10 @@ sub create_radiobuttons {
                    #${snapshots}{$button}{'rooms'}{$all_vars{'host'}{'room'}};
 	      INFO "Room $all_vars{'host'}{'room'} is ",
                    ${all_vars}{'snapshots'}{$button}{'access'}{'rooms'}{$all_vars{'host'}{'room'}};
+              $room_check_ok=1; 
           } else {
 #              INFO "Room >$host_room< not found as allowed room";
               INFO "Room >$all_vars{'host'}{'room'}< not found as allowed room";
-              $room_check_ok=0; 
           }
         }
 
@@ -2717,21 +2733,24 @@ sub create_radiobuttons {
           #         ${snapshots}{$button}{'hosts'}{$hostname};
 	  #    INFO "Linbo Host $alternate_linbo_hostname is ",
           #         ${snapshots}{$button}{'hosts'}{$alternate_linbo_hostname};
-          if (exists ${all_vars}{'snapshots'}{$button}{'access'}{'hosts'}{$hostname}
+	      if (exists ${all_vars}{'snapshots'}{$button}{'access'}{'hosts'}{$hostname}
                   or ${all_vars}{'snapshots'}{$button}{'access'}{'hosts'}{$alternate_linbo_hostname}){
 	      INFO "Host $hostname is ",
                    ${all_vars}{'snapshots'}{$button}{'access'}{'hosts'}{$hostname};
 	      INFO "Linbo Host $alternate_linbo_hostname is ",
                    ${all_vars}{'snapshots'}{$button}{'access'}{'hosts'}{$alternate_linbo_hostname};
+              print "Hostname found: $hostname \n";
+              $host_check_ok=1;
           } else {
               INFO "Host >$hostname< not found as allowed host";
               INFO "Linbo Host >$alternate_linbo_hostname< not found as allowed host";
-              $host_check_ok=0; 
+              print "Host >$hostname< not found as allowed host. \n"; 
           }
         }
 
         if ($room_check_ok==0 and $host_check_ok==0){
             # beide checks ohne Erfolg
+            print "Weder room noch host zugelassen\n";
             next;
         }
 
@@ -2908,7 +2927,7 @@ sub get_snapshots {
             print "      * Adding snapshot: $dirname\n";
             my $abs_path=$get_dir."/".
                          $dirname."/".$snapshot_file_name;
-            if (not -e $abs_path){
+            if ((not -e $abs_path) and (not -e $abs_path.".zip")){
                 # no snapshot file found/no access to snapshot file 
                 next;
             }
@@ -2967,7 +2986,7 @@ sub get_snapshots {
                     #####${snapshots}{$dirname}{$key}="$value";
                     ${all_vars}{'snapshots'}{$dirname}{'conf'}{$key}="$value";
 
-                    #print "   * Key: $key  --> Value: $value\n";
+                    print "   * Key: $dirname $key  --> Value: $value\n";
 	        }
                 close FILE;
             }
