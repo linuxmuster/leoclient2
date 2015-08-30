@@ -3,6 +3,20 @@
 
 ============LEOCLIENT2 CHANGELOG ====================================
 
+0.5.5-1 (2015-08-30)
+    - fixes for Bug #484 (Martin Resch):
+      permissions for virtual machine work now as expected
+      (in the same way as permissions for snapshots)
+
+0.5.4-1 (2015-03-19)
+    - removed tmp/heimatverzeichnis stuff
+    - Added empty dir for SERVERDIR mountpoint in postinst
+
+0.5.3-1 (2015-03-17)
+    - Erweiterung von %all_vars
+
+... undocumented
+
 0.5.1-1 (2015-02-26)
     - show what has to be configured (instead of errors) when 
       starting without serverdir, cache, ...

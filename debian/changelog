@@ -1,3 +1,9 @@
+leoclient2 (0.5.5-1) trusty-testing; urgency=medium
+
+  * Fixed Bug #484
+
+ -- bz <bz@overpower>  Sun, 30 Aug 2015 12:36:27 +0200
+
 leoclient2 (0.5.4-1) trusty-testing; urgency=medium
 
   * removed tmp/heimatverzeichnis stuff
