@@ -1,3 +1,9 @@
+leoclient2 (0.5.7-1) trusty-unstable; urgency=medium
+
+  * fixed bug of starting remote vm's, code cleanup
+
+ -- Ruediger Beck <bz@molly13.bszleo.de>  Mon, 07 Mar 2016 17:06:15 +0100
+
 leoclient2 (0.5.5-1) trusty-testing; urgency=medium
 
   * Fixed Bug #484

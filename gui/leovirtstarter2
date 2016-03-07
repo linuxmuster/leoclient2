@@ -757,7 +757,10 @@ foreach my $dir (@{ $all_vars{'searchdirs'}{'remote'} }){
 }
 if ($all_vars{'vms'}{$vm}{'type'} eq "remote" ){
     # settings for remote machines
-    my $local_dir=&get_local_vm_path($vm,$vm_path_abs);
+    # remote->path is the path where the remote(-only) machine 
+    # will be copied locally 
+    my $local_dir=&get_local_vm_path($vm,$all_vars{'vms'}{$vm}{'remote'}{'path'});
+
     $base_image_target=$local_dir."/".$vm.".vdi";
     $standard_snapshot_local_zipped=
         $local_dir."/snapshot-store/standard/{".
@@ -852,15 +855,10 @@ if ($clean_local_vm ne ""){
     exit;
 }
 
-print "HERE\n";
 # prepare local machine             
 &sync_vm_to_local("--ignore-existing");
-print "HERE\n";
-#exit;
 #&reset_vm_to_defaults();
 &check_base_image($vm);
-#system("rm /virtual/leoclient2-vm/winXP/winXP.vdi");
-#exit;
 
 
 INFO "Starting leovirtstarter2 on $hostname";
