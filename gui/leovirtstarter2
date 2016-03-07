@@ -168,15 +168,7 @@ my $vm_dir_remote="";
 
 ############################################################
 
-# fill this hash with configs
-# vm -> abs_path
-#my %vm=();
-#my %vm_remote=(); # remote values of remote vm
-#my %vm_remote_local=(); # local values of remote vm, empty for local vm
-#my %vm_local=(); # local values of local vm
-#my %vm_uuid=();
 my $vm_path_abs="";
-
 
 ##### servers.conf ##### Server settings on the clients
 ##### do not change this #####
@@ -184,24 +176,15 @@ my $conf="/etc/leoclient2";
 my $conf_machines=$conf."/machines";
 my $conf_servers=$conf."/servers.conf";
 
-
-#my @vm=();
-# local machines
-#my @vm_local=();
-# machines in SERVERDIR, if allowed from local machine
-#my @vm_remote=();
-
 # shell export variable for the machine
 my $vm_path_export="";
 
 # which filepath is used for the shared home folder
 my $home = $ENV{'HOME'};
-#my $shared_home_abs=$home."/Home_auf_Server";
 $all_vars{'user'}{'shared_home'} = $home."/Home_auf_Server";
 
 #if (not -d $shared_home_abs){
 if (not -d $all_vars{'user'}{'shared_home'}){
-    #$shared_home_abs="~";
     $all_vars{'user'}{'shared_home'} = $home; 
 }
 
@@ -433,8 +416,6 @@ if (-f $conf_caches){
 #       print "  CACHE_SIZE:      $cache_size\n";
 #       print "  CACHE_RANGE:     $range\n";
 #       print "  CACHE_PARAMETER: $parameter\n";
-       #push @cache_dirs, $cache_path;
-       #push @cache_dirs_size, $cache_size;
             push @{ $all_vars{'caches'}{'ordered'} }, $cache_path;
             # set var to show caches exist
             $all_vars{'caches'}{'exist'} = 1;
@@ -465,28 +446,19 @@ foreach my $machine (readdir CONFDIR){
         my $path=&get_machine_path($machine);
         $machine=~s/.conf$//g;
 
-#        $vm_local{$machine}=$path;
-#        $vm_remote_local{$machine}="-"; # Empty for local machines
-#       #obsolete
-#        $vm_uuid{$machine}=$path;
-
         $all_vars{'vms'}{$machine}{'local'}{'path'}=$path;
         $all_vars{'vms'}{$machine}{'type'}="local";
         # set to local, remote not checked
         $all_vars{'vms'}{$machine}{'remote'}{'path'}="-";
-#       # obsolete
-#        $all_vars{'vms'}{$machine}{'uuid'}=$path;
  
         # rsync_root, local target
         $all_vars{'vms'}{$machine}{'rsync_root'}{'defaults'}{'target'}=
            $path."/defaults/";
 
-
         # check if machine is accessible
         &read_access_vm($path,$machine);
         &check_sav_file($path,$machine);
         if (1==&access_vm($machine)){
-#            push @vm_local, $machine;       
             push @{ $all_vars{'vms_ordered'}{'local'} }, $machine;
             &save_vbox_uuid($machine);
         }
@@ -501,8 +473,8 @@ if ( $#{ $all_vars{'searchdirs'}{'remote'} }==-1 ){
         print "ERROR: No SERVERDIR configured\n";
         print "       You must configure a possibly empty, existing SERVERDIR\n\n";
         exit;
-   
 }
+
 # read REMOTE vm's from SERVERDIR (exclude local machines)
 foreach my $serverdir ( @{ $all_vars{'searchdirs'}{'remote'} } ){
     if ($all_vars{'user'}{'uid'} ne "root"){
@@ -519,9 +491,10 @@ foreach my $serverdir ( @{ $all_vars{'searchdirs'}{'remote'} } ){
         if ($machine eq "."){next};
         if ($machine eq ".."){next};
         if (not -d $vm_path_remote){next};
+
         # Continue only if the base image *.vdi can be seen
         if (not -e $vm_path_remote."/".$machine.".vdi"){next};
-#        if (exists $vm_local{$machine}){
+
         # analyse type of vm
         if (exists $all_vars{'vms'}{$machine}{'type'} and $all_vars{'vms'}{$machine}{'type'} eq "local"){
             # local AND remote = mixed
@@ -535,15 +508,11 @@ foreach my $serverdir ( @{ $all_vars{'searchdirs'}{'remote'} } ){
         } else {
             # remote machine (no mixed machine)
             $all_vars{'vms'}{$machine}{'type'}="remote";
-#            # use the local machine, ignore the remote
-#            print "   * Local VM:  $machine\n";
-#        } else {
-#            print "   * Remote VM: $machine\n";
+
             # check if machine is accessible
             my $remote_path=$serverdir."/".$machine;
-#            $vm_remote{$machine}=$remote_path;
             my $local_path=&get_local_vm_path($machine,$vm_path_remote);
-#            $vm_remote_local{$machine}=$local_path;
+
             $all_vars{'vms'}{$machine}{'local'}{'path'}=$local_path;
             $all_vars{'vms'}{$machine}{'remote'}{'path'}=$remote_path;
 
@@ -558,25 +527,17 @@ foreach my $serverdir ( @{ $all_vars{'searchdirs'}{'remote'} } ){
             $all_vars{'vms'}{$machine}{'rsync_root'}{'snapshot-store'}{'source'}=
               $remote_path."/snapshot-store/";
 
-            #print "LOKAL von $vm: $local_path\n";
             &read_access_vm($remote_path,$machine);
             if (1==&access_vm($machine)){
-                #push @vm_remote, $machine;
                 push @{ $all_vars{'vms_ordered'}{'remote'} }, $machine;
                 &save_vbox_uuid($machine);
-
             }
-#        }
-    }
-
+	}
     }
     closedir SERVERDIR;
 }
 
 
-
-#@vm_local = sort @vm_local;
-#@vm_remote = sort @vm_remote;
 # sort the vms (if arrays are not empty)
 if ( not  $#{ $all_vars{'vms_ordered'}{'local'} }==-1 ){
     @{ $all_vars{'vms_ordered'}{'local'} } = sort @{ $all_vars{'vms_ordered'}{'local'} };
@@ -588,20 +549,6 @@ if ( not  $#{ $all_vars{'vms_ordered'}{'remote'} }==-1 ){
 @{ $all_vars{'vms_ordered'}{'all'} } = 
    ( @{ $all_vars{'vms_ordered'}{'local'} }, @{ $all_vars{'vms_ordered'}{'remote'} } );
 
-# jetzt all
-#@vm = (@vm_local,@vm_remote);
-#while (my ($k,$v) = each %vm_local){
-#    print "   **#**$k -> $v\n";
-#}
-#while (my ($k,$v) = each %vm_remote){
-#    print "   ***** $k -> $v\n";
-#}
-
-#exit;
-# steht in $all_vars{'vms_ordered'}{'local'} bzw $all_vars{'vms_ordered'}{'remote'}
-#%vm = (%vm_local, %vm_remote);
-#%vm = (%vm_local, %{ $all_vars{'vms'}{'remote'}{'path'} } );
-#%vm = (%{ $all_vars{'vms'}{''}{'path'} } );
 
 # --info
 if ($info==1){
@@ -636,36 +583,21 @@ if ($info==1){
 }
 
 
-
-
-#while (my ($k,$v) = each %vm_remote){
-#    print "   ***** $k -> $v\n";
-#    print "   **H** $all_vars{'vms'}{$k}{'remote'}{'path'}\n";
-#}
-#exit;
-
-
 # --set-permissions
 if ($set_permissions==1){
     # this can be called as root
     my %local_vm_dirs=();
     print "  --set-permissions called as $all_vars{'user'}{'uid'} by ".
           "sudo from $ENV{SUDO_USER}\n";
-#    foreach my $vm (@vm_local){
     foreach my $vm ( @{ $all_vars{'vms_ordered'}{'local'} } ){
         # local VM's
-#        $local_vm_dirs{$vm}="$vm_local{$vm}";
         $local_vm_dirs{$vm}=$all_vars{'vms'}{$vm}{'local'}{'path'};
     }
-#    foreach my $vm (@vm_remote){
     foreach my $vm ( @{ $all_vars{'vms_ordered'}{'remote'} } ){
         # local copy of remote VM's
-#        $local_vm_dirs{$vm}="$vm_remote_local{$vm}";
         $local_vm_dirs{$vm}=$all_vars{'vms'}{$vm}{'local'}{'path'};
     }
     while (my ($vm,$path) = each %local_vm_dirs){
-        #print "$vm  --> local --> $path\n";
-
         if (-e $path){
             system("chmod -R 0755 $path");
         }
@@ -684,25 +616,12 @@ if ($set_permissions==1){
         }
         # vm.vdi (basefile) #ignored here
 
-        ## snapshot-store (recursive)
-        #$command="rsync -a ".
-        #   "$all_vars{'vms'}{$vm}{'rsync_root'}{'snapshot-store'}{'source'} ".
-        #   "$all_vars{'vms'}{$vm}{'rsync_root'}{'snapshot-store'}{'target'}";
-        ##print "$command\n";
-        #system($command);
-
         # fix permissions
         # make sure root can change owners and permissions
         system("chown -R $ENV{SUDO_USER}.$permissive_group $path");
         my $defaults=$path."/defaults";
         system("chown -R root.root $defaults");
         system("chmod -R 0555 $defaults");
-        #my $snapshot_store=$path."/snapshot-store";
-        #system("chown -R root.root $snapshot_store");
-        #system("chmod -R 0555 $snapshot_store");
-        #my $base_image=$path."/".$vm.".vdi";
-        #chown 0, 0, $base_image;
-        #chmod 0555, $base_image;
 
         my $file=&check_sav_file($path,$vm);
         if ($file ne "none"){
@@ -718,14 +637,6 @@ if ($set_permissions==1){
 # chmod all local dirs with sodo script 
 # as early as possible, not before the option (would be recursive)
 system("sudo /usr/bin/leovirtstarter2 --set-permissions");
-
-
-# List searchdirs (hide later, show only with --info ??????) 
-#
-#print "Configured SERVERDIR:\n";
-#foreach my $dir ( @{ $all_vars{'searchdirs'}{'remote'} } ){
-#       print "  SERVERDIR: $dir\n";
-#}
 
 
 # --prepare-remote-vm
@@ -779,24 +690,12 @@ if ($vm ne ""){
     exit;
 } else {
     # show zenity chooser
-#    my $zenity_list="/usr/bin/zenity --list --width=800 --height=400 ".
-#       "--radiolist --title='Virtuelle Maschine wählen!' ".
-#       "--column='' --column='Maschine' ".
-#       "--column='Beschreibung' --column='Pfad' ".
-#       "TRUE 'winxp' 'Windows XP' '/var/virtual/winxp' ".
-#       "FALSE win7 'Windows 7' '/var/virtual/winxp2'";
     my $zenity_list="/usr/bin/zenity --list --width=900 --height=400 ".
        "--radiolist --title='Virtuelle Maschine wählen!' ".
        "--column='' --column='Maschine' ".
        "--column='Beschreibung' --column='Remote path' --column='Local Path' ";
     # add items
-#    print "Virtual machines (VM):\n";
-#    foreach my $machine (@vm){
     foreach my $machine ( @{ $all_vars{'vms_ordered'}{'all'} } ){
-#        print "  $machine --> $vm{$machine}\n";    
-#        print "  $machine -->> $all_vars{'vms'}{$machine}{'remote'}{'path'}\n";    
-#        $zenity_list=$zenity_list.
-#           "FALSE '$machine' '$machine' '$vm{$machine}' '$vm_remote_local{$machine}' ";
         $zenity_list=$zenity_list.
            "FALSE '$machine' ".
            "'$machine' ".
@@ -804,7 +703,6 @@ if ($vm ne ""){
            "'$all_vars{'vms'}{$machine}{'local'}{'path'}' ";
     }
     
-    #print "$zenity_list\n";
     my $zenity_return=`$zenity_list`;
     chomp($zenity_return);
     print "  * Selected VM: $zenity_return in $all_vars{'vms'}{$zenity_return}{'local'}{'path'}\n";
@@ -828,16 +726,13 @@ if ($vm ne ""){
 
 
 # vm is chosen --> setting paths for VM
-#if (not exists $vm{$vm}){
 if (not exists $all_vars{'vms'}{$vm}){
     print "ERROR: Could not find VM $vm \n";
     exit;
 }
+
 # local or remote ?????
-#$vm_path_abs=$vm{$vm};
 $vm_path_abs=$all_vars{'vms'}{$vm}{'local'}{'path'};
-#my $vbox_uuid=&get_vbox_uuid($vm);
-#my $vbox_uuid=&get_vbox_uuid($vm);
 $all_vars{'searchdirs'}{'local'}[0]=$vm_path_abs;
 ## remove last dir to fit to remote dirs
 $all_vars{'searchdirs'}{'local'}[0]=~s/\/$//g;
@@ -860,13 +755,10 @@ foreach my $dir (@{ $all_vars{'searchdirs'}{'remote'} }){
         last;
     }
 }
-#if (exists $vm_remote{$vm}){
 if ($all_vars{'vms'}{$vm}{'type'} eq "remote" ){
     # settings for remote machines
     my $local_dir=&get_local_vm_path($vm,$vm_path_abs);
     $base_image_target=$local_dir."/".$vm.".vdi";
-#    $standard_snapshot_local_zipped=
-#        $local_dir."/snapshot-store/standard/{".$vbox_uuid."}.vdi.zip";
     $standard_snapshot_local_zipped=
         $local_dir."/snapshot-store/standard/{".
         $all_vars{'vms'}{$vm}{'uuid'}.
@@ -877,8 +769,6 @@ if ($all_vars{'vms'}{$vm}{'type'} eq "remote" ){
     $base_image_target=$vm_path_abs."/".$vm.".vdi";
     $standard_snapshot_local_zipped_obsolete=
         $vm_path_abs."/snapshot-store/standard/snapshot.zip";
-#    $standard_snapshot_local_zipped=
-#        $vm_path_abs."/snapshot-store/standard/{".$vbox_uuid."}.vdi.zip";
     $standard_snapshot_local_zipped=
         $vm_path_abs."/snapshot-store/standard/{".
         $all_vars{'vms'}{$vm}{'uuid'}.
@@ -886,7 +776,6 @@ if ($all_vars{'vms'}{$vm}{'type'} eq "remote" ){
     $snapshot_file_dir_local=$vm_path_abs."/Snapshots";
 }
 $conf_network_vm=$vm_path_abs."/network.conf";
-#$snapshot_file_name="{$vbox_uuid}.vdi";
 $snapshot_file_name="{".$all_vars{'vms'}{$vm}{'uuid'}."}.vdi";
 $local_standard_snapshot_abs=$snapshot_file_dir_local."/".$snapshot_file_name;
 print "Setting paths for selected VM $vm\n";
@@ -906,12 +795,6 @@ print "  * Local base snapshot: $standard_snapshot_local_zipped\n";
 
 
 
-
-
-
-#
-#exit;
-
 # --local-snapshots
 if ($local_snapshots==1){
     # empty list of remote snapshots
@@ -929,17 +812,6 @@ $vm_path_export="export VBOX_USER_HOME=".
                 $all_vars{'vms'}{$vm}{'local'}{'path'}.
                 "; ";
 print "  * VBOX_USER_HOME: $vm_path_export\n";
-
-
-#if ($vm_remote_local{$vm} eq "-"){
-#    print "$vm needs local VBOX_USER_HOME\n";
-#    $vm_path_export="export VBOX_USER_HOME=".$vm_local{$vm}."; ";
-#} else {
-#    print "$vm needs remote VBOX_USER_HOME\n";
-#    $vm_path_export="export VBOX_USER_HOME=".$vm_remote_local{$vm}."; ";
-#}
-#print "VBOX_USER_HOME: $vm_path_export\n";
-
 
 
 if ($dump==1){
@@ -980,9 +852,10 @@ if ($clean_local_vm ne ""){
     exit;
 }
 
-
+print "HERE\n";
 # prepare local machine             
 &sync_vm_to_local("--ignore-existing");
+print "HERE\n";
 #exit;
 #&reset_vm_to_defaults();
 &check_base_image($vm);
@@ -1142,7 +1015,6 @@ foreach my $size (@ram_sizes){
 
 
 # make sure all cache dirs exist
-#foreach my $dir (@cache_dirs){
 foreach my $dir ( @{ $all_vars{'caches'}{'ordered'} } ){
     if (not -e $dir){
             system("mkdir -p $dir || sudo mkdir -p $dir");
@@ -1398,12 +1270,19 @@ sub get_local_vm_path {
     my $conffile = "";
     $conffile = $vm_path_abs."/".$vm.".conf";
     if (not -e $conffile){
+        print "  * WARNING: $conffile not found\n";
         # look in /etc for local machines that are deleted locally
         $conffile = $conf_machines."/".$vm.".conf";
+        print "  * Falling back on $conffile\n";
     }
-    my $localpath=`cat $conffile`;
-    chomp($localpath);
-    return $localpath;
+    if (not -f $conffile){
+        print "  * WARNING: $conffile not found\n";
+        return "";
+    } else {
+        my $localpath=`cat $conffile`;
+        chomp($localpath);
+        return $localpath;
+    }
 }
 
 
@@ -1413,7 +1292,6 @@ sub zip_snapshots {
     # all snaphots but not base
     foreach my $snapshot (@snapshots){
         print "   ##### Processing snapshot: $snapshot #####\n";
-#        my $file="";
         if ($snapshot eq "standard"){
             # standard: check for warning
             if (-e $standard_snapshot_local_zipped_obsolete){
@@ -1425,37 +1303,7 @@ sub zip_snapshots {
                 exit;
             } 
         }
-        #$file=$[snapshots}{$snapshot}{'abs_path'};
-        
-        # ????? changed
-        #&zip_image(${snapshots}{$snapshot}{'abs_path'},$snapshot);
         &zip_image(${all_vars}{'snapshots'}{$snapshot}{'remote'}{'file'},$snapshot);
-
-#        if ($snapshot ne "standard"){
-#            $file=${snapshots}{$snapshot}{'abs_path'};
-#            #print "   * File: $file $snapshot\n";
-#            &zip_image($file,$snapshot);
-#        } else {
-#            # standard
-#            if (-e $standard_snapshot_local_zipped_obsolete){
-#                print "\nERROR: You have an obsolete file in your installation:\n";
-#                print "   $standard_snapshot_local_zipped_obsolete\n";
-#                print "Please rename it to:\n";
-#                print "   $standard_snapshot_local_zipped\n\n";
-#                print "and run this script again\n";
-#                exit;
-#            } else {
-#                if (-e $standard_snapshot_local_zipped){
-#                    print "Zipped file exists:\n";
-#                    print "   $standard_snapshot_local_zipped\n";
-#                    $file=$standard_snapshot_local_zipped;
-#                    &zip_image($file,$snapshot);
-#                    #my $zipped_filesize_file=$dirname_zipped."/filesize.vdi.zipped";
-#                    #my $zipped_filesize = -s $file;
-#                    #system("echo $zipped_filesize > '$zipped_filesize_file'");
-#                }
-#            }
-#        }
     }
 }
 
@@ -1491,8 +1339,6 @@ sub zip_image {
         my $file_zipped="";
         if ($type eq "base"){
             $file_zipped=$dirname."/snapshot-store/base/".$filename.".zip";
-#        } elsif ($type eq "standard"){
-#            $file_zipped=$file;
         } else {
             $file_zipped=$dirname."/".$filename.".zip";
         }
@@ -1520,19 +1366,13 @@ sub zip_image {
               and -e $zipped_filesize_file){
             print "      * Nothing to zip!\n";
         } else {
-
-#            if ($type ne "standard"){
-                # ??? wenn Datei *.vdi existiert???
-                print "      * Zipping ... (This can Take a while ...)\n";
-                system("mkdir -p $dirname_zipped");
-                my $zip_command="cd '$dirname'; zip $file_zipped $filename";
-                print "$zip_command\n";
-                system($zip_command);
-                print "      * ... Zipping done!\n";
-#            } else {
-#                print "Standard needs not be zipped";
-#            }
-
+            # ??? wenn Datei *.vdi existiert???
+            print "      * Zipping ... (This can Take a while ...)\n";
+            system("mkdir -p $dirname_zipped");
+            my $zip_command="cd '$dirname'; zip $file_zipped $filename";
+            print "$zip_command\n";
+            system($zip_command);
+            print "      * ... Zipping done!\n";
 
             # file zipped
             $zipped_filesize = -s $file_zipped;
@@ -1550,8 +1390,6 @@ sub zip_image {
 
 
 sub reset_vm_to_defaults {
-    #my $source_dir = $vm_path_abs."/defaults/*";
-#    my $target_dir = $vm_path_abs;
     my $local_dir=&get_local_vm_path($vm,$vm_path_abs);
     my $source_dir = $local_dir."/defaults/*";
     my $command = "cp $source_dir $local_dir";
@@ -1566,13 +1404,12 @@ sub sync_vm_to_local {
     if (not defined $option){
         $option="";
     }
-    my $target=&get_local_vm_path($vm,$vm_path_abs);
+    my $target=$all_vars{'vms'}{$vm}{'local'}{'path'};
+
     # exclude BIG files for a fast rsync
     # BIG files are downloaded later with progressbar
     my $excludes="--exclude ${vm}.vdi ".
        "--exclude snapshot-store/base/${vm}.vdi.zip ";
-#    my $snapshot_as_used=$target."/Snapshots/{".$vbox_uuid."}.vdi";
-#    $excludes=$excludes."--exclude Snapshots/{".$vbox_uuid."}.vdi ";
     my $snapshot_as_used=$target."/Snapshots/{".
          $all_vars{'vms'}{$vm}{'uuid'}."}.vdi";
     $excludes=$excludes."--exclude Snapshots/{".
@@ -1581,11 +1418,11 @@ sub sync_vm_to_local {
     $excludes=$excludes."--exclude defaults ";
     my $mkdir_command="mkdir -p ${target}";
     if (-d ${vm_dir_remote}){
-    print "  * Syncing vm $vm $vm_path_abs\n";
+    print "  * Syncing vm $vm in ${vm_dir_remote}\n";
     print "    to $target\n";
-    #print "$mkdir_command\n";
+    print "$mkdir_command\n";
     my $result=system($mkdir_command);
-    #print "RESULT: $result\n";
+    print "RESULT: $result\n";
     if ($result==0){
         # OK
     } else {
@@ -1609,7 +1446,6 @@ sub sync_vm_to_local {
 
 sub read_access_vm {
     # which user,group,host,room can accessthe vm 
-#    # fill the hash %read_access_vm
     # fill the hash all_vars{'vms'}{$VM}{'access'}
     my ($path,$machine)=@_;
     my $file=$path."/image.conf";
@@ -1634,13 +1470,10 @@ sub read_access_vm {
         my ($option,$data)=split(/=/);
         my @data=split(/,/,$data);
         foreach my $date (@data){
-#            $read_access_vm{$machine}{$option}{$date}='access';
             $all_vars{'vms'}{$machine}{'access'}{$option}{$date}='access';
         }
-
     }
     close(ACCESS);
-
 }
 
 sub access_vm {
@@ -1651,22 +1484,16 @@ sub access_vm {
     # host-level acces
     my $host_level=0;
     # no host and no room
-#    if (not exists $read_access_vm{$machine}{'host'} and 
-#        not exists $read_access_vm{$machine}{'room'}){
     if (not exists $all_vars{'vms'}{$machine}{'access'}{'host'} and
         not exists $all_vars{'vms'}{$machine}{'access'}{'room'}){
         # grant access
         $host_level=1;
     }
-#    if (exists $read_access_vm{$machine}{'host'} and 
-#        exists $read_access_vm{$machine}{'host'}{$hostname}){
     if (exists $all_vars{'vms'}{$machine}{'access'}{'host'} and 
         exists $all_vars{'vms'}{$machine}{'access'}{'host'}{$hostname}){
         # grant access
         $host_level=1;
     }
-#    if (exists $read_access_vm{$machine}{'room'} and 
-#        exists $read_access_vm{$machine}{'room'}{$all_vars{'host'}{'room'}}){
     if (exists $all_vars{'vms'}{$machine}{'access'}{'room'} and 
         exists $all_vars{'vms'}{$machine}{'access'}{'room'}{$all_vars{'host'}{'room'}}){
         # grant access
@@ -1676,26 +1503,20 @@ sub access_vm {
     # user-level acces
     my $user_level=0;
     # no user and no group
-#    if (not exists $read_access_vm{$machine}{'user'} and 
-#        not exists $read_access_vm{$machine}{'group'}){
     if (not exists $all_vars{'vms'}{$machine}{'access'}{'user'} and 
         not exists $all_vars{'vms'}{$machine}{'access'}{'group'}){
         # grant access
         $user_level=1;
     }
-#    if (exists $read_access_vm{$machine}{'user'} and 
-#        exists $read_access_vm{$machine}{'user'}{$all_vars{'user'}{'uid'}}){
     if (exists $all_vars{'vms'}{$machine}{'access'}{'user'} and 
         exists $all_vars{'vms'}{$machine}{'access'}{'user'}{$all_vars{'user'}{'uid'}}){
         # grant access
         print "    -> Access granted to user $all_vars{'user'}{'uid'}\n";
         $user_level=1;
     }
-#    if (exists $read_access_vm{$machine}{'group'}){
     if (exists $all_vars{'vms'}{$machine}{'access'}{'group'}){
         # go through all groups
         while (my ($group,$gid) = each %{ $all_vars{'user'}{'gid'} }){
-#            if (exists $read_access_vm{$machine}{'group'}){
             if (exists $all_vars{'vms'}{$machine}{'access'}{'group'}{$group}){
                 # grant access
                 print "    -> Access granted to group $group\n";
@@ -1927,7 +1748,6 @@ sub save_vbox_uuid {
 
 sub fix_vbox_permissions {
     my ($abs_path) = @_;
-    #my $abs_file=$abs_path."/".$vm.".vbox";
     print "Fixing permissions with sudoers script\n";
     my $command="sudo /usr/bin/leoclient2-set-permissions";
     print "$command\n";
@@ -2157,9 +1977,6 @@ sub start_button {
                "/usr/bin/VBoxManage sharedfolder remove $vm --name home";
             INFO "$remove_shared_folder";
             system($remove_shared_folder);
-#            my $add_shared_folder=$vm_path_export.
-#               "/usr/bin/VBoxManage sharedfolder add $vm ".
-#               "--name home --hostpath $shared_home_abs";
             my $add_shared_folder=$vm_path_export.
                "/usr/bin/VBoxManage sharedfolder add $vm ".
                "--name home --hostpath $all_vars{'user'}{'shared_home'}";
@@ -2172,12 +1989,8 @@ sub start_button {
             system($command_mod);
 
             # as found, not resetting Network
-            #&read_network_conf($selected{'SYSTEM'});
-            #&set_vm_network();
             my $start_vm = $vm_path_export.
                            "/usr/bin/VBoxManage startvm $vm --type gui";
-
-
             INFO "$start_vm";
             system("$start_vm");
             INFO "Snapshot started in other window: Terminating here!";
@@ -2236,8 +2049,6 @@ sub start_zipped_snaphot {
         system("$command_unzip");
         
         my $unzipped_actual_size=0;
-        # ????? changed
-        #my $unzipped_size=${snapshots}{$selected{'SYSTEM'}}{'filesize_vdi'};
         my $unzipped_size=${all_vars}{'snapshots'}{$selected{'SYSTEM'}}{'remote'}{'size_expected'}{'vdi'};
     } else {
 
@@ -2249,11 +2060,7 @@ sub start_zipped_snaphot {
 
 sub unzip_timeout {
     my $actual_size;
-
-    # ????? changed
-    #my $unzipped_size=${snapshots}{$selected{'SYSTEM'}}{'filesize_vdi'};
     my $unzipped_size=${all_vars}{'snapshots'}{$selected{'SYSTEM'}}{'remote'}{'size_expected'}{'vdi'};
-
     my $unzipped_size_mb=int($unzipped_size/1024/1024);
     my $file=$snapshot_file_dir_local."/".$snapshot_file_name;
     my $progress_bar = shift;
@@ -2287,14 +2094,10 @@ sub unzip_timeout {
             # reset the VM hardware
             &sync_vm_to_local(); # overwrite existing files
             &reset_vm_to_defaults(); # set default machine hardware
-            #&check_base_image($vm); # done earlier
             my $remove_shared_folder=$vm_path_export.
                 "/usr/bin/VBoxManage sharedfolder remove $vm --name home";
             INFO "$remove_shared_folder";
             system($remove_shared_folder);
-#            my $add_shared_folder=$vm_path_export.
-#               "/usr/bin/VBoxManage sharedfolder add $vm ".
-#               "--name home --hostpath $shared_home_abs";
             my $add_shared_folder=$vm_path_export.
                "/usr/bin/VBoxManage sharedfolder add $vm ".
                "--name home --hostpath $all_vars{'user'}{'shared_home'}";
@@ -2307,7 +2110,6 @@ sub unzip_timeout {
             system($command_mod);
             &read_network_conf($selected{'SYSTEM'});
             &set_vm_network();
-
 
             my $start_vm=$vm_path_export.
                          "/usr/bin/VBoxManage startvm $vm --type gui";
@@ -2336,21 +2138,14 @@ sub unzip_timeout {
 
 sub getzip_timeout {
     my $actual_size;
-
-    # ????? changed
-    #my $zipped_size=${snapshots}{$selected{'SYSTEM'}}{'filesize_zipped'};
     my $zipped_size=${all_vars}{'snapshots'}{$selected{'SYSTEM'}}{'remote'}{'size_expected'}{'vdi_zipped'};
-
     my $zipped_size_mb=int($zipped_size/1024/1024);
-
     my $target = $selected{'CACHE-ZIP'};
-
     my $progress_bar_copy = shift;
     # Calculate the value of the progress bar using the
     # value range set in the adjustment object
     $actual_size = -s $target;
     print "$actual_size vs $zipped_size $zipped_size $target \n";
-    #$zipped_size=1;
     my $new_val = $actual_size/$zipped_size;
     $actual_size=int($actual_size/1024/1024);
     $progress_bar_copy->set_text("Hole ... $actual_size von $zipped_size_mb MB");
@@ -2392,20 +2187,13 @@ sub get_zipped_snapshot {
         #my $started=&start_zipped_snaphot($selected{'CACHE-ZIP'});
         #my $started=&start_zipped_snaphot("___NOSNAPSHOT___");
         #return "___NOSNAPSHOT___";  
-    # ????? changed
-    #} elsif (not defined ${snapshots}{$snapshot}{'abs_path'}){
     } elsif (not defined ${all_vars}{'snapshots'}{$snapshot}{'remote'}{'file'}){
         
     }
 
     # zipped snapshot must be fetched
     # generate paths
-
-    # ?????
-    #my $file=${snapshots}{$snapshot}{'abs_path'};
     my $file=${all_vars}{'snapshots'}{$snapshot}{'remote'}{'file'};
-    # ?????
-    #my $dir =${snapshots}{$snapshot}{'abs_dir'};
     my $dir=${all_vars}{'snapshots'}{$snapshot}{'remote'}{'dir'};
 
     my $file_zipped=$file.".zip";
@@ -2416,7 +2204,6 @@ sub get_zipped_snapshot {
     my $filesize_correct_mb=int((1.1*$filesize_correct)/(1024*1024));
 
     # snapshot is only local
-#    if($#cache_dirs==-1){
     if($all_vars{'caches'}{'exist'}==0){
         my $local_dir=&get_local_vm_path($vm,$vm_path_abs);
         my $zip_file_local=$local_dir.
@@ -2425,10 +2212,8 @@ sub get_zipped_snapshot {
         return $started;
     }
 
-
     INFO "Wanted in cache with size $filesize_correct:\n   $file_zipped";
     # is snapshot in cache already and size OK?
-#    foreach my $dir (@cache_dirs){
     foreach my $dir ( @{ $all_vars{'caches'}{'ordered'} } ){
         my $file=$dir."/".$snapshot."/".$snapshot_file_name.".zip";
         my $target_dir = $dir."/".$snapshot;
@@ -2450,10 +2235,7 @@ sub get_zipped_snapshot {
     }
 
     # snapshot is not in cache
-
     # copy snapshot into cache
-#    my $count=0;
-#    foreach my $dir (@cache_dirs){
     foreach my $dir (@{ $all_vars{'caches'}{'ordered'} } ){
         # go through all caches, check if there is enough space left
         my $target_dir = $dir."/".$snapshot;
@@ -2466,9 +2248,6 @@ sub get_zipped_snapshot {
         my $cache_used = &get_size_in_mb($dir);
         my $cache=$cache_used+int($filesize_correct/(1024*1024));
         my ($space_left_mb) = &get_space_left($dir);
-
-#        INFO "*** Cache limit:                ",
-#             "$cache_dirs_size[$count] MB";
         INFO "*** Cache limit:                ",
              "$all_vars{'caches'}{$dir}{'size'} MB";
         INFO "*** Cache used so far:            $cache_used MB";
@@ -2477,7 +2256,6 @@ sub get_zipped_snapshot {
         INFO "*** Zip-file (incl 10\% reserve): $filesize_correct_mb MB";
 
         # check available space
-#        while ($cache >= $cache_dirs_size[$count]
         while ($cache >= $all_vars{'caches'}{$dir}{'size'}
                or $filesize_correct_mb >= $space_left_mb){
             INFO "*** --> cache files must be deleted";
@@ -2494,9 +2272,6 @@ sub get_zipped_snapshot {
                 $cache_used = &get_size_in_mb($dir);
                 $cache=$cache_used+int($filesize_correct/(1024*1024));
                 ($space_left_mb) = &get_space_left($dir);
-
-#                INFO "*** Cache limit:                ",
-#                     "$cache_dirs_size[$count] MB";
                 INFO "*** Cache limit:                ",
                      "$all_vars{'caches'}{$dir}{'size'} MB";
                 INFO "*** Cache used so far:            $cache_used MB";
@@ -2546,7 +2321,6 @@ sub get_zipped_snapshot {
         } else {
             INFO "Could not find space to cache $file";
         }# end if $space_left_mb > 10+int ...
-#        $count++;
     }
 }
 
@@ -2634,61 +2408,37 @@ sub create_radiobuttons {
             next;
         }
 
-        # ????? changed
-        #if (exists ${snapshots}{$button}{'name'}){
- 	#    INFO "   * Name:       ",${snapshots}{$button}{'name'};
-        #    $displayname=${snapshots}{$button}{'name'};
         if (exists ${all_vars}{'snapshots'}{$button}{'conf'}{'name'}){
  	    INFO "   * Name:       ",${all_vars}{'snapshots'}{$button}{'conf'}{'name'};
             $displayname=${all_vars}{'snapshots'}{$button}{'conf'}{'name'};
         } else {
             $displayname=$button;
         }
-        # ????? changed
-        #if (exists ${snapshots}{$button}{'maintainer'}){
- 	#    INFO "   * Maintainer: ",
-        #         ${snapshots}{$button}{'maintainer'};
-        #    $displayname=$displayname.
-        #        " (".${snapshots}{$button}{'maintainer'}.")";
-        #}
         if (exists ${all_vars}{'snapshots'}{$button}{'conf'}{'maintainer'}){
  	    INFO "   * Maintainer: ",
                  ${all_vars}{'snapshots'}{$button}{'conf'}{'maintainer'};
             $displayname=$displayname.
                 " (".${all_vars}{'snapshots'}{$button}{'conf'}{'maintainer'}.")";
         }
-        # ????? changed
 
-        #if (exists ${snapshots}{$button}{'host'}){
         if (exists ${all_vars}{'snapshots'}{$button}{'conf'}{'host'}){
-            # ????? changed
-            #$host_string=${snapshots}{$button}{'host'};
             $host_string=${all_vars}{'snapshots'}{$button}{'conf'}{'host'};
-            
             $host_check=1; # check for hosts later
  	    INFO "   * Hosts allowed:";
             my @hosts = split(/,/,$host_string);
             foreach my $host (@hosts){
     	        INFO "      * $host";
-                # ?????
-                #####${snapshots}{$button}{'hosts'}{$host}="OK";
                 ${all_vars}{'snapshots'}{$button}{'access'}{'hosts'}{$host}="OK";
                 # print "OK-Host:   $host \n";
             }
         }
-        # ????? changed
-        #if (exists ${snapshots}{$button}{'room'}){
         if (exists ${all_vars}{'snapshots'}{$button}{'conf'}{'room'}){
-            # ????? changed
-            #$room_string=${snapshots}{$button}{'room'};
             $room_string=${all_vars}{'snapshots'}{$button}{'conf'}{'room'};
             $room_check=1; # check for rooms later
             my @rooms = split(/,/,$room_string);
     	        INFO "   * Rooms allowed";
             foreach my $room (@rooms){
     	        INFO "      * $room";
-                # ?????
-                #####${snapshots}{$button}{'rooms'}{$room}="OK";
                 ${all_vars}{'snapshots'}{$button}{'access'}{'rooms'}{$room}="OK";
             }
         }
@@ -2704,19 +2454,11 @@ sub create_radiobuttons {
              $host_check_ok=0;
         }
         if ($room_check==1){
-#          if (exists ${snapshots}{$button}{'rooms'}{$host_room}){
-          # ????? changed
-          #if (exists ${snapshots}{$button}{'rooms'}{$all_vars{'host'}{'room'}}){
           if (exists ${all_vars}{'snapshots'}{$button}{'access'}{'rooms'}{$all_vars{'host'}{'room'}}){
-#	      INFO "Room $host_room is ",
-#                   "${snapshots}{$button}{'rooms'}{$host_room}";
-                   # ????? changed
-                   #${snapshots}{$button}{'rooms'}{$all_vars{'host'}{'room'}};
 	      INFO "Room $all_vars{'host'}{'room'} is ",
                    ${all_vars}{'snapshots'}{$button}{'access'}{'rooms'}{$all_vars{'host'}{'room'}};
               $room_check_ok=1; 
           } else {
-#              INFO "Room >$host_room< not found as allowed room";
               INFO "Room >$all_vars{'host'}{'room'}< not found as allowed room";
           }
         }
@@ -2726,13 +2468,6 @@ sub create_radiobuttons {
           # when synchronizing has failed
 	  my $alternate_linbo_hostname=$hostname;
           $alternate_linbo_hostname=~s/-w$//g;
-          # ????? changed
-          #if (exists ${snapshots}{$button}{'hosts'}{$hostname}
-          #        or ${snapshots}{$button}{'hosts'}{$alternate_linbo_hostname}){
-	  #    INFO "Host $hostname is ",
-          #         ${snapshots}{$button}{'hosts'}{$hostname};
-	  #    INFO "Linbo Host $alternate_linbo_hostname is ",
-          #         ${snapshots}{$button}{'hosts'}{$alternate_linbo_hostname};
 	      if (exists ${all_vars}{'snapshots'}{$button}{'access'}{'hosts'}{$hostname}
                   or ${all_vars}{'snapshots'}{$button}{'access'}{'hosts'}{$alternate_linbo_hostname}){
 	      INFO "Host $hostname is ",
@@ -2753,8 +2488,6 @@ sub create_radiobuttons {
             print "Weder room noch host zugelassen\n";
             next;
         }
-
-
 
         if ($type eq "RAM"){
             if (exists $ram_mapping{$button}){
@@ -2931,13 +2664,9 @@ sub get_snapshots {
                 # no snapshot file found/no access to snapshot file 
                 next;
             }
-            # ??????
-            #####${snapshots}{$dirname}{'abs_path'}=$abs_path;
             ${all_vars}{'snapshots'}{$dirname}{'remote'}{'file'}=$abs_path;
             my $abs_dir = $get_dir."/".
                           $dirname;
-            # ??????
-            #####${snapshots}{$dirname}{'abs_dir'}=$abs_dir;
             ${all_vars}{'snapshots'}{$dirname}{'remote'}{'dir'}=$abs_dir;
 
             # filesizes
@@ -2950,11 +2679,7 @@ sub get_snapshots {
             #print "SIZE of $file_vdi_size is $filesize_vdi\n";
             #print "SIZE of $file_zipped_size is $filesize_zipped\n";
 
-            # ??????
-            #####${snapshots}{$dirname}{'filesize_vdi'}=$filesize_vdi;
             ${all_vars}{'snapshots'}{$dirname}{'remote'}{'size_expected'}{'vdi'}=$filesize_vdi;
-            # ??????
-            #####${snapshots}{$dirname}{'filesize_zipped'}=$filesize_zipped;
             ${all_vars}{'snapshots'}{$dirname}{'remote'}{'size_expected'}{'vdi_zipped'}=$filesize_zipped;
 
             if ($dirname ne $snapshot_standard){
@@ -2981,11 +2706,7 @@ sub get_snapshots {
                     $value=~s/\303\274/\374/g;# ue
                     $value=~s/\303\234/\334/g;# Ue
                     $value=~s/\303\237/\337/g;# ss
-
-                    # ?????
-                    #####${snapshots}{$dirname}{$key}="$value";
                     ${all_vars}{'snapshots'}{$dirname}{'conf'}{$key}="$value";
-
                     print "   * Key: $dirname $key  --> Value: $value\n";
 	        }
                 close FILE;
