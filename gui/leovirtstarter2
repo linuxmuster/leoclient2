@@ -32,6 +32,7 @@ use POSIX qw(getgroups);
 # %var-> vm -> local -> ... sav
 #           -> remote -> ...
 
+my @probing=("enp4s6");
 my %all_vars=();
 # get username
 $all_vars{'user'}{'uid'} = getpwuid( $< );
@@ -1537,7 +1538,8 @@ sub read_network_conf {
     my $file="";
     print "Reading network.conf:\n";
     print "Reading Snapshot $snapshot_dir \n";
-    my $conf_network_local=$vm_path_abs."/snapshot-store/".$snapshot_dir."/network.conf";
+    my $conf_network_local=$vm_path_abs."/snapshot-store/".
+                           $snapshot_dir."/network.conf";
     if (-e $conf_network_local) {
            $file = $conf_network_local; 
            print "local network.conf for Snapshot found: $file\n";
@@ -1606,6 +1608,13 @@ sub read_network_conf {
                 my @unconfigured_ifs=();
                 my @unconfigured_hwaddr=();
                 my @interfaces = IO::Interface::Simple->interfaces;
+		foreach my $prob (@probing){
+                    my $if1   = IO::Interface::Simple->new('enp4s6');
+                    if (defined $if1){
+			push @interfaces, $if1;
+                        last;
+		    }
+		}
                 print "Probing network devices:\n";
                 for my $if (@interfaces) {
                     $hwaddr=$if->hwaddr;
@@ -1625,8 +1634,7 @@ sub read_network_conf {
                         if ($p_nic_name eq "auto-used-nic"){
                             $interface=$if;
 		        }
-                        if ($p_mac eq "automac-used" or
-                            $p_mac eq "automac-used"){
+                        if ($p_mac eq "automac-used"){
                             $macaddress_used=&automac($hwaddr);
                         } else {
                             $macaddress=$p_mac;
