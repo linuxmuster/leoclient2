@@ -32,7 +32,43 @@ use POSIX qw(getgroups);
 # %var-> vm -> local -> ... sav
 #           -> remote -> ...
 
-my @probing=("enp4s6");
+my @probing=(
+             "enp1s0",
+             "enp1s1",
+             "enp1s2",
+             "enp1s3",
+             "enp1s4",
+             "enp1s5",
+             "enp1s6",
+             "enp2s0",
+             "enp2s1",
+             "enp2s2",
+             "enp2s3",
+             "enp2s4",
+             "enp2s5",
+             "enp2s6",
+             "enp3s0",
+             "enp3s1",
+             "enp3s2",
+             "enp3s3",
+             "enp3s4",
+             "enp3s5",
+             "enp3s6",
+             "enp4s0",
+             "enp4s1",
+             "enp4s2",
+             "enp4s3",
+             "enp4s4",
+             "enp4s5",
+             "enp4s6",
+             "enp5s0",
+             "enp5s1",
+             "enp5s2",
+             "enp5s3",
+             "enp5s4",
+             "enp5s5",
+             "enp5s6",
+            );
 my %all_vars=();
 # get username
 $all_vars{'user'}{'uid'} = getpwuid( $< );
@@ -1608,10 +1644,16 @@ sub read_network_conf {
                 my @unconfigured_ifs=();
                 my @unconfigured_hwaddr=();
                 my @interfaces = IO::Interface::Simple->interfaces;
+		my %interfaces=();
+		# fill interfaces into a hash
+		foreach my $if (@interfaces){
+                    $interfaces{$if}="seen";
+		}
 		foreach my $prob (@probing){
-                    my $if1   = IO::Interface::Simple->new('enp4s6');
-                    if (defined $if1){
-			push @interfaces, $if1;
+		    print "   * probing $prob\n";
+                    my $ifx   = IO::Interface::Simple->new($prob);
+                    if (defined $ifx and not exists $interfaces{$prob}){
+			push @interfaces, $ifx;
                         last;
 		    }
 		}
