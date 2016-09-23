@@ -1,3 +1,9 @@
+leoclient2 (0.5.8-2) xenial-testing; urgency=medium
+
+  * recognizing network card 
+
+ -- Ruediger Beck <bz@j1009p16.bszleo.de>  Fri, 23 Sep 2016 16:25:24 +0200
+
 leoclient2 (0.5.7-1) trusty-unstable; urgency=medium
 
   * fixed bug of starting remote vm's, code cleanup
