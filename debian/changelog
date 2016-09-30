@@ -1,3 +1,9 @@
+leoclient2 (0.5.9-1) xenial-testing; urgency=medium
+
+  * Typout fixed, dumper with better organised output
+
+ -- Ruediger Beck <bz@c0144p01.bszleo.de>  Fri, 30 Sep 2016 13:12:52 +0200
+
 leoclient2 (0.5.8-2) xenial-testing; urgency=medium
 
   * recognizing network card 
