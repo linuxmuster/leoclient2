@@ -13,6 +13,10 @@ use File::Basename;
 use Log::Log4perl qw(:easy);
 use Sys::Hostname;
 use Data::Dumper;
+$Data::Dumper::Indent = 1;
+$Data::Dumper::Sortkeys = 1;
+$Data::Dumper::Useqq = 1;
+$Data::Dumper::Terse = 1; 
 use IO::Interface::Simple;
 use POSIX qw(getgroups);
 
@@ -2699,13 +2703,13 @@ sub get_snapshots {
             print "WARNING: Nonexisting Snapshot search dir: $get_dir\n";
             return @snapshots;
         }
-        print "   ##### Listing snapshots in: $get_dir #####\n";
+        print "##### Listing snapshots in: $get_dir #####\n";
         opendir (DIR, $get_dir) || die $!;
         while( (my $dirname = readdir(DIR))){
             if ($dirname eq "." or $dirname eq ".." ){
 	        next;
             }
-            print "      * Adding snapshot: $dirname\n";
+            print "  * Adding snapshot: $dirname\n";
             my $abs_path=$get_dir."/".
                          $dirname."/".$snapshot_file_name;
             if ((not -e $abs_path) and (not -e $abs_path.".zip")){
@@ -2745,17 +2749,21 @@ sub get_snapshots {
                 open (FILE, $file);
 	        while (<FILE>){
                     chomp();
-                    my ($key,$value) = split(/=/);
-                    # convert unicode to iso
-                    $value=~s/\303\244/\344/g;# ae
-                    $value=~s/\303\204/\304/g;# Ae
-                    $value=~s/\303\266/\366/g;# oe
-                    $value=~s/\303\226/\326/g;# Oe
-                    $value=~s/\303\274/\374/g;# ue
-                    $value=~s/\303\234/\334/g;# Ue
-                    $value=~s/\303\237/\337/g;# ss
-                    ${all_vars}{'snapshots'}{$dirname}{'conf'}{$key}="$value";
-                    print "   * Key: $dirname $key  --> Value: $value\n";
+		    if ($_=~m/=/){
+                        my ($key,$value) = split(/=/);
+                        # convert unicode to iso
+                        $value=~s/\303\244/\344/g;# ae
+                        $value=~s/\303\204/\304/g;# Ae
+                        $value=~s/\303\266/\366/g;# oe
+                        $value=~s/\303\226/\326/g;# Oe
+                        $value=~s/\303\274/\374/g;# ue
+                        $value=~s/\303\234/\334/g;# Ue
+                        $value=~s/\303\237/\337/g;# ss
+                        ${all_vars}{'snapshots'}{$dirname}{'conf'}{$key}="$value";
+                        print "    * $dirname $key  --> Value: $value\n";
+		    } else {
+                        print "    * Line without = found (skipping)\n";
+		    }
 	        }
                 close FILE;
             }
