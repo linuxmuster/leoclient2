@@ -1,4 +1,4 @@
-leoclient2 (0.5.9-1) xenial; urgency=medium
+leoclient2 (0.5.9-2) xenial; urgency=medium
 
   * Typout fixed, dumper with better organised output
 
