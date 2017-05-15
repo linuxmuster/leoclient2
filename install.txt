@@ -114,3 +114,16 @@ leovirtstarter2
 Info:
 cat /etc/leoclient2/machines/server17.conf
 --> wo gibts virtuelle machinen (Pfad)
+
+
+Drucken spooler/splitter
+----------------------------
+Entweder:
+1) linuxmuster-client-extras
+   (zieht andere Pakete nach zum Linuxmuster-client)
+
+2) ohne linuxmuster-client-extras
+
+sudo cp ./printer/leoclient2-splitter.desktop  /etc/xdg/autostart
+
+sudo cp ./printer/leoclient2-spooler.desktop  /etc/xdg/autostart
