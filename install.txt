@@ -14,8 +14,9 @@ Type F12 on boot --> boote menu
 Select HDD-USB --> booting stick
 
 Install Ubuntu:
-Deutsch
-Ubuntu installieren
+--------------------------------------------------
+* Deutsch
+* Ubuntu installieren
 * herunterladen Aktualisierungen
 * Festplatte löschen, ubuntu installieren
 * Berlin
@@ -24,4 +25,23 @@ Ubuntu installieren
 * Neu starten
 
 
+Linuxmuster-client:
+--------------------
+# wget http://pkg.linuxmuster.net/linuxmuster.net.key -O - | apt-key add -
 
+In /etc/apt/sources.list:
+deb http://pkg.linuxmuster.net/ xenial/ 
+
+
+Virtualbox:
+--------------------
+wget -q https://www.virtualbox.org/download/oracle_vbox_2016.asc -O- | sudo apt-key add -
+wget -q https://www.virtualbox.org/download/oracle_vbox.asc -O- | sudo apt-key add -
+
+
+sudo apt-get update
+sudo apt-get install dkms
+sudo apt-get install virtualbox-5.1
+
+sudo adduser linuxadmin vboxusers
+(Abmelden und Anmelden)
