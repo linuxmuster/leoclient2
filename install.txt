@@ -11,7 +11,7 @@ Go
 
 Install
 Type F12 on boot --> boote menu
-Select HDD-USB --> booting stick
+Select USB-HDD --> booting stick
 
 Install Ubuntu:
 --------------------------------------------------
@@ -25,13 +25,6 @@ Install Ubuntu:
 * Neu starten
 
 
-Linuxmuster-client:
---------------------
-# wget http://pkg.linuxmuster.net/linuxmuster.net.key -O - | apt-key add -
-
-In /etc/apt/sources.list:
-deb http://pkg.linuxmuster.net/ xenial/ 
-
 
 Virtualbox:
 --------------------
@@ -43,5 +36,50 @@ sudo apt-get update
 sudo apt-get install dkms
 sudo apt-get install virtualbox-5.1
 
+Download Extension pack and install it.
+
 sudo adduser linuxadmin vboxusers
 (Abmelden und Anmelden)
+
+Linuxmuster-client:
+--------------------
+# wget http://pkg.linuxmuster.net/linuxmuster.net.key -O - | sudo apt-key add -
+
+In /etc/apt/sources.list:
+deb http://pkg.linuxmuster.net/ xenial/ 
+
+# sudo apt-get install leoclient2-leovirtstarter-client leoclient2-vm-printer
+????? # sudo apt-get install linuxmuster-client-sudoers
+
+
+Install virtual Machine
+-------------------------
+sudo leoclient2-init
+
+name
+ja
+8000
+ja
+
+-> Virtualbox
+
+Allgemein:
+   * Typ
+   * Version
+Massenspeicher:
+   * iso image wählen
+--> starten
+--> installieren
+--> runterfahren
+--> Virtualbox: beenden
+--> leoclint-init zippt noch, ABWARTEN  
+
+
+
+Virtuelle Maschine starten
+----------------------------
+leovirtstarter2
+
+Info:
+cat /etc/leoclient2/machines/server17.conf
+--> wo gibts virtuelle machinen (Pfad)
