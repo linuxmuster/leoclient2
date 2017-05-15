@@ -55,29 +55,55 @@ deb http://pkg.linuxmuster.net/ xenial/
 
 # sudo apt-get install leoclient2-leovirtstarter-client leoclient2-vm-printer
 ????? # sudo apt-get install linuxmuster-client-sudoers
-
+--> nicht notwendig bei installation auf standard ubuntu
 
 Install virtual Machine
 -------------------------
 sudo leoclient2-init
 
-name
-ja
-8000
-ja
+Ubuntu 17:04 server:
+  * server17
+  * ja
+  * 8000
+  * ja
 
--> Virtualbox
+  -> Virtualbox
 
-Allgemein:
-   * Typ
-   * Version
+  Allgemein:
+     * Typ
+     * Version
+  Massenspeicher:
+     * iso image wählen
+     --> starten
+     --> installieren
+     --> runterfahren
+     --> Virtualbox: beenden
+     --> leoclint-init zippt noch, ABWARTEN  
+
+Windows 10:
+  * win10
+  * ja
+  * 23000 (minimum recommended)
+  * ja
+
+  -> Virtualbox
+
+  Allgemein:
+     * Typ
+     * Version Windows 10 64 bit
+System:
+     * 4500 MB RAM
+     * 4 CPU's
+     * 64 MB Grafik RAM
+     ????? 3D Beschleunigung ??? damit Guest additions das können?
 Massenspeicher:
-   * iso image wählen
---> starten
---> installieren
---> runterfahren
---> Virtualbox: beenden
---> leoclint-init zippt noch, ABWARTEN  
+     * iso image wählen
+     --> starten
+     --> installieren
+     --> runterfahren
+     --> Virtualbox: beenden
+     --> leoclint-init zippt noch, ABWARTEN  
+
 
 
 
