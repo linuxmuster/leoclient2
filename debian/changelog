@@ -1,6 +1,6 @@
-leoclient2 (0.5.9-2) xenial; urgency=medium
+leoclient2 (0.5.9-4) xenial; urgency=medium
 
-  * Typout fixed, dumper with better organised output
+  * Typout fixed, dumper with better organised output, no dep for virtualbox
 
  -- Ruediger Beck <bz@c0144p01.bszleo.de>  Fri, 30 Sep 2016 13:12:52 +0200
 
