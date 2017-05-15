@@ -10,6 +10,7 @@ MENU=$(DESTDIR)/usr/share/menu
 # configs
 LEOCLIENTCONF=$(DESTDIR)/etc/leoclient2
 VIRTCONF=$(DESTDIR)/etc/leovirtstarter2
+USRSHAREDESKTOP=$(DESTDIR)/usr/share/leovirtstarter2/desktop
 BIN=$(DESTDIR)/usr/bin
 SBIN=$(DESTDIR)/usr/sbin
 DESKTOP=$(DESTDIR)/usr/share/applications
@@ -99,5 +100,7 @@ leoclient2-vm-printer:
 	@install -oroot -groot --mode=0755 printer/run-vm-printer2-spooler $(BIN)
 	@install -d -m755 -oroot -groot $(LEOCLIENTCONF)
 	@install -oroot -groot --mode=0644 printer/leoclient-vm-printer2.conf  $(LEOCLIENTCONF)
+	@install -oroot -groot --mode=0644 printer/leoclient2-spooler.desktop  $(USRSHAREDESKTOP)
+	@install -oroot -groot --mode=0644 printer/leoclient2-splitter.desktop  $(USRSHAREDESKTOP)
 
 

@@ -124,6 +124,6 @@ Entweder:
 
 2) ohne linuxmuster-client-extras
 
-sudo cp ./printer/leoclient2-splitter.desktop  /etc/xdg/autostart
+sudo install -oroot -groot --mode=0644 /usr/share/leovirtstarter2/leoclient2-splitter.desktop  /etc/xdg/autostart
 
-sudo cp ./printer/leoclient2-spooler.desktop  /etc/xdg/autostart
+sudo install -oroot -groot --mode=0644 /usr/share/leovirtstarter2/leoclient2-spooler.desktop  /etc/xdg/autostart
