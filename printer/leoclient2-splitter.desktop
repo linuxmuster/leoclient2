@@ -1,0 +1,4 @@
+[Desktop Entry]
+Type=Application
+Name=leoclient2-splitter
+Exec=/usr/bin/run-vm-printer2-splitter
