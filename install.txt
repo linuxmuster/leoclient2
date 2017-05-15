@@ -38,6 +38,11 @@ sudo apt-get install virtualbox-5.1
 
 Download Extension pack and install it.
 
+
+sudo adduser user1
+sudo adduser user2
+sudo adduser user1 vboxusers
+sudo adduser user2 vboxusers
 sudo adduser linuxadmin vboxusers
 (Abmelden und Anmelden)
 
