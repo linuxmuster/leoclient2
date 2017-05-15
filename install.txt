@@ -1,0 +1,27 @@
+Installation i J10.10
+
+Prepare USB-Stick with mkusb
+d
+OK
+i Install
+l Live
+Select iso
+select Stick
+Go
+
+Install
+Type F12 on boot --> boote menu
+Select HDD-USB --> booting stick
+
+Install Ubuntu:
+Deutsch
+Ubuntu installieren
+* herunterladen Aktualisierungen
+* Festplatte löschen, ubuntu installieren
+* Berlin
+* linuxadmin
+* Muster!
+* Neu starten
+
+
+
