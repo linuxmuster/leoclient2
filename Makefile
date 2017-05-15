@@ -100,6 +100,7 @@ leoclient2-vm-printer:
 	@install -oroot -groot --mode=0755 printer/run-vm-printer2-spooler $(BIN)
 	@install -d -m755 -oroot -groot $(LEOCLIENTCONF)
 	@install -oroot -groot --mode=0644 printer/leoclient-vm-printer2.conf  $(LEOCLIENTCONF)
+	@install -d -m755 -oroot -groot $(USRSHAREDESKTOP)
 	@install -oroot -groot --mode=0644 printer/leoclient2-spooler.desktop  $(USRSHAREDESKTOP)
 	@install -oroot -groot --mode=0644 printer/leoclient2-splitter.desktop  $(USRSHAREDESKTOP)
 

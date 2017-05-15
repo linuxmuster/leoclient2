@@ -1,3 +1,5 @@
 usr/bin/run-vm-printer2-splitter
 usr/bin/run-vm-printer2-spooler
+usr/share/leovirtstarter2/desktop/leoclient2-spooler.desktop
+usr/share/leovirtstarter2/desktop/leoclient2-splitter.desktop
 etc/leoclient2/leoclient-vm-printer2.conf

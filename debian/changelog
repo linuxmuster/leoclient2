@@ -1,3 +1,9 @@
+leoclient2 (0.6.0-1) xenial; urgency=medium
+
+  * added files for autostart
+
+ -- Ruediger Beck <bz@j1010p02>  Mon, 15 May 2017 17:58:50 +0200
+
 leoclient2 (0.5.9-4) xenial; urgency=medium
 
   * Typout fixed, dumper with better organised output, no dep for virtualbox
