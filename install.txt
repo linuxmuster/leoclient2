@@ -1,61 +1,48 @@
-Installation i J10.10
+Aktuelle Version: https://github.com/linuxmuster/leoclient2/blob/master/install.txt
+
+Installation in J10.10
 
 Prepare USB-Stick with mkusb
-d
-OK
-i Install
-l Live
-Select iso
-select Stick
-Go
+d -> OK -> i Install -> l Live -> Select iso -> select Stick -> Go
 
-Install
+Install on Computers in J10.10:
 Type F12 on boot --> boote menu
 Select USB-HDD --> booting stick
 
 Install Ubuntu:
 --------------------------------------------------
-* Deutsch
-* Ubuntu installieren
-* herunterladen Aktualisierungen
-* Festplatte löschen, ubuntu installieren
+* Deutsch, Ubuntu installieren
+* Haken bei: herunterladen Aktualisierungen
+* Ganze Festplatte löschen, ubuntu installieren
 * Berlin
-* linuxadmin
-* Muster!
+* User: linuxadmin, Password: Muster!
 * Neu starten
 
-
-
 Virtualbox:
---------------------
-wget -q https://www.virtualbox.org/download/oracle_vbox_2016.asc -O- | sudo apt-key add -
-wget -q https://www.virtualbox.org/download/oracle_vbox.asc -O- | sudo apt-key add -
+--------------------------------------------------
+# wget -q https://www.virtualbox.org/download/oracle_vbox_2016.asc -O- | sudo apt-key add -
+# wget -q https://www.virtualbox.org/download/oracle_vbox.asc -O- | sudo apt-key add -
 
+# sudo apt-get update
+# sudo apt-get install dkms
+# sudo apt-get install virtualbox-5.1
 
-sudo apt-get update
-sudo apt-get install dkms
-sudo apt-get install virtualbox-5.1
+Download VirtualBox ExtensionPack and install it.
 
-Download Extension pack and install it.
-
-
-sudo adduser user1
-sudo adduser user2
-sudo adduser user1 vboxusers
-sudo adduser user2 vboxusers
-sudo adduser linuxadmin vboxusers
+Adding users and add them to to vboxusers
+--------------------------------------------------
+# sudo adduser user1; sudo adduser user2
+# sudo adduser user1 vboxusers; sudo adduser user2 vboxusers
+# sudo adduser linuxadmin vboxusers
 (Abmelden und Anmelden)
 
-Linuxmuster-client:
---------------------
+Leoclient2:
+--------------------------------------------------
 # wget http://pkg.linuxmuster.net/linuxmuster.net.key -O - | sudo apt-key add -
 
-In /etc/apt/sources.list:
-deb http://pkg.linuxmuster.net/ xenial/ 
+In /etc/apt/sources.list:  deb http://pkg.linuxmuster.net/ xenial/ 
 
 # sudo apt-get install leoclient2-leovirtstarter-client leoclient2-vm-printer
-????? # sudo apt-get install linuxmuster-client-sudoers
---> nicht notwendig bei installation auf standard ubuntu
 
 Install virtual Machine
 -------------------------
@@ -66,12 +53,9 @@ Ubuntu 17:04 server:
   * ja
   * 8000
   * ja
-
-  -> Virtualbox
-
+  -> Virtualbox startet
   Allgemein:
-     * Typ
-     * Version
+     * Typ Linux, Version Ubuntu 64bit
   Massenspeicher:
      * iso image wählen
      --> starten
@@ -85,18 +69,14 @@ Windows 10:
   * ja
   * 23000 (minimum recommended)
   * ja
-
-  -> Virtualbox
-
+  -> Virtualbox startet
   Allgemein:
-     * Typ
-     * Version Windows 10 64 bit
-System:
-     * 4500 MB RAM
-     * 4 CPU's
+     * Typ Windows, Version Windows 10 64 bit
+  System:
+     * min. 2048 MB RAM
+     * min 2 CPU's
      * 64 MB Grafik RAM
-     ????? 3D Beschleunigung ??? damit Guest additions das können?
-Massenspeicher:
+  Massenspeicher:
      * iso image wählen
      --> starten
      --> installieren
@@ -104,26 +84,19 @@ Massenspeicher:
      --> Virtualbox: beenden
      --> leoclint-init zippt noch, ABWARTEN  
 
-
-
-
 Virtuelle Maschine starten
 ----------------------------
-leovirtstarter2
+# leovirtstarter2
 
-Info:
-cat /etc/leoclient2/machines/server17.conf
---> wo gibts virtuelle machinen (Pfad)
-
+Info:  # cat /etc/leoclient2/machines/server17.conf   (--> wo gibts virtuelle Maschinen)
 
 Drucken spooler/splitter
 ----------------------------
 Entweder:
-1) linuxmuster-client-extras
+1) Linuxmuster-Client
+   linuxmuster-client-extras
    (zieht andere Pakete nach zum Linuxmuster-client)
 
 2) ohne linuxmuster-client-extras
-
-sudo install -oroot -groot --mode=0644 /usr/share/leovirtstarter2/desktop/leoclient2-splitter.desktop  /etc/xdg/autostart
-
-sudo install -oroot -groot --mode=0644 /usr/share/leovirtstarter2/desktop/leoclient2-spooler.desktop  /etc/xdg/autostart
+   # sudo install -oroot -groot --mode=0644 /usr/share/leovirtstarter2/desktop/leoclient2-splitter.desktop  /etc/xdg/autostart
+   # sudo install -oroot -groot --mode=0644 /usr/share/leovirtstarter2/desktop/leoclient2-spooler.desktop  /etc/xdg/autostart
