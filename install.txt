@@ -45,6 +45,7 @@ Leoclient2:
 
 In /etc/apt/sources.list:  deb http://pkg.linuxmuster.net/ xenial/ 
 
+# sudo apt-get update
 # sudo apt-get install leoclient2-leovirtstarter-client leoclient2-vm-printer
 
 Install virtual Machine
