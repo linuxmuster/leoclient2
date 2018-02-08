@@ -410,6 +410,9 @@ while (<CONFFILE>){
    if ($option eq "SERVERDIR"){
        push @{ $all_vars{'searchdirs'}{'remote'} }, $data;
    }
+   if ($option eq "OFFLINECACHE"){
+       $all_vars{'offlinecache'}=$data;
+   }
 }
 close CONFFILE;
 } else {
@@ -438,6 +441,7 @@ if ($all_vars{'user'}{'uid'} ne "root"){
 }
 
 if (-f $conf_caches){
+    # caches.conf auf remote
     open (CACHECONFFILE, $conf_caches);
     while (<CACHECONFFILE>){
         s/^ //g; # Leerzeichen am Zeilenangfang entfernen
@@ -468,8 +472,16 @@ if (-f $conf_caches){
     close CACHECONFFILE;
 } else {
     if ($all_vars{'user'}{'uid'} ne "root"){
-        print "  * WARNING: nonexisting CACHE\n";
-        print "             No caches.conf found at $conf_caches\n";
+	if (defined $all_vars{'offlinecache'}){
+            my $cache_path=$all_vars{'offlinecache'}."/cache";
+	    push @{ $all_vars{'caches'}{'ordered'} }, $cache_path;
+	    $all_vars{'caches'}{'exist'} = 1;
+	    $all_vars{'offlinemode'} = 1;
+	} else {
+            print "  * WARNING: nonexisting CACHE\n";
+            print "             No remote caches.conf found at $conf_caches\n";
+            print "             No offline cache found in $conf_servers\n";
+	}
     }
 }
 
@@ -1013,7 +1025,6 @@ my $buttons_default="$vm Standard";
 my $buttons_as_used="$vm wie vorgefunden";
 
 my @buttons=&get_snapshots( @{ $all_vars{'searchdirs'}{'all'} } );
-
 
 # ??????
 #print Dumper(\%snapshots);
