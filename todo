@@ -1,6 +1,39 @@
 Bugfix:
 
-ohne caches.conf solls tun
+Maschinen nach lokal holen
+(auch vollständig remote)
+
+Teilschritte:
+0) all_vars mit dumper anzeigen per option (und exit)
+
+1) wird eine nur remote Maschine nach local geholt,
+   dann wird sie auch registriert:
+   cp <vm>.conf /et   /etc/leoclient2/machines/<vm>.conf
+   -> dazu die option --register-machine <vm>
+      die in sudoers zugelassen wird
+   -> immer local überschreiben
+2) Im rechten Bereich (statt 2D/3D zeugs) 2 Radiobuttons
+   (*) <vm> Snapshot cachen (default)
+   ( ) <vm> und Snapshot offline verfügbar machen
+            (Platztest vorher: 3fache zipfile-Größe)
+   -> cachen, wie bisher
+   -> Snapshot offline verfürgbar machen durch kopieren
+        VON:  /media/leoclient2-vm/<vm>/snapshot-store/<snapshot>
+        NACH:    /virtual/Machines/<vm>/snapshot-store/<snapshot>
+      folgender Dateien:
+        {dhdj}.vdi.zip (Snaphot Datei) (Fortschrittsbalken)
+        image.conf
+        network.conf
+        filesize.vdi
+        filesize.vdi.zipped
+3) Bugfix: auflisten der Snapshots
+   --> gibts denselben Snapshot remote und ist er gecached
+       -> bisher Doppelte Anzeige des Snapshot
+       -> Bugfix: nur den Serversnapshot anzeigen
+       -> bei der Anzeige evtl. noch auflisten, welche Snapshots offline liegen
+          (mkk_Kältetechnik*): * heisst local (im Fenster unten erklärt)
+	  
+Tests: klappt das mit updates wenn remote machine sich ändert, dass remotes nach lokal geholt wird
 
 
 
