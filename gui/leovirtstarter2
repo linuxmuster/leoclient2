@@ -290,6 +290,7 @@ my $help=0;
 my $info=0;
 my $dump=0;
 my $set_permissions=0;
+my $register_machine="";
 my $show_menu=0;
 my $snapshot_search_dir="";
 my $ignore_virtualbox=0;
@@ -313,6 +314,7 @@ my $testopt=GetOptions(
            "info|i" => \$info,
            "dump" => \$dump,
            "set-permissions" => \$set_permissions,
+           "register-machine=s" => \$register_machine,
            "show-menu|menu" => \$show_menu,
            "on-the-go|g=s" => \$on_the_go,
            "vm=s" => \$vm,
@@ -636,6 +638,23 @@ if ($info==1){
 }
 
 
+# --register-machine
+if ($register_machine ne ""){
+    print "  --register-machine $register_machine called as $all_vars{'user'}{'uid'} by ".
+	"sudo from $ENV{SUDO_USER}\n";
+    my $source=$all_vars{'vms'}{$register_machine}{'remote'}{'path'}."/".$register_machine.".conf";
+    my $target=$conf_machines."/".$register_machine.".conf";
+    my $command="cp $source $target";
+    print "$command\n";
+    system($command);
+    system("chmod 644 $target");
+    if ($all_vars{'user'}{'uid'} eq "root"){
+        print "SUDOERS END\n";
+    }
+    exit;
+}
+
+
 # --set-permissions
 if ($set_permissions==1){
     # this can be called as root
@@ -687,7 +706,7 @@ if ($set_permissions==1){
     exit;
 }
 
-# chmod all local dirs with sodo script 
+# chmod all local dirs with sudo script 
 # as early as possible, not before the option (would be recursive)
 system("sudo /usr/bin/leovirtstarter2 --set-permissions");
 
@@ -1455,6 +1474,8 @@ sub sync_vm_to_local {
         $option="";
     }
     my $target=$all_vars{'vms'}{$vm}{'local'}{'path'};
+
+    system("sudo /usr/bin/leovirtstarter2 --register-machine $vm");
 
     # exclude BIG files for a fast rsync
     # BIG files are downloaded later with progressbar

@@ -4,14 +4,14 @@ Maschinen nach lokal holen
 (auch vollständig remote)
 
 Teilschritte:
-0) all_vars mit dumper anzeigen per option (und exit)
+OK: 0) all_vars mit dumper anzeigen per option (und exit)
 
-1) wird eine nur remote Maschine nach local geholt,
-   dann wird sie auch registriert:
-   cp <vm>.conf /et   /etc/leoclient2/machines/<vm>.conf
-   -> dazu die option --register-machine <vm>
-      die in sudoers zugelassen wird
-   -> immer local überschreiben
+OK: 1) wird eine nur remote Maschine nach local geholt,
+       dann wird sie auch registriert:
+       cp <vm>.conf /et   /etc/leoclient2/machines/<vm>.conf
+       -> dazu die option --register-machine <vm>
+          die in sudoers zugelassen wird
+       -> immer local überschreiben
 2) Im rechten Bereich (statt 2D/3D zeugs) 2 Radiobuttons
    (*) <vm> Snapshot cachen (default)
    ( ) <vm> und Snapshot offline verfügbar machen
