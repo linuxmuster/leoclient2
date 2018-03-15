@@ -1,7 +1,5 @@
 # leoclient2 needs to make a VM of other users usable
 # option --set-permissions allows to do this
-%vboxusers ALL=NOPASSWD: /usr/bin/leovirtstarter2 --set-permissions
-# leoclient2 needs to register a remotely fetched machin in /etc/...
 # option --register-machine allows to do this
-%vboxusers ALL=NOPASSWD: /usr/bin/leovirtstarter2 --register-machine
+%vboxusers ALL=NOPASSWD: /usr/bin/leovirtstarter2 --set-permissions, /usr/bin/leovirtstarter2 --register-machine *
 

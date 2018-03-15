@@ -644,10 +644,14 @@ if ($register_machine ne ""){
 	"sudo from $ENV{SUDO_USER}\n";
     my $source=$all_vars{'vms'}{$register_machine}{'remote'}{'path'}."/".$register_machine.".conf";
     my $target=$conf_machines."/".$register_machine.".conf";
-    my $command="cp $source $target";
-    print "$command\n";
-    system($command);
-    system("chmod 644 $target");
+    if (-f $source){
+        my $command="cp $source $target";
+        print "$command\n";
+        system($command);
+        system("chmod 644 $target");
+    } else {
+        print "Could not cp $source (nonexisting)\n";
+    }
     if ($all_vars{'user'}{'uid'} eq "root"){
         print "SUDOERS END\n";
     }
