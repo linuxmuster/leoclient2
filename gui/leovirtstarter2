@@ -2078,17 +2078,50 @@ sub start_button {
     INFO "   RAM:     $selected{'RAM'}";
     INFO "   GOCACHE: $selected{'GOCACHE'}";
     #INFO "   GRAFIK:  $selected{'GRAFIK'}";
-    INFO "   SYSTEM:  $selected{'SYSTEM'}";
-    # check if existing file is OK
-       # copy
-       # copy not needed
+    INFO "   SYSTEM:  $selected{'SYSTEM'}"; # snapshot
+
+    # GOCACHE
     if ($selected{'GOCACHE'} eq $go_cache_fetch){
-        print "\nGOCACHE: $selected{'GOCACHE'}\n";
-        print "Do the copying here ...\n\n";
+        print "\n";
+        print "GOCACHE: Virtual Machine is \"$vm\"\n";
+        print "GOCACHE: Snapshot is \"$selected{'SYSTEM'}\"\n";
+        print "GOCACHE: Option is \"$selected{'GOCACHE'}\"\n";
+
+	my $source_dir=$all_vars{'vms'}{$vm}{'remote'}{'path'};
+	my $source;
+	my $target;
+	my $copy_command;
+        
+        print "Do the copying here from $source_dir\n";
+
+	$source=$source_dir."/image.conf";
+	$target="/tmp";
+	if (-f $source){
+	    $copy_command="cp ".$source." ".$target;
+            print $copy_command."\n";
+	    system($copy_command);
+        } else {
+            print "skipping nonexisting $source\n"
+	}
+	
+	$source=$source_dir."/network.conf";
+	if (-f $source){
+   	    $copy_command="cp ".$source." ".$target;
+            print $copy_command."\n";
+	    system($copy_command);
+	} else {
+            print "skipping nonexisting $source\n"
+	}
+
+        print "   * todo: copying filesize.vdi\n";
+        print "   * todo: copying {...xyz...}.vdi.zip\n";
+        print "   * todo: copying filesize.vdi.zipped\n";
+	print "\n";
     } else {
-        print "\n$selected{'GOCACHE'}\n";
-        print "Nothing to do\n\n";
+        print "\nGOCACHE: Option is \"$selected{'GOCACHE'}\"\n";
+        print "  ---> Nothing to do for GOCACHE\n\n";
     }
+    
     if ($selected{'SYSTEM'} eq $buttons_as_used){
         if ($virtualbox==1){
             # --virtualbox
@@ -2099,7 +2132,7 @@ sub start_button {
             Gtk2->main_quit;
         } else {
             # start VM with snapshot as found
-	    print "SELECTED: $selected{'SYSTEM'}\n\n";
+	    print "SELECTED: \"$selected{'SYSTEM'}\"\n\n";
             #&sync_vm_to_local(); # overwrite existing files
             #&reset_vm_to_defaults(); # set default machine hardware
             #&check_base_image($vm); # done earlier
