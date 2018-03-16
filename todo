@@ -12,7 +12,7 @@ OK: 1) wird eine nur remote Maschine nach local geholt,
        -> dazu die option --register-machine <vm>
           die in sudoers zugelassen wird
        -> immer local überschreiben
-2) Im rechten Bereich (statt 2D/3D zeugs) 2 Radiobuttons
+2) Im rechten Bereich (statt 2D/3D zeugs) 2 Radiobuttons go_cache
    (*) <vm> Snapshot cachen (default)
    ( ) <vm> und Snapshot offline verfügbar machen
             (Platztest vorher: 3fache zipfile-Größe)
@@ -20,6 +20,8 @@ OK: 1) wird eine nur remote Maschine nach local geholt,
    -> Snapshot offline verfürgbar machen durch kopieren
         VON:  /media/leoclient2-vm/<vm>/snapshot-store/<snapshot>
         NACH:    /virtual/Machines/<vm>/snapshot-store/<snapshot>
+
+---> weiter here (Quellcode Do the copying here)
       folgender Dateien:
         {dhdj}.vdi.zip (Snaphot Datei) (Fortschrittsbalken)
         image.conf
@@ -35,6 +37,12 @@ OK: 1) wird eine nur remote Maschine nach local geholt,
 	  
 Tests: klappt das mit updates wenn remote machine sich ändert, dass remotes nach lokal geholt wird
 
+
+sudoers fix:
+
+register machine in extra script, bei dem Ziel scriptintern ausgewerted wird
+irgendeine Datei (sbs-Pfad angeben kann dann nach /etc/leoclient/machines kopiert werden)
+dieses script dann aufrufen
 
 
 Rainer:

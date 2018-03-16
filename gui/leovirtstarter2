@@ -1047,6 +1047,9 @@ my $gui3_snapshot_chooser = Gtk2::Window->new('toplevel');
 my $buttons_default="$vm Standard";
 my $buttons_as_used="$vm wie vorgefunden";
 
+my $go_cache_fetch="mitnehmen";
+my $go_cache_no_fetch="nicht mitnehmen";
+
 my @buttons=&get_snapshots( @{ $all_vars{'searchdirs'}{'all'} } );
 
 # ??????
@@ -1247,21 +1250,49 @@ my $vbox_hardware = Gtk2::VBox->new(FALSE, 5);
 $vbox_hardware->set_border_width(0);
 $hbox_hardware->add($vbox_hardware);
 
-my $hardware_grafik = Gtk2::Frame->new();
-$hardware_grafik->set_shadow_type ('out');
-$hardware_grafik->set_border_width(10);
-$hardware_grafik->set_label("  Virtuelle Grafik:  ");
-$vbox_hardware->pack_start($hardware_grafik,TRUE,TRUE,5);
-$hardware_grafik->show;
+# my $hardware_grafik = Gtk2::Frame->new();
+# $hardware_grafik->set_shadow_type ('out');
+# $hardware_grafik->set_border_width(10);
+# $hardware_grafik->set_label("  Virtuelle Grafik:  ");
+# $vbox_hardware->pack_start($hardware_grafik,TRUE,TRUE,5);
+# $hardware_grafik->show;
 
-my $grafik_v_stock = Gtk2::VBox->new(FALSE,5);
-$grafik_v_stock->set_border_width(15);
-&create_radiobuttons("GRAFIK",
-                     $grafik_v_stock, 
-                     $grafik_buttons_default,
-                     @grafik_buttons);
-$hardware_grafik->add($grafik_v_stock);
+# my $grafik_v_stock = Gtk2::VBox->new(FALSE,5);
+# $grafik_v_stock->set_border_width(15);
+# &create_radiobuttons("GRAFIK",
+#                      $grafik_v_stock, 
+#                      $grafik_buttons_default,
+#                      @grafik_buttons);
+# $hardware_grafik->add($grafik_v_stock);
+# $vbox_hardware->show_all();
+
+
+############################################################
+# go_cache radiobuttons
+############################################################
+$vbox_hardware = Gtk2::VBox->new(FALSE, 5);
+$vbox_hardware->set_border_width(0);
+$hbox_hardware->add($vbox_hardware);
+
+my $go_cache = Gtk2::Frame->new();
+$go_cache->set_shadow_type ('out');
+$go_cache->set_border_width(10);
+$go_cache->set_label(" Remotes  OS mitnehmen:  ");
+$vbox_hardware->pack_start($go_cache,TRUE,TRUE,5);
+$go_cache->show;
+
+my $go_cache_button_default=$go_cache_no_fetch;
+my @go_cache_buttons=($go_cache_no_fetch,$go_cache_fetch);
+
+my $go_cache_default = Gtk2::VBox->new(FALSE,5);
+$go_cache_default->set_border_width(15);
+&create_radiobuttons("GOCACHE",
+                     $go_cache_default, 
+                     $go_cache_button_default,
+                     @go_cache_buttons);
+$go_cache->add($go_cache_default);
 $vbox_hardware->show_all();
+
 
 
 ############################################################
@@ -1288,10 +1319,13 @@ $ram_v_stock->set_border_width(15);
 $hardware_ram->add($ram_v_stock);
 $vbox_hardware->show_all();
 
-            if ($dump==1){
-                &dump_all("Before boot of snapshot");
-                exit;
-            }
+
+############################################################
+# dump all
+if ($dump==1){
+    &dump_all("Before boot of snapshot");
+    exit;
+}
 
 
 # rows, columns, homogeneous
@@ -2041,12 +2075,20 @@ sub start_button {
     my ($window, $name) = @_;
     # what to start
     INFO "########## Start-Button pressed:  ##########";
-    INFO "   RAM:    $selected{'RAM'}";
-    INFO "   GRAFIK: $selected{'GRAFIK'}";
-    INFO "   SYSTEM: $selected{'SYSTEM'}";
+    INFO "   RAM:     $selected{'RAM'}";
+    INFO "   GOCACHE: $selected{'GOCACHE'}";
+    #INFO "   GRAFIK:  $selected{'GRAFIK'}";
+    INFO "   SYSTEM:  $selected{'SYSTEM'}";
     # check if existing file is OK
        # copy
        # copy not needed
+    if ($selected{'GOCACHE'} eq $go_cache_fetch){
+        print "\nGOCACHE: $selected{'GOCACHE'}\n";
+        print "Do the copying here ...\n\n";
+    } else {
+        print "\n$selected{'GOCACHE'}\n";
+        print "Nothing to do\n\n";
+    }
     if ($selected{'SYSTEM'} eq $buttons_as_used){
         if ($virtualbox==1){
             # --virtualbox
@@ -2587,7 +2629,10 @@ sub create_radiobuttons {
                 # $button: dirname
                 # $displayname: name in image.conf
                 $button_name=$displayname;
-        } 
+        }
+        if ($type eq "GOCACHE"){
+                $button_name=$displayname;
+        }	
         if ($i==0){
             # this is the first button
             $radiobutton[$i] = Gtk2::RadioButton->new(undef, $button_name);
