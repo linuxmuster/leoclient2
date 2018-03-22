@@ -2089,15 +2089,17 @@ sub start_button {
 
 	my $source_dir=$all_vars{'vms'}{$vm}{'remote'}{'path'};
 	my $source;
-	my $target;
+	my $target_dir;
+	my $mkdir_command;
 	my $copy_command;
         
         print "Do the copying here from $source_dir\n";
 
+	# copying the machine to local
 	$source=$source_dir."/image.conf";
-	$target="/tmp";
+	$target_dir=$all_vars{'vms'}{$vm}{'local'}{'path'};
 	if (-f $source){
-	    $copy_command="cp ".$source." ".$target;
+	    $copy_command="cp ".$source." ".$target_dir;
             print $copy_command."\n";
 	    system($copy_command);
         } else {
@@ -2106,13 +2108,56 @@ sub start_button {
 	
 	$source=$source_dir."/network.conf";
 	if (-f $source){
-   	    $copy_command="cp ".$source." ".$target;
+   	    $copy_command="cp ".$source." ".$target_dir;
             print $copy_command."\n";
 	    system($copy_command);
 	} else {
             print "skipping nonexisting $source\n"
 	}
 
+	# copying the snapshot to local
+        # filesize.vdi.zipped
+	$source_dir=$all_vars{'vms'}{$vm}{'rsync_root'}{'snapshot-store'}{'source'};
+	$source=$source_dir.$selected{'SYSTEM'}."/filesize.vdi.zipped";
+	$target_dir=$all_vars{'vms'}{$vm}{'local'}{'path'}."/snapshot-store/".$selected{'SYSTEM'}."-local";
+#	$target_dir=$all_vars{'vms'}{$vm}{'local'}{'path'}."/snapshot-store/".$selected{'SYSTEM'};
+	
+	$mkdir_command="mkdir -p $target_dir";
+	$copy_command="cp $source $target_dir";
+	print "   $mkdir_command\n";
+	print "   $copy_command\n";
+        system($mkdir_command);
+        system($copy_command);
+
+        # filesize.vdi
+        $source=$source_dir.$selected{'SYSTEM'}."/filesize.vdi";
+	$copy_command="cp $source $target_dir";
+	print "   $copy_command\n";
+        system($copy_command);
+	
+        # {uuid}vdi.zip
+        $source=$source_dir.$selected{'SYSTEM'}."/{".$all_vars{'vms'}{$vm}{'uuid'}."}.vdi.zip";
+	$copy_command="cp $source $target_dir";	
+	print "   $copy_command\n";
+        system($copy_command);
+
+	# ??? image.conf
+        $source=$source_dir.$selected{'SYSTEM'}."/image.conf";
+	if (-e $source){
+	   $copy_command="cp $source $target_dir";	
+	   print "???   $copy_command\n";
+	   # user und host restriktionen raus??? 
+           #system($copy_command);
+        }
+
+	# ??? network.conf
+        $source=$source_dir.$selected{'SYSTEM'}."/network.conf";
+	if (-e $source){
+	    $copy_command="cp $source $target_dir";	
+	    print "???   $copy_command\n";
+            #system($copy_command);
+        }	
+	
         print "   * todo: copying filesize.vdi\n";
         print "   * todo: copying {...xyz...}.vdi.zip\n";
         print "   * todo: copying filesize.vdi.zipped\n";

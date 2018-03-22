@@ -34,7 +34,14 @@ OK: 1) wird eine nur remote Maschine nach local geholt,
        -> Bugfix: nur den Serversnapshot anzeigen
        -> bei der Anzeige evtl. noch auflisten, welche Snapshots offline liegen
           (mkk_Kältetechnik*): * heisst local (im Fenster unten erklärt)
-	  
+
+4) überlegung das locale "-local zu nennen"
+5) was passiert wenn man offline auf mitnehmen geht?
+6) Fortschrittsbalken bei m "mitnehmen"
+7) image.conf/network.conf:
+   - überhaupt kopieren: network.conf (NIC anzahl evtl. anders??)
+   - evtl. Rechte rausnehmen (jeder darf auf jedem host starten, name anpassen?) 
+
 Tests: klappt das mit updates wenn remote machine sich ändert, dass remotes nach lokal geholt wird
 
 
