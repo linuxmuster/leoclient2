@@ -2154,8 +2154,8 @@ sub start_button {
         $source=$source_dir.$selected{'SYSTEM'}."/network.conf";
 	if (-e $source){
 	    $copy_command="cp $source $target_dir";	
-	    print "???   $copy_command\n";
-            #system($copy_command);
+	    print "  $copy_command\n";
+            system($copy_command);
         }	
 	
         print "   * todo: copying filesize.vdi\n";
