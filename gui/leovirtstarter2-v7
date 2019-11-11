@@ -1,0 +1,2818 @@
+#!/usr/bin/perl -w
+# This Script (leovirtstarter2) was created by Rüdiger Beck
+# It is released under the GPL Version 3
+# For Bugs send mail to (jeffbeck-at-web.de)
+# Version August 2015
+
+use strict;
+use Glib qw/TRUE FALSE/;
+use Gtk2 '-init';
+use Getopt::Long;
+use utf8;
+use File::Basename;
+use Log::Log4perl qw(:easy);
+use Sys::Hostname;
+use Data::Dumper;
+$Data::Dumper::Indent = 1;
+$Data::Dumper::Sortkeys = 1;
+$Data::Dumper::Useqq = 1;
+$Data::Dumper::Terse = 1; 
+use IO::Interface::Simple;
+use POSIX qw(getgroups);
+
+# todo
+# set $vm if only ONE vm is there
+# start using snapshots
+# Haken beim starten (Rechner starten / Virtualbox starten)
+
+# GUI: three Windows appear
+# Window 1: choose a VM -> $gui1_vm_chooser 
+#           (is managed as a zenity window now) ???
+# Window 2: download base image if necessary -> $base_download
+#           (progressbar, not working now)
+# Window 3: choose a snapshot -> $gui3_snapshot_chooser
+
+# save all data for machines in this hash
+# %var-> vm -> local -> ... sav
+#           -> remote -> ...
+
+my @probing=(
+             "enp1s0",
+             "enp1s1",
+             "enp1s2",
+             "enp1s3",
+             "enp1s4",
+             "enp1s5",
+             "enp1s6",
+             "enp2s0",
+             "enp2s1",
+             "enp2s2",
+             "enp2s3",
+             "enp2s4",
+             "enp2s5",
+             "enp2s6",
+             "enp3s0",
+             "enp3s1",
+             "enp3s2",
+             "enp3s3",
+             "enp3s4",
+             "enp3s5",
+             "enp3s6",
+             "enp4s0",
+             "enp4s1",
+             "enp4s2",
+             "enp4s3",
+             "enp4s4",
+             "enp4s5",
+             "enp4s6",
+             "enp5s0",
+             "enp5s1",
+             "enp5s2",
+             "enp5s3",
+             "enp5s4",
+             "enp5s5",
+             "enp5s6",
+            );
+my %all_vars=();
+# get username
+$all_vars{'user'}{'uid'} = getpwuid( $< );
+if ($all_vars{'user'}{'uid'} eq "root"){
+    print "SUDOERS START\n";
+}
+
+#************************************************************
+#************************************************************
+#************************************************************
+#************************************************************
+#************************************************************
+#************************************************************
+# old serverConf stuff
+
+############################################################                    
+# ram                                                                           
+############################################################                    
+my @ram_steps=("192",
+            "256",
+            "384",
+            "512",
+            "768",
+            "1024",
+            "1536",
+            "2048",
+            "3072",
+            "4096",
+            "6144",
+            "8192",
+            "12288",
+            "16384");
+
+my $min_host_ram="256";
+my $max_guest_ram="3072";
+
+my $snapshot_file_name="";
+my $local_standard_snapshot_abs="";
+
+############################################################                    
+# virtualbox                                                                    
+############################################################                    
+# the BASE IMAGE, that is never changed                                         
+# where must the base image be on the client:                                   
+#my $base_image_target="/virtual/vdi/winXP-2010.vdi";
+# where in the image directory can the base image be found:                     
+# (relative to $snapshot_file_dir below)                                        
+#my $base_image_source="base/winXP-2010.vdi";
+
+#in Snapshot-store/base
+#my $base_image_size="2468409856"; # winXP as seen with 'ls -l'  
+#my $base_image_size="33554432"; # tinycore
+my $base_image_size="";
+# the base image
+
+
+# the SNAPSHOTS                                                                 
+#my $snapshot_file_dir="/virtual/Machines/winXP-2010/Snapshots";
+
+##### network.conf ##### Network settings on the clients
+# calculate path to network.conf
+my $conf_network_vm="";
+# is a network.conf used? 0=not used, 1=used, patch network settings for vm
+my $network_patch=0;
+
+# array index 0 -> NIC1 
+# array index 1 -> NIC2 
+# array index 2 -> NIC3 
+# array index 3 -> NIC4 
+my @network_vbox_commands=();
+
+
+#####################################2#######################                    
+# logging                                                                       
+############################################################                    
+my $server_popularity_log_file=".log-popularity";
+
+# old server conf end
+#************************************************************
+#************************************************************
+#************************************************************
+#************************************************************
+#************************************************************
+#************************************************************
+
+# which user,group,host,room can access the machine
+#my %read_access_vm=();
+
+# Contains information about snapshots
+#my %snapshots=();
+
+my $standard_snapshot_local_zipped="";
+# old snapshot.zip
+my $standard_snapshot_local_zipped_obsolete="";
+
+
+############################################################
+# new config
+
+# Base image source is calculated
+my $base_image_source="";
+my $base_image_source_filesize="";
+my $base_image_source_filesize_zipped="";
+my $base_image_target="";
+
+##### caches.conf ##### Caches on the clients
+# path to caches.conf is calculated:
+my $conf_caches="";
+# set var for caches to nonexisting
+$all_vars{'caches'}{'exist'} = 0;
+
+# path to the caches from caches.conf:
+#my @cache_dirs=();
+# size of the caches in MB from caches.conf:
+#my @cache_dirs_size=();
+
+##### defaults.conf ##### Server settings on the clients
+my $conf_defaults="";
+
+# the group a user must be member in to use all features
+#my $permissive_group="vboxusers";
+# eine Gruppe in der alle Benutzer Mitgleid sind, denn
+# vboxusers scheint nicht mehr notwendig
+my $permissive_group="schools";
+
+# Snapshots
+# in which directory is the snapshot that is  used as the
+# second entry
+my $snapshot_standard="standard";
+my $snapshot_file_dir_local="";
+my $snapshot_file_dir_remote="";
+my $vm_dir_remote_parent="";
+my $vm_dir_remote="";
+
+
+
+
+############################################################
+
+my $vm_path_abs="";
+
+##### servers.conf ##### Server settings on the clients
+##### do not change this #####
+my $conf="/etc/leoclient2";
+my $conf_machines=$conf."/machines";
+my $conf_servers=$conf."/servers.conf";
+
+# shell export variable for the machine
+my $vm_path_export="";
+
+# which filepath is used for the shared home folder
+my $home = $ENV{'HOME'};
+$all_vars{'user'}{'shared_home'} = $home."/Home_auf_Server";
+
+#if (not -d $shared_home_abs){
+if (not -d $all_vars{'user'}{'shared_home'}){
+    $all_vars{'user'}{'shared_home'} = $home; 
+}
+
+
+############################################################
+# Info about user,group,host,room
+# get hostname (host)
+my $hostname=hostname();
+chomp($hostname);
+
+
+# version 6.x server
+# get group(=room) of host (not user)
+my $host_group="";
+my $host_uid = getpwnam($hostname);
+if (not defined $host_uid){
+    # no host group (no linuxmuster-base client)
+    if ($all_vars{'user'}{'uid'} ne "root"){
+        print "  * No host account (this is no linuxmuster.net 6 client)\n";
+    }
+    $all_vars{'host'}{'linuxmuster-client'} = 0; 
+    $host_uid=0;
+} else {
+    $all_vars{'host'}{'linuxmuster-client'} = 1; 
+}
+
+my @host_entry= getpwuid($host_uid);
+my $host_gid=$host_entry[3];
+$all_vars{'host'}{'roomuidnumber'} = $host_entry[3];
+$all_vars{'host'}{'room'} = getgrgid($host_gid);
+
+# additional info for version 7.x server
+# parse multiple group memberships from id command
+my $id_result=`id $hostname\$`;
+chomp($id_result);
+my @parts=split(/=/,$id_result);
+my $last_part=pop(@parts);
+my @id_group=split(/,/,$last_part);
+foreach my $group_string (@id_group){
+    my ($gidnumber,$group)=split(/\(/,$group_string);
+    $group=~s/\)//;
+    $all_vars{'host'}{'room7'}{$group}=$gidnumber;
+}
+
+
+
+# get list of the current groups for this process
+my @gidlist=getgroups();
+foreach my $gid (@gidlist){
+    #$all_vars{'user'}{'gidnumber'}{$gid} = "seen";
+    my ($group) = getgrgid($gid);
+    $all_vars{'user'}{'gid'}{$group} = "seen";
+}
+############################################################
+
+
+
+# create VM, snapshots
+my $prepare_remote_vm="";
+my $clean_local_vm="";
+
+
+
+my $on_the_go="";
+# Option --vm
+my $vm="";
+# Option --virtualbox
+my $virtualbox=0;
+# Option --local-snapshots
+my $local_snapshots=0;
+# Option --serverdir /one --serverdir /two
+my @serverdir=();
+my $clean_cache=0;
+my $clean_log=0;
+my $help=0;
+my $info=0;
+my $dump=0;
+my $set_permissions=0;
+my $show_menu=0;
+my $snapshot_search_dir="";
+my $ignore_virtualbox=0;
+my $log="/tmp/leovirtstarter2.log";
+# allow everybody to log into the logfile
+umask 000;
+# change $INFO to $DEBUG to see more
+Log::Log4perl->easy_init({ 
+#                level   => $INFO,
+                level   => $DEBUG,
+                file    => ">>$log" } );    
+
+#use leoclient2::leovirtstarter2;
+use Filesys::Df;
+
+
+
+# Parsen der Optionen
+my $testopt=GetOptions(
+           "help|h" => \$help,
+           "info|i" => \$info,
+           "dump" => \$dump,
+           "set-permissions" => \$set_permissions,
+           "show-menu|menu" => \$show_menu,
+           "on-the-go|g=s" => \$on_the_go,
+           "vm=s" => \$vm,
+           "virtualbox|vbox" => \$virtualbox,
+           "local-snapshots" => \$local_snapshots,
+           "prepare-remote-vm=s" => \$prepare_remote_vm,
+           "clean-local-vm=s" => \$clean_local_vm,
+           "serverdir=s" => \@serverdir,
+           "clean|clean-cache" => \$clean_cache,
+           "clean-log" => \$clean_log,
+           "ignore-virtualbox" => \$ignore_virtualbox,
+           "snapshots|snapshots-search-dir|s=s" => \$snapshot_search_dir,
+          );
+
+# Prüfen, ob Optionen erkannt wurden, sonst Abbruch
+&check_options($testopt);
+
+# exit with warning if user is NOT in group vboxusers (only vboxusers are allowed to 
+# use passwordless sudo to change permissions of a machine)
+if ($all_vars{'user'}{'uid'} ne "root"){
+    if (not exists $all_vars{'user'}{'gid'}{$permissive_group}){
+        # user in not in permissive group
+        print "$all_vars{'user'}{'uid'} is not in group $permissive_group\n";
+        my $message="$all_vars{'user'}{'uid'} muss in der Gruppe $permissive_group sein um leoclient2 verwenden zu können";
+        system("/usr/bin/zenity --warning --text='$message'");
+        exit;
+    } else {
+        print "  * OK: $all_vars{'user'}{'uid'} is in group $permissive_group\n";
+    }
+}
+
+
+if ($help==1){
+   print('
+Options
+  -h  / --help
+  -i  / --info (list the available machines and exit)
+
+Power User:
+  --virtualbox / --vbox
+    Open the virtualbox window of the machine 
+    instead of starting the machine
+  --local-snapshots
+    look only for snapshots in the snapshot-store of the machine
+  --ignore-virtualbox 
+    Start leovirtstarter2 even if VirtualBox ist running.
+    This may overwrite the virtual harddisk of a running virtual machine,
+    which will therefore crash.
+  --serverdir /abs/path/to/dir1 --serverdir /abs/path/to/dir2
+    Use /abs/path/to/dir1, ... instead of the configured SERVERDIR in
+    /etc/leoclient2/servers.conf 
+
+Preparing VM or Snapshot:
+  --prepare-remote-vm VM
+
+Cleaning a local VM (Deleting needless files):
+  --clean-local-vm VM
+
+Development:
+  --clean-cache   (clean all caches)
+  --clean-log     (clean all log files)
+  --dump          (dump all_vars and exit)
+
+Non-Server use:
+  --on-the-go /path/to/config/file  (using another config file)
+  --snapshots /path/to/zipped/snapshots (override path in config files)
+
+');
+   print "\n";
+   exit;
+}
+
+
+
+
+
+
+# read config file /etc/leoclient2/servers.conf
+if ($all_vars{'user'}{'uid'} ne "root"){
+    print "  * Reading servers.conf from $conf_servers\n";
+}
+if (-f $conf_servers){
+open (CONFFILE, $conf_servers);
+while (<CONFFILE>){
+   s/^ //g; # Leerzeichen am Zeilenangfang entfernen
+   if(/^\#/){ # # am Anfang bedeutet Kommentarzeile
+       next;
+   }
+   chomp();
+   if($_ eq ""){
+       next;
+   }
+   #print "servers.conf LINE:   $_\n";
+   my ($option,$data)=split(/=/);
+   if ($option eq "SERVERDIR"){
+       push @{ $all_vars{'searchdirs'}{'remote'} }, $data;
+   }
+}
+close CONFFILE;
+} else {
+    print "  * WARNING: nonexisting $conf_servers\n";
+}
+
+# --serverdir ...
+if (@serverdir){
+    # option used, overwrite
+    @{ $all_vars{'searchdirs'}{'remote'} } = @serverdir;
+}
+
+
+# Set variables based on serverdirs
+# caches.conf must be in first serverdir (????? Look in all server dirs)
+if (defined $all_vars{'searchdirs'}{'remote'}[0]){ 
+    $conf_caches=$all_vars{'searchdirs'}{'remote'}[0]."/caches.conf";
+} else {
+    # default cache
+}
+
+
+# read config file /etc/leoclient2/caches.conf
+if ($all_vars{'user'}{'uid'} ne "root"){
+    print "  * Reading caches.conf from $conf_caches\n";
+}
+
+if (-f $conf_caches){
+    open (CACHECONFFILE, $conf_caches);
+    while (<CACHECONFFILE>){
+        s/^ //g; # Leerzeichen am Zeilenangfang entfernen
+        if(/^\#/){ # # am Anfang bedeutet Kommentarzeile
+            next;
+        }
+        chomp();
+        if($_ eq ""){
+            next;
+        }
+        #print "caches.conf LINE: $_\n";
+        my ($cache_path,$cache_size,$range,$parameter)=split(/::/);
+        if($range eq "ALLHOSTS"){
+            # add a cache dir
+            $cache_path=$cache_path."/cache";
+#       print "  CACHE_PATH:      $cache_path\n";
+#       print "  CACHE_SIZE:      $cache_size\n";
+#       print "  CACHE_RANGE:     $range\n";
+#       print "  CACHE_PARAMETER: $parameter\n";
+            push @{ $all_vars{'caches'}{'ordered'} }, $cache_path;
+            # set var to show caches exist
+            $all_vars{'caches'}{'exist'} = 1;
+            $all_vars{'caches'}{$cache_path}{'size'} = $cache_size;
+            $all_vars{'caches'}{$cache_path}{'range'} = $range;
+            $all_vars{'caches'}{$cache_path}{'parameter'} = $parameter;
+        } 
+    }
+    close CACHECONFFILE;
+} else {
+    if ($all_vars{'user'}{'uid'} ne "root"){
+        print "  * WARNING: nonexisting CACHE\n";
+        print "             No caches.conf found at $conf_caches\n";
+    }
+}
+
+
+# read LOCAL vm's from config dir /etc/leoclient2/machines
+if (not -d $conf_machines){
+    print "\nERROR: Configuration directory $conf_machines does not exist\n\n";
+    exit;
+} 
+opendir CONFDIR, $conf_machines;
+foreach my $machine (readdir CONFDIR){
+    if ($machine eq "."){next};
+    if ($machine eq ".."){next};
+    if ($machine=~m/.conf$/){
+        my $path=&get_machine_path($machine);
+        $machine=~s/.conf$//g;
+
+        $all_vars{'vms'}{$machine}{'local'}{'path'}=$path;
+        $all_vars{'vms'}{$machine}{'type'}="local";
+        # set to local, remote not checked
+        $all_vars{'vms'}{$machine}{'remote'}{'path'}="-";
+ 
+        # rsync_root, local target
+        $all_vars{'vms'}{$machine}{'rsync_root'}{'defaults'}{'target'}=
+           $path."/defaults/";
+
+        # check if machine is accessible
+        &read_access_vm($path,$machine);
+        &check_sav_file($path,$machine);
+        if (1==&access_vm($machine)){
+            push @{ $all_vars{'vms_ordered'}{'local'} }, $machine;
+            &save_vbox_uuid($machine);
+        }
+    }
+}
+closedir CONFDIR;
+
+
+# Exit if no SERVERDIR is configured
+if ( $#{ $all_vars{'searchdirs'}{'remote'} }==-1 ){
+        print "\n";
+        print "ERROR: No SERVERDIR configured\n";
+        print "       You must configure a possibly empty, existing SERVERDIR\n\n";
+        exit;
+}
+
+# read REMOTE vm's from SERVERDIR (exclude local machines)
+foreach my $serverdir ( @{ $all_vars{'searchdirs'}{'remote'} } ){
+    if ($all_vars{'user'}{'uid'} ne "root"){
+        print "  * Reading remote machines from $serverdir\n";
+    }
+    if (not -d $serverdir){
+        print "\nERROR: SERVERDIR $serverdir does not exist\n\n";
+        exit;
+    }
+
+    opendir SERVERDIR, $serverdir;
+    foreach my $machine (readdir SERVERDIR){
+        my $vm_path_remote=$serverdir."/".$machine;
+        if ($machine eq "."){next};
+        if ($machine eq ".."){next};
+        if (not -d $vm_path_remote){next};
+
+        # Continue only if the base image *.vdi can be seen
+        if (not -e $vm_path_remote."/".$machine.".vdi"){next};
+
+        # analyse type of vm
+        if (exists $all_vars{'vms'}{$machine}{'type'} and $all_vars{'vms'}{$machine}{'type'} eq "local"){
+            # local AND remote = mixed
+            $all_vars{'vms'}{$machine}{'type'}="mixed";
+            my $remote_path=$serverdir."/".$machine;
+            $all_vars{'vms'}{$machine}{'remote'}{'path'}=$remote_path;
+            $all_vars{'vms'}{$machine}{'rsync_root'}{'defaults'}{'source'}=
+              $remote_path."/defaults/";
+            $all_vars{'vms'}{$machine}{'rsync_root'}{'snapshot-store'}{'source'}=
+              $remote_path."/snapshot-store/";
+        } else {
+            # remote machine (no mixed machine)
+            $all_vars{'vms'}{$machine}{'type'}="remote";
+
+            # check if machine is accessible
+            my $remote_path=$serverdir."/".$machine;
+            my $local_path=&get_local_vm_path($machine,$vm_path_remote);
+
+            $all_vars{'vms'}{$machine}{'local'}{'path'}=$local_path;
+            $all_vars{'vms'}{$machine}{'remote'}{'path'}=$remote_path;
+
+            # rsync_root, remote source
+            $all_vars{'vms'}{$machine}{'rsync_root'}{'defaults'}{'target'}=
+              $local_path."/defaults/";
+            $all_vars{'vms'}{$machine}{'rsync_root'}{'defaults'}{'source'}=
+              $remote_path."/defaults/";
+
+            $all_vars{'vms'}{$machine}{'rsync_root'}{'snapshot-store'}{'target'}=
+              $local_path."/snapshot-store/";
+            $all_vars{'vms'}{$machine}{'rsync_root'}{'snapshot-store'}{'source'}=
+              $remote_path."/snapshot-store/";
+
+            &read_access_vm($remote_path,$machine);
+            if (1==&access_vm($machine)){
+                push @{ $all_vars{'vms_ordered'}{'remote'} }, $machine;
+                &save_vbox_uuid($machine);
+            }
+	}
+    }
+    closedir SERVERDIR;
+}
+
+
+# sort the vms (if arrays are not empty)
+if ( not  $#{ $all_vars{'vms_ordered'}{'local'} }==-1 ){
+    @{ $all_vars{'vms_ordered'}{'local'} } = sort @{ $all_vars{'vms_ordered'}{'local'} };
+}
+if ( not  $#{ $all_vars{'vms_ordered'}{'remote'} }==-1 ){
+    @{ $all_vars{'vms_ordered'}{'remote'} } = sort @{ $all_vars{'vms_ordered'}{'remote'} };
+}
+# concatenate the vms
+@{ $all_vars{'vms_ordered'}{'all'} } = 
+   ( @{ $all_vars{'vms_ordered'}{'local'} }, @{ $all_vars{'vms_ordered'}{'remote'} } );
+
+
+# --info
+if ($info==1){
+    # list machines alphabetically
+    print "\nLocal VM's listed in ${conf_machines}:\n";
+        printf " %-9s| %-35s| %-19s\n",
+               "Name","Snapshot-file UUID","Local path";
+    print "----------+------------------------------------+",
+          "----------------------------\n";
+    foreach my $machine ( @{ $all_vars{'vms_ordered'}{'local'} } ){
+        printf " %-9s|%-36s|%-20s\n",
+               $machine,
+               $all_vars{'vms'}{$machine}{'uuid'},
+               $all_vars{'vms'}{$machine}{'local'}{'path'};
+    }
+    print "----------+-----------------------------------------+",
+          "-----------------------\n";
+    print "\nRemote machines in SERVERDIR:\n";
+        printf " %-9s| %-35s| %-19s\n",
+               "Name","Snapshot-file UUID","Local path";
+    print "----------+------------------------------------+",
+          "----------------------------\n";
+    foreach my $machine ( @{ $all_vars{'vms_ordered'}{'remote'} } ){
+        printf " %-9s|%-36s|%-20s\n",
+               $machine,
+               $all_vars{'vms'}{$machine}{'uuid'},
+               $all_vars{'vms'}{$machine}{'local'}{'path'};
+    }
+    print "----------+-----------------------------------------+",
+          "-----------------------\n";
+    exit;
+}
+
+
+# --set-permissions
+if ($set_permissions==1){
+    # this can be called as root
+    my %local_vm_dirs=();
+    print "  --set-permissions called as $all_vars{'user'}{'uid'} by ".
+          "sudo from $ENV{SUDO_USER}\n";
+    foreach my $vm ( @{ $all_vars{'vms_ordered'}{'local'} } ){
+        # local VM's
+        $local_vm_dirs{$vm}=$all_vars{'vms'}{$vm}{'local'}{'path'};
+    }
+    foreach my $vm ( @{ $all_vars{'vms_ordered'}{'remote'} } ){
+        # local copy of remote VM's
+        $local_vm_dirs{$vm}=$all_vars{'vms'}{$vm}{'local'}{'path'};
+    }
+    while (my ($vm,$path) = each %local_vm_dirs){
+        if (-e $path){
+            system("chmod -R 0755 $path");
+        }
+
+        # rsync commands run as root, to repair files, that will be owned by root:
+        system("mkdir -p $all_vars{'vms'}{$vm}{'local'}{'path'}");
+
+        # defaults (recursive)
+        if (exists $all_vars{'vms'}{$vm}{'rsync_root'}{'defaults'}{'source'} and 
+            -d $all_vars{'vms'}{$vm}{'rsync_root'}{'defaults'}{'source'} ){
+            my $command="rsync -a ".
+               "$all_vars{'vms'}{$vm}{'rsync_root'}{'defaults'}{'source'} ".
+               "$all_vars{'vms'}{$vm}{'rsync_root'}{'defaults'}{'target'}";
+            #print "$command\n";
+            system($command);
+        }
+        # vm.vdi (basefile) #ignored here
+
+        # fix permissions
+        # make sure root can change owners and permissions
+        system("chown -R $ENV{SUDO_USER}.$permissive_group $path");
+        my $defaults=$path."/defaults";
+        system("chown -R root.root $defaults");
+        system("chmod -R 0555 $defaults");
+
+        my $file=&check_sav_file($path,$vm);
+        if ($file ne "none"){
+            unlink $file;
+        }
+    }
+    if ($all_vars{'user'}{'uid'} eq "root"){
+        print "SUDOERS END\n";
+    }
+    exit;
+}
+
+# chmod all local dirs with sodo script 
+# as early as possible, not before the option (would be recursive)
+system("sudo /usr/bin/leovirtstarter2 --set-permissions");
+
+
+# --prepare-remote-vm
+if ($prepare_remote_vm ne ""){
+    # set vm name
+    $vm=$prepare_remote_vm;
+    # use only local snapshots
+    $local_snapshots=1;
+}
+
+
+# --clean-local-vm
+if ($clean_local_vm ne ""){
+    # set vm name
+    $vm=$clean_local_vm;
+    # use only local snapshots
+    $local_snapshots=1;
+}
+
+
+if ($clean_cache==1){
+    print "##################### Cleaning the cache ##########################\n";
+    foreach my $cache ( @{ $all_vars{'caches'}{'ordered'} } ){
+        print "Removing recursively $cache\n";
+        if (-d $cache){
+            system("rm -rf $cache || sudo rm -rf $cache");
+        }
+    }
+    print "########################## Exiting ###############################\n";
+    exit;
+}
+
+
+if ($clean_log==1){
+    system("echo '' > $log");
+    print "################### Cleaning the logfiles ########################\n";
+    print "Previous logfiles cleaned by leovirtstarter2 --clean-log\n";
+    print "########################## Exiting ###############################\n";
+    exit;
+}
+
+
+
+if ($vm ne ""){
+   # ???
+#} elsif ($#vm==-1) {
+} elsif ( $#{ $all_vars{'vms_ordered'}{'all'} }==-1 ) {
+    INFO "No machines found, aborting with gui Error\n";
+    my $message="Es gibt keine Maschinen in $conf_machines!";
+    system("/usr/bin/zenity --warning --text='$message'");
+    exit;
+} else {
+    # show zenity chooser
+    my $zenity_list="/usr/bin/zenity --list --width=900 --height=400 ".
+       "--radiolist --title='Virtuelle Maschine wählen!' ".
+       "--column='' --column='Maschine' ".
+       "--column='Beschreibung' --column='Remote path' --column='Local Path' ";
+    # add items
+    foreach my $machine ( @{ $all_vars{'vms_ordered'}{'all'} } ){
+        $zenity_list=$zenity_list.
+           "FALSE '$machine' ".
+           "'$machine' ".
+           "'$all_vars{'vms'}{$machine}{'remote'}{'path'}' ".
+           "'$all_vars{'vms'}{$machine}{'local'}{'path'}' ";
+    }
+    
+    my $zenity_return=`$zenity_list`;
+    chomp($zenity_return);
+    print "  * Selected VM: $zenity_return in $all_vars{'vms'}{$zenity_return}{'local'}{'path'}\n";
+    if ($all_vars{'vms'}{$zenity_return}{'type'} eq "local"
+         and not -d $all_vars{'vms'}{$zenity_return}{'local'}{'path'}."/Snapshots"
+        ){
+        print "\nERROR: Local machine $zenity_return in ".
+              "$all_vars{'vms'}{$zenity_return}{'local'}{'path'} is damaged.\n\n";
+        exit;
+    }
+
+    #print Dumper(\%all_vars);
+
+    if ($zenity_return eq ""){
+        #  canceled
+        exit;
+    }
+    $vm=$zenity_return;
+}
+
+
+
+# vm is chosen --> setting paths for VM
+if (not exists $all_vars{'vms'}{$vm}){
+    print "ERROR: Could not find VM $vm \n";
+    exit;
+}
+
+# local or remote ?????
+$vm_path_abs=$all_vars{'vms'}{$vm}{'local'}{'path'};
+$all_vars{'searchdirs'}{'local'}[0]=$vm_path_abs;
+## remove last dir to fit to remote dirs
+$all_vars{'searchdirs'}{'local'}[0]=~s/\/$//g;
+$all_vars{'searchdirs'}{'local'}[0]=~s/\/${vm}$//g;
+# Where is the zipped standard snaphot
+foreach my $dir (@{ $all_vars{'searchdirs'}{'remote'} }){
+    # Remote data
+    $vm_dir_remote_parent=$dir;
+    $vm_dir_remote=$dir.
+        "/$vm";
+    $snapshot_file_dir_remote=$dir.
+        "/$vm/Snapshots";
+    $base_image_source = $dir.
+        "/$vm/snapshot-store/base/".$vm.".vdi";
+    $base_image_source_filesize = $dir.
+        "/$vm/filesize.vdi";
+    $base_image_source_filesize_zipped = $dir.
+        "/$vm/snapshot-store/base/filesize.vdi.zipped";
+    if (-e $base_image_source){
+        last;
+    }
+}
+if ($all_vars{'vms'}{$vm}{'type'} eq "remote" ){
+    # settings for remote machines
+    # remote->path is the path where the remote(-only) machine 
+    # will be copied locally 
+    my $local_dir=&get_local_vm_path($vm,$all_vars{'vms'}{$vm}{'remote'}{'path'});
+
+    $base_image_target=$local_dir."/".$vm.".vdi";
+    $standard_snapshot_local_zipped=
+        $local_dir."/snapshot-store/standard/{".
+        $all_vars{'vms'}{$vm}{'uuid'}.
+        "}.vdi.zip";
+    $snapshot_file_dir_local=$local_dir."/Snapshots";
+} else {
+    # settings for local machines
+    $base_image_target=$vm_path_abs."/".$vm.".vdi";
+    $standard_snapshot_local_zipped_obsolete=
+        $vm_path_abs."/snapshot-store/standard/snapshot.zip";
+    $standard_snapshot_local_zipped=
+        $vm_path_abs."/snapshot-store/standard/{".
+        $all_vars{'vms'}{$vm}{'uuid'}.
+        "}.vdi.zip";
+    $snapshot_file_dir_local=$vm_path_abs."/Snapshots";
+}
+$conf_network_vm=$vm_path_abs."/network.conf";
+$snapshot_file_name="{".$all_vars{'vms'}{$vm}{'uuid'}."}.vdi";
+$local_standard_snapshot_abs=$snapshot_file_dir_local."/".$snapshot_file_name;
+print "Setting paths for selected VM $vm\n";
+print "  * vm_dir_remote:   $vm_dir_remote\n";
+print "  * base_image_source:   $base_image_source\n";
+print "  * base_image_target:   $base_image_target\n";
+print "  * network.conf der VM: $conf_network_vm\n";
+print "  * Snapshot file name:  $snapshot_file_name\n";
+print "  * Local base snapshot: $standard_snapshot_local_zipped\n";
+
+@network_vbox_commands=(
+   "/usr/bin/vboxmanage modifyvm $vm --nic1 null --nic1 none",
+   "/usr/bin/vboxmanage modifyvm $vm --nic2 null --nic2 none",
+   "/usr/bin/vboxmanage modifyvm $vm --nic3 null --nic3 none",
+   "/usr/bin/vboxmanage modifyvm $vm --nic4 null --nic4 none",
+);
+
+
+
+# --local-snapshots
+if ($local_snapshots==1){
+    # empty list of remote snapshots
+    @{ $all_vars{'searchdirs'}{'remote'} }=();
+}
+
+@{ $all_vars{'searchdirs'}{'all'} } =
+    ($all_vars{'searchdirs'}{'local'}[0],
+    @{ $all_vars{'searchdirs'}{'remote'} });
+
+
+# Setting $VBOX_USER_HOME
+
+$vm_path_export="export VBOX_USER_HOME=".
+                $all_vars{'vms'}{$vm}{'local'}{'path'}.
+                "; ";
+print "  * VBOX_USER_HOME: $vm_path_export\n";
+
+
+if ($dump==1){
+    &dump_all("After VM selection");
+}
+
+
+
+# --ignore-virtualbox
+# Abbruch, falls virtualbox schon läuft
+my $pid_string=`pgrep -f /usr/lib/virtualbox/VirtualBox`;
+chomp($pid_string);
+#print "PID: <$pid_string>\n";
+if ($pid_string ne "" and $ignore_virtualbox==0){
+    print "VirtualBox is running already\n";
+    my $message="<b>Oracle VM VirtualBox</b> läuft schon!\n\n".
+                "Deshalb kann <b>VirtualBox Snapshotstarter</b>".
+                " nicht gestartet werden.\n\n".
+                "Bitte beenden Sie zuerst <b>Oracle VM VirtualBox</b>!";
+    system("/usr/bin/zenity --warning --text='$message'");
+    exit;
+}
+
+
+# --prepare-remote-vm
+if ($prepare_remote_vm ne ""){
+    print "######## Preparing virtual machine $vm: ########\n";
+    &zip_image($base_image_target,"base");
+    &zip_snapshots();
+    #&clean_vm($vm_path_abs); 
+    exit;
+}
+
+# --clean-local-vm
+if ($clean_local_vm ne ""){
+    print "Cleaning up virtual machine $vm:\n";
+    &clean_vm($vm_path_abs); 
+    exit;
+}
+
+# prepare local machine             
+&sync_vm_to_local("--ignore-existing");
+#&reset_vm_to_defaults();
+&check_base_image($vm);
+
+
+INFO "Starting leovirtstarter2 on $hostname";
+#INFO "UUID: $vbox_uuid (Max RAM: $max_guest_ram)";
+INFO "UUID: $all_vars{'vms'}{$vm}{'uuid'} (Max RAM: $max_guest_ram)";
+my @unused=@ram_steps;
+# Abhängigkeiten von Paketen: 
+# libfilesys-df-perl (ubuntu 10.04)
+# libglib-perl (lenny)
+# libgtk2-perl
+
+# config
+# auf client bzw. server wird in /etc/leovirtstarter2/leovirtstarter2.conf
+# so konfiguriert, dass es auf diesselebe Datei auf dem server verweist
+
+# Todo:
+
+# count how often a image was used (from cache) or downloaded
+# from which server:
+# log a line into the server file usage in the directory containing 
+# all images:
+# date::image-name::client-name/IP::user::??
+# log everything into .log/leovirtstarter2-err.log
+# 
+# checks:
+# A) no virtualbox is allowed to run, when starting another one
+# B) refresh .Virtualbox, when image could not be started -> 
+# start again/prompt user to refresh and start again 
+
+
+
+# Works:
+# starting from Desktop icon
+
+
+
+# server script
+# the same binary as this (pm)
+#     A) zip all files
+#     B) store size zip and notzipped (and md5sum)
+#     C) rsync zipped files to a list of servers 
+# 
+
+# Option --pack-and-go path-to-packed-files
+# benutze leovirtstarter2.conf mit Pfad zu vorbereiteter/gepatchter 
+# leovirtstarter2-server.conf
+# ersetze .VirtualBox oder patche sie (unionfs?)
+# beim beenden fragen ob /virtual wieder gelöschtw werden soll
+# evtl zusatzoption --link-virtual (verlinkt /virtual zum stick/Platte)
+
+
+########### $gui3_snapshot_chooser #############################################
+# +++++++++++++++++++++++++ $vbox ++++++++++++++++++++++++++++++++++++++++++++ #
+# + ######################## $ hbox ######################################## + #
+# + # +++ $hbox_starter ++++++++++++++ # +++++++ $hbox_hardware +++++++++  # + #
+# + # +                              + # +                              +  # + #
+# + # +                              + # + ###### $vbox_hardware #####  +  # + #
+# + # +                              + # + ###### $hardware_grafik ###  +  # + #
+# + # +                              +   + #                         #  +  # + #
+# + # +                              + $ + #                         #  +  # + #
+# + # +                              + h + #                         #  +  # + #
+# + # +                              + b + #                         #  +  # + #
+# + # +                              + o + #                         #  +  # + #
+# + # +                              + x + ###########################  +  # + #
+# + # +                              + _ +                              +  # + #
+# + # +                              + s + ##### $hardware_hsep ######  +  # + #
+# + # +                              + e +                              +  # + #
+# + # +                              + p +                              +  # + #
+# + # +                              + e +                              +  # + #
+# + # +                              + r +                              +  # + #
+# + # +                              + a +                              +  # + #
+# + # +                              + t +                              +  # + #
+# + # +                              + o +                              +  # + #
+# + # +                              + r +                              +  # + #
+# + # +                              +   +                              +  # + #
+# + # +                              + # +                              +  # + #
+# + # +                              + # +                              +  # + #
+# + # +                              + # +                              +  # + #
+# + # +                              + # +                              +  # + #
+# + # ++++++++++++++++++++++++++++++++ # ++++++++++++++++++++++++++++++++  # + #
+# + ######################################################################## + #
+# +                                                                          + #
+# + ######################## $vbox_seperator ############################### + #
+# +                                                                          + #
+# + ######################## $align -> $progress_bar ####################### + #
+# + #                                                                      # + #
+# + #                                                                      # + #
+# + #                                                                      # + #
+# + #                                                                      # + #
+# + ######################################################################## + #
+# ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #
+################################################################################
+
+# where to save selected radiobuttons
+my %selected=();
+
+my $copying_done=0; 
+
+# weiter
+# help grafik vervollständigen
+# programm darf nur 1x gestartet werden
+# wenns schon kopiert, dann fragen ob man abbrechen will, oder neue kopie starten
+
+
+
+my $gui3_snapshot_chooser = Gtk2::Window->new('toplevel');
+
+
+# The following lists might be created automatically
+my $buttons_default="$vm Standard";
+my $buttons_as_used="$vm wie vorgefunden";
+
+my @buttons=&get_snapshots( @{ $all_vars{'searchdirs'}{'all'} } );
+
+
+# ??????
+#print Dumper(\%snapshots);
+
+# display as used button? 
+@buttons=($buttons_as_used,$buttons_default,@buttons);
+
+my @grafik_buttons=("2D",
+                    "3D Beschleunigung",
+                    "3D und Video Beschleunigung");
+my $grafik_buttons_default="2D";
+
+my $gui2_base_download;
+my $pb_win_get_zip;
+my $pb_win_start_zip;
+
+
+############################################################
+# Checks 
+############################################################
+
+
+$gui3_snapshot_chooser->show;
+
+
+my ($ram_buttons_default, @ram_sizes)=&ram_sizes();
+
+print "\n---Default RAM: $ram_buttons_default---\n\n";
+
+my %ram_mapping=();
+my @ram_buttons=();
+foreach my $size (@ram_sizes){
+    push @ram_buttons, $size;
+    my $string=$size." MB";
+    $ram_mapping{$size}="$string"; 
+}
+
+
+
+# make sure all cache dirs exist
+foreach my $dir ( @{ $all_vars{'caches'}{'ordered'} } ){
+    if (not -e $dir){
+            system("mkdir -p $dir || sudo mkdir -p $dir");
+            system("chmod -R 777 $dir || sudo -R chmod 777 $dir");
+    }
+}
+
+
+
+
+INFO "Starting leovirtstarter2 GUI on $hostname";
+
+############################################################
+# GUI
+############################################################
+
+# create programm window: gui3_snapshot_chooser
+# $gui3_snapshot_chooser definded before check base image which shows it
+$gui3_snapshot_chooser->set_resizable(TRUE);
+$gui3_snapshot_chooser->signal_connect(destroy => \&destroy_progress);
+$gui3_snapshot_chooser->signal_connect('delete_event' => sub { Gtk2->main_quit; });
+$gui3_snapshot_chooser->set_title("$vm starten");
+$gui3_snapshot_chooser->set_border_width(0);
+# Fenstergroesse
+$gui3_snapshot_chooser->set_size_request( 800, 600 );
+# zentrieren
+$gui3_snapshot_chooser->set_position('center_always');
+
+
+############################################################
+# create vbox inside gui3_snapshot_chooser and fill it:
+# hbox, vbox_seperator, align, progress_bar
+############################################################
+my $vbox = Gtk2::VBox->new(FALSE, 5);
+$vbox->set_border_width(0);
+$gui3_snapshot_chooser->add($vbox);
+$vbox->show;
+
+
+
+############################################################
+# Drop Down Menus: machines, help, ...
+############################################################
+my $menu_drop_machine = new Gtk2::Menu();
+my $menu_drop_help = new Gtk2::Menu();
+
+############################################################
+# Menu machine items
+############################################################
+
+# Top
+my $menu_machine_top = new Gtk2::MenuItem( "Virtuelle Maschinen" );
+$menu_machine_top->show();
+$menu_machine_top->set_submenu( $menu_drop_machine );
+
+# item 1
+my $menu_machine_1 = new Gtk2::MenuItem( "Windows" );
+$menu_drop_machine->append( $menu_machine_1 );
+$menu_machine_1->signal_connect( 'activate', sub { print( "Windows\n" ); } );
+$menu_machine_1->show();
+
+# item 2
+my $menu_machine_2 = new Gtk2::MenuItem( "Linux" );
+$menu_drop_machine->append( $menu_machine_2 );
+$menu_machine_2->signal_connect( 'activate', sub { print( "Linux\n" ); } );
+$menu_machine_2->show();
+
+# item ...
+
+
+############################################################
+# Help Menu
+############################################################
+
+# Top 
+my $menu_help_top = new Gtk2::MenuItem( "Hilfe" );
+$menu_help_top->show();
+$menu_help_top->set_submenu( $menu_drop_help );
+
+# item 1
+my $menu_help_1 = new Gtk2::MenuItem( "Hilfe" );
+$menu_drop_help->append( $menu_help_1 );
+$menu_help_1->signal_connect( 'activate', sub { print( "Help\n" ); } );
+$menu_help_1->show();
+
+# item 2
+my $menu_help_2 = new Gtk2::MenuItem( "Über" );
+$menu_drop_help->append( $menu_help_2 );
+$menu_help_2->signal_connect( 'activate', sub { print( "About\n" ); } );
+$menu_help_2->show();
+
+# item ...
+
+############################################################
+# Menu Bar
+############################################################
+
+# Create a menu-bar to hold the menus and add it to 
+# the vbox in our main window
+my $menubar = new Gtk2::MenuBar();
+$vbox->pack_start( $menubar, 0, 0, 2 );
+if ($show_menu==1){
+    $menubar->show();
+}
+
+# And finally we append the top items of a drop down menu
+# to the menu-bar 
+$menubar->append( $menu_machine_top );
+$menubar->append( $menu_help_top );
+
+
+
+############################################################
+# add vbox 
+############################################################
+# create hbox inside vbox
+my $hbox = Gtk2::HBox->new(FALSE, 5);
+$hbox->set_border_width(20);
+# insert hbox into vbox
+$vbox->add($hbox);
+#$vbox->pack_start($hbox, FALSE,FALSE,5);
+$hbox->show;
+
+
+############################################################
+# create the starter box and fill it:
+# hbox_starter, hbox_seperator, $hbox_hardware
+############################################################
+
+# Chooser for the starter box
+my $hbox_starter = &starter_vbox();
+$hbox->add($hbox_starter);
+
+# Trennlinie in hbox
+my $hbox_seperator = Gtk2::VSeparator->new;
+$hbox->pack_start($hbox_seperator, TRUE, FALSE, 5);
+$hbox_seperator->show;
+
+# create vbox for hardware
+my $hbox_hardware = Gtk2::VBox->new(FALSE, 5);
+$hbox_hardware->set_border_width(0);
+# insert vbox into window
+$hbox->add($hbox_hardware);
+$hbox_hardware->show;
+
+
+############################################################
+# add vbox_hardware inside hbox_hardware and fill it:
+# hardware_grafik, hardware_ram 
+############################################################
+
+############################################################
+# grafik radiobuttons
+############################################################
+# hardware_grafik
+my $vbox_hardware = Gtk2::VBox->new(FALSE, 5);
+$vbox_hardware->set_border_width(0);
+$hbox_hardware->add($vbox_hardware);
+
+my $hardware_grafik = Gtk2::Frame->new();
+$hardware_grafik->set_shadow_type ('out');
+$hardware_grafik->set_border_width(10);
+$hardware_grafik->set_label("  Virtuelle Grafik:  ");
+$vbox_hardware->pack_start($hardware_grafik,TRUE,TRUE,5);
+$hardware_grafik->show;
+
+my $grafik_v_stock = Gtk2::VBox->new(FALSE,5);
+$grafik_v_stock->set_border_width(15);
+&create_radiobuttons("GRAFIK",
+                     $grafik_v_stock, 
+                     $grafik_buttons_default,
+                     @grafik_buttons);
+$hardware_grafik->add($grafik_v_stock);
+$vbox_hardware->show_all();
+
+
+############################################################
+# ram radiobuttons
+############################################################
+# hardware_ram
+$vbox_hardware = Gtk2::VBox->new(FALSE, 5);
+$vbox_hardware->set_border_width(0);
+$hbox_hardware->add($vbox_hardware);
+
+my $hardware_ram = Gtk2::Frame->new();
+$hardware_ram->set_shadow_type ('out');
+$hardware_ram->set_border_width(10);
+$hardware_ram->set_label("  Virtueller Arbeitsspeicher (RAM):  ");
+$vbox_hardware->pack_start($hardware_ram,TRUE,TRUE,5);
+$hardware_ram->show;
+
+my $ram_v_stock = Gtk2::VBox->new(FALSE,5);
+$ram_v_stock->set_border_width(15);
+&create_radiobuttons("RAM",
+                     $ram_v_stock, 
+                     $ram_buttons_default,
+                     @ram_buttons);
+$hardware_ram->add($ram_v_stock);
+$vbox_hardware->show_all();
+
+            if ($dump==1){
+                &dump_all("Before boot of snapshot");
+                exit;
+            }
+
+
+# rows, columns, homogeneous
+my $table = Gtk2::Table->new(2, 3, FALSE);
+$vbox->pack_start($table, FALSE, TRUE, 0);
+$table->show;
+
+# is shown by base image restorer
+#$gui3_snapshot_chooser->show;
+
+Gtk2->main;
+
+0;
+
+
+
+
+############################################################
+# subs
+############################################################
+sub check_sav_file {
+    my ($path,$machine) = @_;
+    my $sav_dir=$path."/Snapshots";
+    my $sav_file="none";
+    # set to not seen
+    $all_vars{'vms'}{$machine}{'local'}{'sav_seen'}=0;
+    $all_vars{'vms'}{$machine}{'local'}{'sav'}=$sav_file;
+    if (not -d $sav_dir){
+        return $sav_file;
+    }
+    opendir SAV, $sav_dir;
+    foreach my $file (readdir SAV){
+        if ($file eq "."){next};
+        if ($file eq ".."){next};
+        if ($file=~m/.sav$/){
+            $sav_file=$sav_dir."/".$file;
+            # abs path to *.sav file
+            $all_vars{'vms'}{$machine}{'local'}{'sav'}=$sav_file;
+            # encountered sav file 0|1
+            $all_vars{'vms'}{$machine}{'local'}{'sav_seen'}=1;
+        }
+    }
+    closedir SAV;
+    return $sav_file;
+}
+
+sub get_local_vm_path {
+    my ($vm,$vm_path_abs) = @_;
+    my $conffile = "";
+    $conffile = $vm_path_abs."/".$vm.".conf";
+    if (not -e $conffile){
+        print "  * WARNING: $conffile not found\n";
+        # look in /etc for local machines that are deleted locally
+        $conffile = $conf_machines."/".$vm.".conf";
+        print "  * Falling back on $conffile\n";
+    }
+    if (not -f $conffile){
+        print "  * WARNING: $conffile not found\n";
+        return "";
+    } else {
+        my $localpath=`cat $conffile`;
+        chomp($localpath);
+        return $localpath;
+    }
+}
+
+
+sub zip_snapshots {
+    my @snapshots=&get_snapshots( @{ $all_vars{'searchdirs'}{'all'} } );
+    @snapshots = ("standard",@snapshots);
+    # all snaphots but not base
+    foreach my $snapshot (@snapshots){
+        print "   ##### Processing snapshot: $snapshot #####\n";
+        if ($snapshot eq "standard"){
+            # standard: check for warning
+            if (-e $standard_snapshot_local_zipped_obsolete){
+                print "\nERROR: You have an obsolete file in your installation:\n";
+                print "   $standard_snapshot_local_zipped_obsolete\n";
+                print "Please rename it to:\n";
+                print "   $standard_snapshot_local_zipped\n\n";
+                print "and run this script again\n";
+                exit;
+            } 
+        }
+        &zip_image(${all_vars}{'snapshots'}{$snapshot}{'remote'}{'file'},$snapshot);
+    }
+}
+
+
+sub clean_vm {
+    my ($dir) = @_;
+    print "######## Cleaning VM in $dir ########\n";
+    print "   * Removing Logs directory\n";
+    my $logdir=$dir."/Logs";
+    system("rm -rf $logdir");
+    print "   * Removing Log-files VBoxSVC.log\n";
+    system("rm -f $dir/VBoxSVC.log*");
+    print "   * Removing Log-files selectorwindow.log\n";
+    system("rm -f $dir/selectorwindow.log*");
+    my $file=$dir."/".$vm.".vbox-prev";
+    print "   * Removing file $file\n";
+    system("rm -f $file");
+    $file=$dir."/VirtualBox.xml-prev";
+    print "   * Removing file $file\n";
+    system("rm -f $file");
+    # ??? removing more stuff
+}
+
+
+sub zip_image {
+    my ($file,$type) = @_;
+    # $type is base or other
+    if (-e $file){
+        print "    * Zipping $type:\n";
+        print "      * Image:   $file\n";
+        my $dirname = dirname($file);
+        my $filename = basename($file);
+        my $file_zipped="";
+        if ($type eq "base"){
+            $file_zipped=$dirname."/snapshot-store/base/".$filename.".zip";
+        } else {
+            $file_zipped=$dirname."/".$filename.".zip";
+        }
+        my $dirname_zipped = dirname($file_zipped);
+        my $filesize = -s $file;
+        # file
+        my $old_filesize=0;
+        my $old_filesize_file=$dirname."/filesize.vdi";
+        if (-e $old_filesize_file){
+            $old_filesize=`cat '$old_filesize_file'`;
+            chomp($old_filesize);
+        }
+
+        my $zipped_filesize=0;
+        my $zipped_filesize_file=$dirname_zipped."/filesize.vdi.zipped";
+
+        print "      * Dir:     $dirname\n";
+        print "      * File:    $filename\n";
+        print "      * Zipped:  $file_zipped\n";
+        print "      * Newsize vdi: $filesize\n";
+        print "      * Oldsize vdi: $old_filesize\n";
+        print "      * filesize file zip: $zipped_filesize_file\n";
+        if ($old_filesize==$filesize 
+              and -e $file_zipped
+              and -e $zipped_filesize_file){
+            print "      * Nothing to zip!\n";
+        } else {
+            # ??? wenn Datei *.vdi existiert???
+            print "      * Zipping ... (This can Take a while ...)\n";
+            system("mkdir -p $dirname_zipped");
+            my $zip_command="cd '$dirname'; zip $file_zipped $filename";
+            print "$zip_command\n";
+            system($zip_command);
+            print "      * ... Zipping done!\n";
+
+            # file zipped
+            $zipped_filesize = -s $file_zipped;
+
+            system("echo $zipped_filesize > '$zipped_filesize_file'");
+
+            # remember zipped filesize
+            system("echo $filesize > '$old_filesize_file'");
+        }
+    } else {
+        print "Base image $file not found\n";
+    }
+}
+
+
+
+sub reset_vm_to_defaults {
+    my $local_dir=&get_local_vm_path($vm,$vm_path_abs);
+    my $source_dir = $local_dir."/defaults/*";
+    my $command = "cp $source_dir $local_dir";
+    print "$command\n";
+    system($command);
+}
+
+
+
+sub sync_vm_to_local {
+    my ($option) = @_;
+    if (not defined $option){
+        $option="";
+    }
+    my $target=$all_vars{'vms'}{$vm}{'local'}{'path'};
+
+    # exclude BIG files for a fast rsync
+    # BIG files are downloaded later with progressbar
+    my $excludes="--exclude ${vm}.vdi ".
+       "--exclude snapshot-store/base/${vm}.vdi.zip ";
+    my $snapshot_as_used=$target."/Snapshots/{".
+         $all_vars{'vms'}{$vm}{'uuid'}."}.vdi";
+    $excludes=$excludes."--exclude Snapshots/{".
+         $all_vars{'vms'}{$vm}{'uuid'}."}.vdi ";
+    $excludes=$excludes."--exclude snapshot-store/* ";
+    $excludes=$excludes."--exclude defaults ";
+    my $mkdir_command="mkdir -p ${target}";
+    if (-d ${vm_dir_remote}){
+    print "  * Syncing vm $vm in ${vm_dir_remote}\n";
+    print "    to $target\n";
+    print "$mkdir_command\n";
+    my $result=system($mkdir_command);
+    print "RESULT: $result\n";
+    if ($result==0){
+        # OK
+    } else {
+        print "\nERROR: Could not create $target ",
+              "for local copy of remote machine\n\n";
+        exit;
+    }
+    # get small stuff
+    my $rsync_command1="rsync $option -a $excludes ${vm_dir_remote}/ ${target}/";
+    #print "$rsync_command1\n";
+    system($rsync_command1);
+    # get standard snapshot alone
+    my $rsync_command2="rsync -a ${vm_dir_remote}/snapshot-store/standard ".
+                                  "${target}/snapshot-store";
+    #print "$rsync_command2\n";
+    system($rsync_command2);
+    }
+}
+
+
+
+sub read_access_vm {
+    # which user,group,host,room can accessthe vm 
+    # fill the hash all_vars{'vms'}{$VM}{'access'}
+    my ($path,$machine)=@_;
+    my $file=$path."/image.conf";
+    if (not -e $file){
+        return;
+    }
+    if ($all_vars{'user'}{'uid'} ne "root"){
+        print "  * Reading access rules of $vm from $file\n";
+    }
+    open (ACCESS, $file);
+    while (<ACCESS>){
+        s/^ //g; # Leerzeichen am Zeilenangfang entfernen
+        if(/^\#/){ # # am Anfang bedeutet Kommentarzeile
+            next;
+        }
+        chomp();
+        if($_ eq ""){
+           next;
+        }
+        #print "   ACCESS-LINE: $_\n";
+        s/ //g; # Leerzeichen entfernen
+        my ($option,$data)=split(/=/);
+        my @data=split(/,/,$data);
+        foreach my $date (@data){
+            $all_vars{'vms'}{$machine}{'access'}{$option}{$date}='access';
+        }
+    }
+    close(ACCESS);
+}
+
+sub access_vm {
+    my ($machine) = @_;
+    # return 1: show vm
+    # return 0: hide vm
+    # grant access if no entry is given
+    # host-level acces
+    my $host_level=0;
+    # no host and no room
+    if (not exists $all_vars{'vms'}{$machine}{'access'}{'host'} and
+        not exists $all_vars{'vms'}{$machine}{'access'}{'room'}){
+        # grant access
+        $host_level=1;
+    }
+    if (exists $all_vars{'vms'}{$machine}{'access'}{'host'} and 
+        exists $all_vars{'vms'}{$machine}{'access'}{'host'}{$hostname}){
+        # grant access
+        $host_level=1;
+    }
+    
+    if (exists $all_vars{'vms'}{$machine}{'access'}{'room'} and 
+        exists $all_vars{'vms'}{$machine}{'access'}{'room'}{$all_vars{'host'}{'room'}}){
+        # grant access
+        $host_level=1;
+    }
+
+    # user-level acces
+    my $user_level=0;
+    # no user and no group
+    if (not exists $all_vars{'vms'}{$machine}{'access'}{'user'} and 
+        not exists $all_vars{'vms'}{$machine}{'access'}{'group'}){
+        # grant access
+        $user_level=1;
+    }
+    if (exists $all_vars{'vms'}{$machine}{'access'}{'user'} and 
+        exists $all_vars{'vms'}{$machine}{'access'}{'user'}{$all_vars{'user'}{'uid'}}){
+        # grant access
+        print "    -> Access granted to user $all_vars{'user'}{'uid'}\n";
+        $user_level=1;
+    }
+    if (exists $all_vars{'vms'}{$machine}{'access'}{'group'}){
+        # go through all groups
+        while (my ($group,$gid) = each %{ $all_vars{'user'}{'gid'} }){
+            if (exists $all_vars{'vms'}{$machine}{'access'}{'group'}{$group}){
+                # grant access
+                print "    -> Access granted to group $group\n";
+                $user_level=1;
+            }
+        }
+    }
+    # connect access by lgical AND
+    if ($host_level==1 and $user_level==1){
+	return 1;
+        print "  -> Access granted\n";
+    } else {
+        return 0;
+        print "  -> Access denied\n";
+    }
+}
+
+sub read_network_conf {
+    my ($snapshot_dir)=@_;
+    my $file="";
+    print "Reading network.conf:\n";
+    print "Reading Snapshot $snapshot_dir \n";
+    my $conf_network_local=$vm_path_abs."/snapshot-store/".
+                           $snapshot_dir."/network.conf";
+    if (-e $conf_network_local) {
+           $file = $conf_network_local; 
+           print "local network.conf for Snapshot found: $file\n";
+       } else {
+       print "   * No file $conf_network_local\n";
+       if (-e $conf_network_vm){
+           # VM specific network.conf
+           $file = $conf_network_vm;
+           print "network.conf for VM found: $file\n";
+       } else {
+          # no network conf found
+          print "   * No file $conf_network_vm\n";
+          #return;
+       }
+    }
+
+    if (defined $all_vars{'searchdirs'}{'remote'}[0]){
+        my $conf_network_snapshot=$all_vars{'searchdirs'}{'remote'}[0]."/".
+             $vm."/snapshot-store/".$snapshot_dir."/network.conf";
+        if (-e $conf_network_snapshot){
+            # snapshot specific network.conf
+            $file = $conf_network_snapshot;
+            print "remote network.conf for Snapshot found: $file\n";
+        } else {
+            print "   * No file $conf_network_snapshot\n";
+        }
+    }
+
+    if ($file eq ""){
+        # no network.conf found
+        return;
+    }
+
+    
+    # read config file network.conf
+    print "Checking if network of $hostname must be patched\n";
+    open (NETCONF, $file);
+    while (<NETCONF>){
+        s/^ //g; # Leerzeichen am Zeilenangfang entfernen
+        if(/^\#/){ # # am Anfang bedeutet Kommentarzeile
+            next;
+        }
+        chomp();
+        if($_ eq ""){
+            next;
+        }
+        print "network.conf LINE:   $_\n";
+        my ($p_host,$p_virt_nic,$p_net_type,$p_mac,$p_nic_name)=split(/;/);
+        my $interface="";
+        my $old_mac="";
+        my $macaddress="";
+        my $macaddress_used="";
+        my $macaddress_unused="";
+        if ($hostname eq $p_host){
+            $network_patch=1;
+            print "Values in network.conf:\n";
+            print "  Host:          $p_host\n";
+            print "  Virtual NIC:   $p_virt_nic\n";
+            print "  Network type:  $p_net_type\n";
+            print "  MAC :          $p_mac\n";
+            print "  Interface:     $p_nic_name\n";
+            my $p_option="";
+            my $hwaddr="";
+            if ($p_nic_name eq "auto-used-nic" or
+                $p_nic_name eq "auto-unused-nic"){
+                my @unconfigured_ifs=();
+                my @unconfigured_hwaddr=();
+                my @interfaces = IO::Interface::Simple->interfaces;
+		my %interfaces=();
+		# fill interfaces into a hash
+		foreach my $if (@interfaces){
+                    $interfaces{$if}="seen";
+		}
+		foreach my $prob (@probing){
+		    print "   * probing $prob\n";
+                    my $ifx   = IO::Interface::Simple->new($prob);
+                    if (defined $ifx and not exists $interfaces{$prob}){
+			push @interfaces, $ifx;
+                        last;
+		    }
+		}
+                print "Probing network devices:\n";
+                for my $if (@interfaces) {
+                    $hwaddr=$if->hwaddr;
+                    if ($if->is_loopback){
+                        print "   * $if is loopback\n";
+                        next;
+                    }
+                    my $running=$if->is_running;
+                    if (defined $if->address and 
+                        defined $if->netmask and 
+                        defined $if->hwaddr and
+                        $running==1
+                       ){
+                        # keep unchanged
+                        print "   * $if is running (IP: ",$if->address,")\n";
+                        print "     * MAC: $hwaddr\n";
+                        if ($p_nic_name eq "auto-used-nic"){
+                            $interface=$if;
+		        }
+                        if ($p_mac eq "automac-used"){
+                            $macaddress_used=&automac($hwaddr);
+                        } else {
+                            $macaddress=$p_mac;
+                        }
+                    } else {
+                        # interface is not in use
+                        print "   * $if is NOT in use\n";
+                        print "     * MAC: $hwaddr\n";
+                        push @unconfigured_ifs, $if;
+                        push @unconfigured_hwaddr, $hwaddr;
+                    }
+                }
+                # get the first unused NIC
+                if ($p_nic_name eq "auto-unused-nic"){
+                    # sort unconfigured ifs
+	            @unconfigured_ifs = sort  @unconfigured_ifs;
+                    if (defined $unconfigured_ifs[0]){
+                        # use the first unconfigured interface
+                        $interface=$unconfigured_ifs[0];
+                        $hwaddr=$unconfigured_hwaddr[0];
+                        if ($p_mac eq "automac-used" or
+                            $p_mac eq "automac-unused"){
+                            $macaddress_unused=&automac($hwaddr);
+                        } else {
+                            $macaddress=$p_mac;
+                        }
+	            } else {
+                        print "\nERROR: No unconfigured interface found\n\n";
+                        INFO "ERROR: No unconfigured interface found";
+                    }
+	        }
+            }
+            # NAT
+            if ($p_net_type eq "nat"){
+                $p_option="--natnet";
+                # Option behind --natnet must be a network:
+                $interface="192.168.1.0/24";
+            } elsif ($p_net_type eq "bridged"){
+                $p_option="--bridgeadapter";
+            }
+            if ($p_mac eq "automac-used"){
+                $macaddress = $macaddress_used;
+            } elsif ($p_mac eq "automac-unused"){
+                $macaddress = $macaddress_unused;
+            }
+            my $index=$p_virt_nic-1;
+            $network_vbox_commands[$index]=$vm_path_export.
+                                  "/usr/bin/vboxmanage ".
+                                  "modifyvm $vm ".
+                                  "--nic${p_virt_nic} $p_net_type ".
+                                  "$p_option${p_virt_nic} $interface ".
+                                  "--macaddress$p_virt_nic $macaddress ".
+                                  "--cableconnected${p_virt_nic} on ";
+            print "Created network command(Patch: $network_patch ,",
+                  " executed later):\n";
+            print "$network_vbox_commands[$index]\n";
+        }
+    }
+    close NETCONF;
+}
+
+
+
+sub automac {
+    # calculate a new mac from old
+    my ($mac_old) = @_;
+    # remove :'s
+    $mac_old=~s/://g;
+    # Replace first 2 bytes with 08
+    my $mac_new = "08".substr($mac_old, 2, 10);
+    print "Replacing MAC: $mac_old -> $mac_new\n";
+    return $mac_new;
+}
+
+
+sub set_vm_network {
+    # going through the 4 commands
+    for my $num (0..3){
+        my $command=$vm_path_export.$network_vbox_commands[$num];
+        INFO "$command";
+        system($command);
+    }
+}
+
+
+sub save_vbox_uuid {
+    my ($vm) = @_;
+    my $vbox_uuid="";
+    my $success=0;
+    # paths to check
+    my @paths=($all_vars{'vms'}{$vm}{'local'}{'path'}, 
+                $all_vars{'vms'}{$vm}{'remote'}{'path'});
+    foreach my $path (@paths){
+        $path=$path."/Snapshots";
+        my $file=$path."/Snapshots/*.vdi";
+        if (-d $path){
+            # ok
+        } else {
+            next;
+        }
+         opendir SNAP, $path;
+         foreach my $file (readdir SNAP){
+             if ($file eq "."){next};
+             if ($file eq ".."){next};
+             $file=~s/}.vdi$//g;
+             $file=~s/^{//g;
+             $vbox_uuid=$file;
+             $success=1;
+         }
+         closedir SNAP;
+        $all_vars{'vms'}{$vm}{'uuid'}=$vbox_uuid;
+        return $vbox_uuid;
+    }
+}
+
+
+
+sub fix_vbox_permissions {
+    my ($abs_path) = @_;
+    print "Fixing permissions with sudoers script\n";
+    my $command="sudo /usr/bin/leoclient2-set-permissions";
+    print "$command\n";
+    system($command);
+}
+
+sub get_machine_path {
+    my ($machine) = @_;
+    my $machine_abs=$conf_machines."/".$machine;
+    my $path=`cat $machine_abs`;
+    chomp($path);
+    return $path;
+}
+
+
+sub check_base_image {
+    my ($vm) = @_;
+    INFO "Checking base image of $vm";
+    print "  * Checking local base image of VM $vm at $base_image_target\n";
+    my $get_it=0;
+    my $target_dir = dirname($base_image_target);
+    if (-e "$base_image_target"){
+        # size of locally existing base image
+        my $local_size = -s $base_image_target;
+  
+        my $remote_size = "none";
+        if (-e $base_image_source_filesize){
+            $remote_size = `cat '$base_image_source_filesize'`;
+        }
+
+        chomp($remote_size);
+        print "     Local size:  $local_size\n";
+        print "     Remote size: $remote_size\n";
+        if ($local_size ne $remote_size
+            and $remote_size ne "none"){
+            &get_base_image();
+        } else {
+            return;
+        }
+    } else {
+        &get_base_image();
+    }
+}
+
+
+
+sub get_base_image {
+   INFO "Unzipping Base Image";
+   my ($target) = @_;
+   my $target_dir = dirname($base_image_target);
+   my $base_image_remote=$base_image_source.".zip";
+   # window
+   $gui2_base_download = Gtk2::Window->new('toplevel');
+   $gui2_base_download->set_title("Unpacking  base image of VM $vm");
+   $gui2_base_download->set_border_width(20);
+   # Fenstergroesse
+   $gui2_base_download->set_size_request( 900, 70 );
+   # zentrieren
+   $gui2_base_download->set_position('center_always');
+   $gui2_base_download->show;
+
+   my $pbar = Gtk2::ProgressBar->new;
+   #$pbar->set_fraction(0.5);
+   # movement from left to right
+   $pbar->{activity_mode} = 0;
+
+   $gui2_base_download->{pbar} = $pbar;
+   $gui2_base_download->add($pbar);
+   $pbar->show;
+   # Add a timer callback to update the value of the progress bar
+   $pbar->{timer} = Glib::Timeout->add(200, 
+                                    \&unzip_base_timeout, 
+                                     $pbar);
+   my $unzip_command="cd $target_dir; ".
+                     "unzip -o '$base_image_remote' &";
+   print "$unzip_command\n";
+   system("$unzip_command");
+   Gtk2->main;
+   return;
+}
+
+
+sub unzip_base_timeout {
+    my $progress_bar = shift;
+    my $actual_size;
+    my $remote_size = `cat '$base_image_source_filesize'`;
+    my $remote_size_mb=int($remote_size/1024/1024);
+    my $file=$base_image_target;
+    INFO "Watching $base_image_target";
+    #print "Checking $file for its size\n";
+    # Calculate the value of the progress bar using the
+    # value range set in the adjustment object
+    if (-e $file){
+        $actual_size = -s $file;
+    }
+    my $new_val = $actual_size/$remote_size;
+    $actual_size=int($actual_size/1024/1024);
+    #print "Size: $actual_size";
+
+    # check if done
+    if ($new_val == 1.0){
+        $progress_bar->set_fraction($new_val);
+        $progress_bar->set_text('Fertig!');
+        $gui2_base_download->destroy;
+        # this is run by program main ????
+        #        $gui3_snapshot_chooser->show;
+        Gtk2->main_quit;
+        return FALSE;
+    }
+    # Set the new value
+    $progress_bar->set_text("Unpacking ... $actual_size of $remote_size_mb MB");
+    # make it 10% faster
+    $new_val=1.1*$new_val;
+    if ($new_val>=1){
+        $new_val=1;
+    }
+    $progress_bar->set_fraction($new_val);
+
+    # As this is a timeout function, return TRUE so that it
+    # continues to get called
+    return TRUE;
+}
+
+
+
+sub starter_vbox {
+    # The starter Window
+    my $hand_cursor = Gtk2::Gdk::Cursor->new ('hand2');
+    #create a Gtk2::VBox to pack a Gtk2::Frame in. The frame will contain
+    #a Gtk2::ScrolledWindow, which in turn will contain a Gtk2::VBox full
+    #of Gtk2::Buttons
+    my $sw;
+    my $vbox = Gtk2::VBox->new(FALSE,5);
+    my $frame = Gtk2::Frame->new();
+    $frame->set_shadow_type ('out');
+    #method of Gtk2::Container
+    $frame->set_border_width(2);
+    $frame->set_label("  Wählen Sie das virtuelle $vm aus:  ");
+    $sw = Gtk2::ScrolledWindow->new (undef, undef);
+    $sw->set_shadow_type ('etched-out');
+    $sw->set_policy ('never', 'automatic');
+    #This is a method of the Gtk2::Widget class,it will force a minimum 
+    #size on the widget. Handy to give intitial size to a 
+    #Gtk2::ScrolledWindow class object
+    $sw->set_size_request (300, 500);
+    #method of Gtk2::Container
+    $sw->set_border_width(10);
+    #create a vbox that will contain all the stock buttons
+    my $vbox_stock = Gtk2::VBox->new(FALSE,5);
+    $vbox_stock->set_border_width(10);
+    &create_radiobuttons("SYSTEM",
+                         $vbox_stock, 
+                         $buttons_as_used,
+                         @buttons);
+
+    # add the vbox with all the stock buttons	
+    $sw->add_with_viewport($vbox_stock);
+    $frame->add($sw); 
+    #$frame->add($vbox_stock);
+    $vbox->pack_start($frame,TRUE,TRUE,4);
+
+    # add the big start button
+    my $start_button = Gtk2::Button->new("Starten!");
+    $start_button->set_alignment (0.5, 0.5);
+    $start_button->signal_connect(clicked => \&start_button, $start_button);
+    $vbox->pack_start($start_button, FALSE, FALSE, 0);
+    $start_button->show;
+    $vbox->show_all();
+    return $vbox;
+}
+
+
+
+
+# Remove the timer
+sub destroy_progress {
+	my $gui3_snapshot_chooser = shift;
+	Glib::Source->remove($gui3_snapshot_chooser->{pbar}->{timer});
+	Gtk2->main_quit;
+}
+
+
+sub dump_all {
+    my ($string) = @_;
+    #print "########## $string:  %snapshots\n";
+    #print Dumper(\%snapshots);
+    print "########## $string:  %all_vars\n";
+    print Dumper(\%all_vars);
+    print "Explanation of VARS:\n";
+    print "searchdirs -> local is THE exactly ONE dir of the local machine\n";
+    print "           -> remote are the dir(s) in SERVERDIR\n";
+    print "           -> all is ONE local followed by the remote(s)\n";
+    print "user       -> Info about the user that has started leovirtstarter2\n";
+    print "host       -> Info about the machine on which leovirtstarter2 runs\n";
+    print "vms        -> Info about ALL virtual machines available\n";
+    print "  type -> local: only local, no backup in serverdirs\n";
+    print "       -> remote: only remote, local data might exist\n";
+    print "       -> mixed: local, backup in serverdirs exist\n";
+}
+
+
+# The big start button
+sub start_button {
+    my ($window, $name) = @_;
+    # what to start
+    INFO "########## Start-Button pressed:  ##########";
+    INFO "   RAM:    $selected{'RAM'}";
+    INFO "   GRAFIK: $selected{'GRAFIK'}";
+    INFO "   SYSTEM: $selected{'SYSTEM'}";
+    # check if existing file is OK
+       # copy
+       # copy not needed
+    if ($selected{'SYSTEM'} eq $buttons_as_used){
+        if ($virtualbox==1){
+            # --virtualbox
+            my $start_vbox=$vm_path_export."/usr/bin/virtualbox &";
+            INFO "$start_vbox\n";
+            system("$start_vbox");
+            INFO "VirtualBox started in other window: Terminating here!";
+            Gtk2->main_quit;
+        } else {
+            # start VM with snapshot as found
+	    print "SELECTED: $selected{'SYSTEM'}\n\n";
+            #&sync_vm_to_local(); # overwrite existing files
+            #&reset_vm_to_defaults(); # set default machine hardware
+            #&check_base_image($vm); # done earlier
+            my $remove_shared_folder=$vm_path_export.
+               "/usr/bin/VBoxManage sharedfolder remove $vm --name home";
+            INFO "$remove_shared_folder";
+            system($remove_shared_folder);
+            my $add_shared_folder=$vm_path_export.
+               "/usr/bin/VBoxManage sharedfolder add $vm ".
+               "--name home --hostpath $all_vars{'user'}{'shared_home'}";
+            INFO "$add_shared_folder";
+            system($add_shared_folder);
+            my $command_mod = $vm_path_export.
+                              "/usr/bin/VBoxManage modifyvm $vm".
+                              " --memory $selected{'RAM'}";
+            INFO "$command_mod";
+            system($command_mod);
+
+            # as found, not resetting Network
+            my $start_vm = $vm_path_export.
+                           "/usr/bin/VBoxManage startvm $vm --type gui";
+            INFO "$start_vm";
+            system("$start_vm");
+            INFO "Snapshot started in other window: Terminating here!";
+        }
+        exit;
+    } else {
+        &sync_vm_to_local("--ignore-existing");# double???
+        # get the zipped snapshot
+        my $zipped_snapshot_file = &get_zipped_snapshot($selected{'SYSTEM'});
+        #print "Snapshot file is local at $zipped_snapshot_file\n";
+    }
+}
+
+
+
+sub start_zipped_snaphot {
+    my ($zipped_snapshot_file) = @_;
+    #print Dumper(\%selected);
+
+    if ($zipped_snapshot_file ne "___NOSNAPSHOT___"){
+        INFO "unzip $zipped_snapshot_file ";
+        INFO "to    $snapshot_file_dir_local} ";
+
+        $pb_win_start_zip = Gtk2::Window->new('toplevel');
+        $pb_win_start_zip->set_title("Unpacking snapshot '$selected{'SYSTEM'}' of VM $vm");
+        $pb_win_start_zip->set_border_width(20);
+        # Fenstergroesse
+        $pb_win_start_zip->set_size_request( 700, 70 );
+        # zentrieren
+        $pb_win_start_zip->set_position('center_always');
+        $pb_win_start_zip->show;
+
+        my $progress_bar = Gtk2::ProgressBar->new;
+        $pb_win_start_zip->{pbar} = $progress_bar;
+        $pb_win_start_zip->add($progress_bar);
+        # movement from left to right
+        $progress_bar->{activity_mode} = 0;
+        # hin und her
+        #$progress_bar->{activity_mode} = 1;
+        $progress_bar->show;
+        # Add a timer callback to update the value of the progress bar
+        $progress_bar->{timer} = Glib::Timeout->add(500, 
+                                             \&unzip_timeout, 
+                                             $progress_bar);
+   
+        my $command_prep="mkdir -p $snapshot_file_dir_local || ".
+                      "sudo mkdir -p $snapshot_file_dir_local";
+        INFO "$command_prep";
+        system("$command_prep");
+
+        my $command_unzip="cd $snapshot_file_dir_local; ".
+	                  "unzip -o '$zipped_snapshot_file' &";
+
+        INFO "$command_unzip";
+        print "$command_unzip\n";
+        system("$command_unzip");
+        
+        my $unzipped_actual_size=0;
+        my $unzipped_size=${all_vars}{'snapshots'}{$selected{'SYSTEM'}}{'remote'}{'size_expected'}{'vdi'};
+    } else {
+
+    }
+    #exit;
+}
+
+
+
+sub unzip_timeout {
+    my $actual_size;
+    my $unzipped_size=${all_vars}{'snapshots'}{$selected{'SYSTEM'}}{'remote'}{'size_expected'}{'vdi'};
+    my $unzipped_size_mb=int($unzipped_size/1024/1024);
+    my $file=$snapshot_file_dir_local."/".$snapshot_file_name;
+    my $progress_bar = shift;
+    INFO "Watching $file";
+
+    # Calculate the value of the progress bar using the
+    # value range set in the adjustment object
+    $actual_size = -s $file;
+    if (not defined $actual_size){
+        $actual_size=0;
+    }
+    my $new_val = $actual_size/$unzipped_size;
+    $actual_size=int($actual_size/1024/1024);
+
+    # check if done
+    if ($new_val == 1.0){
+        $progress_bar->set_fraction($new_val);
+        $progress_bar->set_text('Fertig!');
+        $pb_win_start_zip->destroy;
+        # modifying virtual machine
+        print "Working on $file ...\n";
+        system("chmod 777 $file");
+        if ($virtualbox==1){
+            # start virtualbox gui (instead of VN)
+            my $start_vbox=$vm_path_export."/usr/bin/virtualbox";
+            INFO "Executing: $start_vbox\n";
+            system("$start_vbox");
+            INFO "VirtualBox started in other window: Terminating here!";
+        } else {
+            # start VM with synced snapshot
+            # reset the VM hardware
+            &sync_vm_to_local(); # overwrite existing files
+            &reset_vm_to_defaults(); # set default machine hardware
+            my $remove_shared_folder=$vm_path_export.
+                "/usr/bin/VBoxManage sharedfolder remove $vm --name home";
+            INFO "$remove_shared_folder";
+            system($remove_shared_folder);
+            my $add_shared_folder=$vm_path_export.
+               "/usr/bin/VBoxManage sharedfolder add $vm ".
+               "--name home --hostpath $all_vars{'user'}{'shared_home'}";
+            INFO "$add_shared_folder";
+            system($add_shared_folder);
+            my $command_mod = $vm_path_export.
+                              "/usr/bin/VBoxManage modifyvm $vm".
+                              " --memory $selected{'RAM'}";
+            INFO "Executing: $command_mod\n";
+            system($command_mod);
+            &read_network_conf($selected{'SYSTEM'});
+            &set_vm_network();
+
+            my $start_vm=$vm_path_export.
+                         "/usr/bin/VBoxManage startvm $vm --type gui";
+            INFO "Executing: $start_vm\n";
+            system("$start_vm");
+            INFO "Snapshot started in other window: Terminating here!";
+        }
+        exit;
+        return FALSE;
+    }
+    # Set the new value
+    $progress_bar->set_text("Unpacking ... $actual_size of $unzipped_size_mb MB");
+    # make it 10% faster
+    $new_val=1.1*$new_val;
+    if ($new_val>=1){
+        $new_val=1;
+    }
+    $progress_bar->set_fraction($new_val);
+
+    # As this is a timeout function, return TRUE so that it
+    # continues to get called
+    return TRUE;
+}
+
+
+
+sub getzip_timeout {
+    my $actual_size;
+    my $zipped_size=${all_vars}{'snapshots'}{$selected{'SYSTEM'}}{'remote'}{'size_expected'}{'vdi_zipped'};
+    my $zipped_size_mb=int($zipped_size/1024/1024);
+    my $target = $selected{'CACHE-ZIP'};
+    my $progress_bar_copy = shift;
+    # Calculate the value of the progress bar using the
+    # value range set in the adjustment object
+    $actual_size = -s $target;
+    print "$actual_size vs $zipped_size $zipped_size $target \n";
+    my $new_val = $actual_size/$zipped_size;
+    $actual_size=int($actual_size/1024/1024);
+    $progress_bar_copy->set_text("Hole ... $actual_size von $zipped_size_mb MB");
+    if ($new_val == 1.0){
+        # Copying of zippd file done
+        $progress_bar_copy->set_fraction($new_val);
+        $progress_bar_copy->set_text('Fertig!');
+        $pb_win_get_zip->destroy;
+        $copying_done=1;
+        INFO "Snapshot was copied to $target";
+        system("chmod 777 $target");
+        my $started=&start_zipped_snaphot($target);
+        return FALSE;
+    }
+    # make it 10% faster
+    $new_val=1.1*$new_val;
+    if ($new_val>=1){
+        $new_val=1;
+    }
+    # Set the new value
+    $progress_bar_copy->set_fraction($new_val);
+
+    # As this is a timeout function, return TRUE so that it
+    # continues to get called
+    return TRUE;
+}
+
+
+
+sub get_zipped_snapshot {
+    # returns absolute path of zipped file in cache
+    my ($snapshot) = @_;
+    if ($snapshot eq $buttons_default){
+       # This is the default snapshot, do what is configured as default/standard
+	$snapshot=$snapshot_standard;
+        $selected{'SYSTEM'}=$snapshot;
+    } elsif ($snapshot eq $buttons_as_used){
+        # start as found
+        #my $started=&start_zipped_snaphot($selected{'CACHE-ZIP'});
+        #my $started=&start_zipped_snaphot("___NOSNAPSHOT___");
+        #return "___NOSNAPSHOT___";  
+    } elsif (not defined ${all_vars}{'snapshots'}{$snapshot}{'remote'}{'file'}){
+        
+    }
+
+    # zipped snapshot must be fetched
+    # generate paths
+    my $file=${all_vars}{'snapshots'}{$snapshot}{'remote'}{'file'};
+    my $dir=${all_vars}{'snapshots'}{$snapshot}{'remote'}{'dir'};
+
+    my $file_zipped=$file.".zip";
+    my $filesize_file_zipped = $dir."/filesize.vdi.zipped";
+
+    my $filesize_correct=`cat '$filesize_file_zipped'`;
+    chomp($filesize_correct);
+    my $filesize_correct_mb=int((1.1*$filesize_correct)/(1024*1024));
+
+    # snapshot is only local
+    if($all_vars{'caches'}{'exist'}==0){
+        my $local_dir=&get_local_vm_path($vm,$vm_path_abs);
+        my $zip_file_local=$local_dir.
+           "/snapshot-store/".$snapshot."/".$snapshot_file_name.".zip";
+        my $started=&start_zipped_snaphot($zip_file_local);
+        return $started;
+    }
+
+    INFO "Wanted in cache with size $filesize_correct:\n   $file_zipped";
+    # is snapshot in cache already and size OK?
+    foreach my $dir ( @{ $all_vars{'caches'}{'ordered'} } ){
+        my $file=$dir."/".$snapshot."/".$snapshot_file_name.".zip";
+        my $target_dir = $dir."/".$snapshot;
+        my $target=$target_dir."/".$snapshot_file_name.".zip";
+        # save target
+        $selected{'CACHE-ZIP'}=$target;
+        INFO "CACHE-ZIP: $selected{'CACHE-ZIP'}";
+
+	INFO "Checking for existance in $dir:\n   $file";
+	if (-e $file){
+            INFO "Snapshot found: $dir";
+            my $actual_size = -s $file;
+            if ($actual_size==$filesize_correct){
+                INFO  "Snapshot size correct ($actual_size) --> using it:";
+                my $started=&start_zipped_snaphot($selected{'CACHE-ZIP'});
+                return $started;
+            }
+	}
+    }
+
+    # snapshot is not in cache
+    # copy snapshot into cache
+    foreach my $dir (@{ $all_vars{'caches'}{'ordered'} } ){
+        # go through all caches, check if there is enough space left
+        my $target_dir = $dir."/".$snapshot;
+        my $target=$target_dir."/".$snapshot_file_name.".zip";
+        INFO "*** : $target";
+        # save target
+        $selected{'CACHE-ZIP'}=$target;
+        INFO "   CACHE-ZIP: $selected{'CACHE-ZIP'}";
+        # check if files must be deleted (obey cache size limit ) 
+        my $cache_used = &get_size_in_mb($dir);
+        my $cache=$cache_used+int($filesize_correct/(1024*1024));
+        my ($space_left_mb) = &get_space_left($dir);
+        INFO "*** Cache limit:                ",
+             "$all_vars{'caches'}{$dir}{'size'} MB";
+        INFO "*** Cache used so far:            $cache_used MB";
+        INFO "*** Cache needed with new file:   $cache MB";
+        INFO "*** Space left :                  $space_left_mb MB";
+        INFO "*** Zip-file (incl 10\% reserve): $filesize_correct_mb MB";
+
+        # check available space
+        while ($cache >= $all_vars{'caches'}{$dir}{'size'}
+               or $filesize_correct_mb >= $space_left_mb){
+            INFO "*** --> cache files must be deleted";
+            my @oldest_in_cache = &oldest_in_cache($dir);
+            if (not defined $oldest_in_cache[0]){
+                # define it to avois errors
+                $oldest_in_cache[0]="_____nonsense_____";
+            }
+            my $oldest=$dir."/".$oldest_in_cache[0];
+            if (-d $oldest ){
+                # delete file here
+                INFO "*** Deleting: $oldest";
+                system("rm -rf '$oldest'");
+                $cache_used = &get_size_in_mb($dir);
+                $cache=$cache_used+int($filesize_correct/(1024*1024));
+                ($space_left_mb) = &get_space_left($dir);
+                INFO "*** Cache limit:                ",
+                     "$all_vars{'caches'}{$dir}{'size'} MB";
+                INFO "*** Cache used so far:            $cache_used MB";
+                INFO "*** Cache needed with new file:   $cache MB";
+                INFO "*** Space left :                  $space_left_mb MB";
+                INFO "*** Zip-file (incl 10\% reserve): $filesize_correct_mb MB";
+            } else {
+                INFO "Nothing to delete!";
+                # exit from while
+                last;
+	    }
+        }        
+
+        # copy snapshot if enough space
+        ($space_left_mb) = &get_space_left($dir);
+        if ($space_left_mb > 10+int($filesize_correct/(1024*1024))){
+
+            system("mkdir -p '$target_dir'");
+            # window erstellen
+            $pb_win_get_zip = Gtk2::Window->new('toplevel'); 
+            $pb_win_get_zip->set_title("Hole gezipptes $vm: '$selected{'SYSTEM'}'");
+            $pb_win_get_zip->set_border_width(20);
+            # Fenstergroesse
+            $pb_win_get_zip->set_size_request( 700, 70 );
+            # zentrieren
+            $pb_win_get_zip->set_position('center_always');
+            $pb_win_get_zip->show;
+
+            my $progress_bar = Gtk2::ProgressBar->new;
+            # wozu?
+            $pb_win_get_zip->{pbar} = $progress_bar;
+            $pb_win_get_zip->add($progress_bar);
+            # movement from left to right
+            $progress_bar->{activity_mode} = 0;
+            # hin und her
+            #$progress_bar->{activity_mode} = 1;
+            $progress_bar->show;
+            # Add a timer callback to update the value of the progress bar
+            $progress_bar->{timer} = Glib::Timeout->add(500, 
+                                             \&getzip_timeout, 
+                                             $progress_bar);
+            INFO "* cp $file_zipped";
+            INFO "* -> $target ...";
+            system("cp -v '$file_zipped' '$target' &");
+            INFO "* ... done!";
+            return $target;
+        } else {
+            INFO "Could not find space to cache $file";
+        }# end if $space_left_mb > 10+int ...
+    }
+}
+
+
+
+sub get_space_left {
+    my ($dir) = @_;
+    my $space_left_mb=0;
+    my $space_left=0;
+    # using Filesys::Df
+    my $ref = df($dir);
+    if (defined $ref){
+        $space_left=$ref->{bavail};
+    }
+    $space_left_mb=int($space_left/1024);
+    INFO "*** $space_left_mb MB left in $dir";
+    return $space_left_mb;
+}
+
+
+
+sub oldest_in_cache {
+    my ($dir) = @_;
+    my $result=`ls -Atr1 '$dir'`;
+    my @list = split(/\n/,$result);
+    foreach my $item (@list){
+        INFO "List:  >$item<";
+    }
+    return @list;
+}
+
+
+
+sub get_size_in_mb {
+    # return size of dir in MB
+    my ($dir) = @_;
+    my $string=`du -ms '$dir'`;
+    my ($size,$rest)=split(/\s/,$string);
+    return $size;
+}
+
+
+
+sub create_radiobuttons {
+    # string under which to save selected value in %selected
+    # widget to which radiobuttons will be added
+    # default button ('no button' = do not show a default button)
+    # more buttons
+    my ($type,$radio_box,$default,@buttons) = @_;
+    $selected{$type}=$default;
+    my @radiobutton;
+    my @group;
+
+    my $i=0; # counter for DISPLAYED buttons
+    # add the buttons from the list
+    foreach my $button ( @buttons ){
+        my $button_name;
+        # $button: dirname
+        # $snaphots{$button}
+	INFO "Checking for button $button";
+	print "Checking for button: >$button<\n";
+        my $displayname="---";
+        my $host_string="";
+        my $host_check=0; # default: no check
+        my $room_string="";
+        my $room_check=0; # default: no check
+
+        # Ignore "as used" button, when no snapshot is in $VM/Snapshots
+        if ($type eq "SYSTEM" # Buttonlist SYSTEM
+             and $button eq $buttons_as_used # working on this button
+             and not -e $local_standard_snapshot_abs # no 'as used' snapshot file
+           ){
+            print "No 'as used' button: nonexisting $local_standard_snapshot_abs\n";
+            $selected{$type}=$snapshot_standard;
+            next;
+        }
+
+        # Ignore "as used" button, when *.sav file was present
+        if ($type eq "SYSTEM" # Buttonlist SYSTEM
+             and $button eq $buttons_as_used # working on this button
+             and $all_vars{'vms'}{$vm}{'local'}{'sav_seen'}==1
+           ){
+            print "No 'as used' button: Deleted $all_vars{'vms'}{$vm}{'local'}{'sav'}\n";
+            $selected{$type}=$snapshot_standard;
+            next;
+        }
+
+        if (exists ${all_vars}{'snapshots'}{$button}{'conf'}{'name'}){
+ 	    INFO "   * Name:       ",${all_vars}{'snapshots'}{$button}{'conf'}{'name'};
+            $displayname=${all_vars}{'snapshots'}{$button}{'conf'}{'name'};
+        } else {
+            $displayname=$button;
+        }
+        if (exists ${all_vars}{'snapshots'}{$button}{'conf'}{'maintainer'}){
+ 	    INFO "   * Maintainer: ",
+                 ${all_vars}{'snapshots'}{$button}{'conf'}{'maintainer'};
+            $displayname=$displayname.
+                " (".${all_vars}{'snapshots'}{$button}{'conf'}{'maintainer'}.")";
+        }
+
+        if (exists ${all_vars}{'snapshots'}{$button}{'conf'}{'host'}){
+            $host_string=${all_vars}{'snapshots'}{$button}{'conf'}{'host'};
+            $host_check=1; # check for hosts later
+ 	    INFO "   * Hosts allowed:";
+            my @hosts = split(/,/,$host_string);
+            foreach my $host (@hosts){
+    	        INFO "      * $host";
+                ${all_vars}{'snapshots'}{$button}{'access'}{'hosts'}{$host}="OK";
+                # print "OK-Host:   $host \n";
+            }
+        }
+        if (exists ${all_vars}{'snapshots'}{$button}{'conf'}{'room'}){
+            $room_string=${all_vars}{'snapshots'}{$button}{'conf'}{'room'};
+            $room_check=1; # check for rooms later
+            my @rooms = split(/,/,$room_string);
+    	        INFO "   * Rooms allowed";
+            foreach my $room (@rooms){
+    	        INFO "      * $room";
+                ${all_vars}{'snapshots'}{$button}{'access'}{'rooms'}{$room}="OK";
+            }
+        }
+
+
+
+        # check if button should be displayed        
+        ########################################
+        my $room_check_ok=1; # default: display 
+        my $host_check_ok=1; # default: display
+        if (($room_check==1) or ($host_check==1)) {
+             $room_check_ok=0;
+             $host_check_ok=0;
+        }
+        if ($room_check==1){
+
+
+	# linuxmuster 6 server    
+          if (exists ${all_vars}{'snapshots'}{$button}{'access'}{'rooms'}{$all_vars{'host'}{'room'}}){
+	      INFO "Room $all_vars{'host'}{'room'} is ",
+                   ${all_vars}{'snapshots'}{$button}{'access'}{'rooms'}{$all_vars{'host'}{'room'}};
+              $room_check_ok=1; 
+          } else {
+              INFO "LMN6: Room >$all_vars{'host'}{'room'}< not found as allowed room";
+          }
+        }
+
+        # linuxmuster7 server
+	my $ref_all_vars=\%all_vars;
+	my $lmn7_count=0;
+	my $lmn7_roomlist_string="";
+	foreach my $room (keys %{ $ref_all_vars->{'snapshots'}{$button}{'access'}{'rooms'} }) {
+            # test all allowed rooms
+	    $lmn7_roomlist_string=$lmn7_roomlist_string." ".$room;
+	    if (exists $all_vars{'host'}{'room7'}{$room}){
+		$room_check_ok=1;
+		$lmn7_count=1;
+	    }
+	}
+	if ($lmn7_count==1){
+            INFO "LMN7: ONE of groups $lmn7_roomlist_string  found as allowed room";
+	} else {
+            INFO "LMN7: NONE of groups $lmn7_roomlist_string  found as allowed room";
+	}
+	
+        if ($host_check==1){
+          # hostname on a linbo client can have an -w added at the end
+          # when synchronizing has failed
+	  my $alternate_linbo_hostname=$hostname;
+          $alternate_linbo_hostname=~s/-w$//g;
+	      if (exists ${all_vars}{'snapshots'}{$button}{'access'}{'hosts'}{$hostname}
+                  or ${all_vars}{'snapshots'}{$button}{'access'}{'hosts'}{$alternate_linbo_hostname}){
+	      INFO "Host $hostname is ",
+                   ${all_vars}{'snapshots'}{$button}{'access'}{'hosts'}{$hostname};
+	      INFO "Linbo Host $alternate_linbo_hostname is ",
+                   ${all_vars}{'snapshots'}{$button}{'access'}{'hosts'}{$alternate_linbo_hostname};
+              print "Hostname found: $hostname \n";
+              $host_check_ok=1;
+          } else {
+              INFO "Host >$hostname< not found as allowed host";
+              INFO "Linbo Host >$alternate_linbo_hostname< not found as allowed host";
+              print "Host >$hostname< not found as allowed host. \n"; 
+          }
+        }
+
+        if ($room_check_ok==0 and $host_check_ok==0){
+            # beide checks ohne Erfolg
+            print "Weder room noch host zugelassen\n";
+            next;
+        }
+
+        if ($type eq "RAM"){
+            if (exists $ram_mapping{$button}){
+                $button_name=$ram_mapping{$button};
+            } else {
+                $button_name=$button;
+            }
+        } else {
+                # $button: dirname
+                # $displayname: name in image.conf
+                $button_name=$displayname;
+        } 
+        if ($i==0){
+            # this is the first button
+            $radiobutton[$i] = Gtk2::RadioButton->new(undef, $button_name);
+            $radio_box->pack_start($radiobutton[0], FALSE, TRUE, 5);
+            $radiobutton[$i]->signal_connect (clicked => sub {
+                   ($selected{$type} = $button); 
+                  });
+            $radiobutton[$i]->show;
+            if ($type eq "RAM"){
+                my $sep = Gtk2::HSeparator->new;
+                $radio_box->pack_start($sep, FALSE, FALSE, 3);
+                $sep->show;
+	    }
+        } else {
+            # just another button
+            @group = $radiobutton[0]->get_group;
+            $radiobutton[$i] = Gtk2::RadioButton->new_with_label(@group,
+                               "$button_name");
+            $radiobutton[$i]->set_active(FALSE);
+            # $radiobutton[$i]->signal_connect (clicked => sub {
+            # ($radiobutton[$i]->get_active) and ($selected_system = $button); 
+            $radiobutton[$i]->signal_connect (clicked => sub {
+                         ($selected{$type} = $button); 
+                  });
+            $radio_box->pack_start($radiobutton[$i],FALSE,FALSE,4);
+        }
+        $i++;
+    }
+    $radiobutton[0]->set_active(TRUE);
+}
+
+
+
+sub ram_sizes {
+    my $error_default="512 MB";
+    my $mem_kb=`cat /proc/meminfo | grep MemTotal:`;
+    $mem_kb=~m/([0-9]+)/;
+    my $mem_mb=int($1/1024);
+    my $last_diff_size=100000;
+    my $last_size;
+    my @display_size=();
+    my $list_count=0;
+    DEBUG "Host memory size: $mem_mb";
+    foreach my $size ( @ram_steps ){
+        DEBUG "Is $size ok for $mem_mb ?";
+        # 0.34: give approx 34% to the virtual machine
+        my $diff_size=abs((0.34*$mem_mb)-$size);
+        DEBUG "$diff_size > $last_diff_size ($size MB)";        
+        if ($diff_size > $last_diff_size or
+            $size >$max_guest_ram){
+            last;            
+        }
+        $last_diff_size=$diff_size;
+        $last_size=$size;
+        $list_count++;
+    }
+    my $pre=$list_count-2;
+    my $fix=$list_count-1;
+    my $post=$list_count-0;
+    INFO "        RAM size: $ram_steps[$pre] MB (".$pre.")";
+    INFO "Perfect RAM size: $ram_steps[$fix] MB (: ".$fix.")";
+    INFO "        RAM size: $ram_steps[$post] MB (: ".$post.")";
+
+    @display_size=(
+               $ram_steps[$fix],
+               $ram_steps[$pre]
+                  );
+    if ($ram_steps[$post]<=$max_guest_ram){
+        push @display_size, $ram_steps[$post];
+    }
+    return $ram_steps[$fix],@display_size;
+}
+
+
+
+
+
+# subs from pm:
+
+
+sub  check_options{
+    my ($parse_ergebnis) = @_;
+    if (not $parse_ergebnis==1){
+        my @list = split(/\//,$0);
+        my $scriptname = pop @list;
+        print "\nYou have made a mistake, when specifying options.\n"; 
+        print "See error message above. \n\n";
+        print "... $scriptname is terminating.\n\n";
+        exit;
+    } else {
+        if ($all_vars{'user'}{'uid'} ne "root"){
+            print "  * All options were recognized.\n";
+        }
+    }
+}
+
+
+
+
+sub test {
+    print "Sub test from module leovirtstarter\n";
+}
+
+
+
+
+sub show_message_dialog {
+    #THIS IS THE MAIN FEATURE OF THE APP:
+    #you tell it what to display, and how to display it
+    #$parent is the parent window, or "undef"
+    #$icon can be one of the following:	a) 'info'
+    #					b) 'warning'
+    #					c) 'error'
+    #					d) 'question'
+    #$text can be pango markup text, or just plain text, IE the message
+    #$button_type can be one of the following: 	a) 'none'
+    #						b) 'ok'
+    #						c) 'close'
+    #						d) 'cancel'
+    #						e) 'yes-no'
+    #						f) 'ok-cancel'
+
+    my ($parent,$icon,$text,$button_type) = @_;
+ 
+    my $dialog = Gtk2::MessageDialog->new_with_markup ($parent,
+					[qw/modal destroy-with-parent/],
+					$icon,
+					$button_type,
+					sprintf "$text");
+		
+    # this will typically return certain values depending on the 
+    # value of $retval.
+    # in this application, we only change the label's value accordingly
+    my $retval = $dialog->run;
+    #destroy the dialog as it comes out of the 'run' loop	
+    $dialog->destroy;
+}
+
+
+
+sub get_snapshots {
+    my @snapshots=();
+    my @dirs = @_;
+    foreach my $dir (@dirs){
+        # append vm name
+        my $get_dir=$dir."/".$vm."/snapshot-store";
+
+        if (not -d $get_dir){
+            print "WARNING: Nonexisting Snapshot search dir: $get_dir\n";
+            return @snapshots;
+        }
+        print "##### Listing snapshots in: $get_dir #####\n";
+        opendir (DIR, $get_dir) || die $!;
+        while( (my $dirname = readdir(DIR))){
+            if ($dirname eq "." or $dirname eq ".." ){
+	        next;
+            }
+            print "  * Adding snapshot: $dirname\n";
+            my $abs_path=$get_dir."/".
+                         $dirname."/".$snapshot_file_name;
+            if ((not -e $abs_path) and (not -e $abs_path.".zip")){
+                # no snapshot file found/no access to snapshot file 
+                next;
+            }
+            ${all_vars}{'snapshots'}{$dirname}{'remote'}{'file'}=$abs_path;
+            my $abs_dir = $get_dir."/".
+                          $dirname;
+            ${all_vars}{'snapshots'}{$dirname}{'remote'}{'dir'}=$abs_dir;
+
+            # filesizes
+            my $file_vdi_size=$abs_dir."/filesize.vdi";
+            my $file_zipped_size=$abs_dir."/filesize.vdi.zipped";
+            my $filesize_vdi=`cat '$file_vdi_size'`;
+            chomp($filesize_vdi);
+            my $filesize_zipped=`cat '$file_zipped_size'`;
+            chomp($filesize_zipped);
+            #print "SIZE of $file_vdi_size is $filesize_vdi\n";
+            #print "SIZE of $file_zipped_size is $filesize_zipped\n";
+
+            ${all_vars}{'snapshots'}{$dirname}{'remote'}{'size_expected'}{'vdi'}=$filesize_vdi;
+            ${all_vars}{'snapshots'}{$dirname}{'remote'}{'size_expected'}{'vdi_zipped'}=$filesize_zipped;
+
+            if ($dirname ne $snapshot_standard){
+                # jump over the default snapshot 
+                # (appears automagically at second in the list)
+		#print "DIRNAME: $dirname\n";
+                push @snapshots, $dirname;
+            } else {
+		print "      * Skipping snapshot $dirname (is in the snapshot list by default).\n";
+            }
+
+            # read image.conf
+            my $file=$get_dir."/".$dirname."/image.conf";
+            if (-e $file){
+                open (FILE, $file);
+	        while (<FILE>){
+                    chomp();
+		    if ($_=~m/=/){
+                        my ($key,$value) = split(/=/);
+                        # convert unicode to iso
+                        $value=~s/\303\244/\344/g;# ae
+                        $value=~s/\303\204/\304/g;# Ae
+                        $value=~s/\303\266/\366/g;# oe
+                        $value=~s/\303\226/\326/g;# Oe
+                        $value=~s/\303\274/\374/g;# ue
+                        $value=~s/\303\234/\334/g;# Ue
+                        $value=~s/\303\237/\337/g;# ss
+                        ${all_vars}{'snapshots'}{$dirname}{'conf'}{$key}="$value";
+                        print "    * $dirname $key  --> Value: $value\n";
+		    } else {
+                        print "    * Line without = found (skipping)\n";
+		    }
+	        }
+                close FILE;
+            }
+        }
+        closedir DIR;
+    }
+    @snapshots = sort @snapshots;
+    return @snapshots;
+}
+
+
+
