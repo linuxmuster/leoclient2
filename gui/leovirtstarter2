@@ -192,8 +192,10 @@ $all_vars{'caches'}{'exist'} = 0;
 ##### defaults.conf ##### Server settings on the clients
 my $conf_defaults="";
 
-# the group a user must be member in to use all features
-my $permissive_group="vboxusers";
+# ??? remove this test. Suche nach permissive_group
+# what should be the group owner of 
+# the group, a user must be member in, to use all features
+#my $permissive_group="schools";
 
 # Snapshots
 # in which directory is the snapshot that is  used as the
@@ -256,6 +258,18 @@ $all_vars{'host'}{'roomuidnumber'} = $host_entry[3];
 $all_vars{'host'}{'room'} = getgrgid($host_gid);
 
 
+# additional info for version 7.x server
+# parse multiple group memberships from id command
+my $id_result=`id $hostname\$`;
+chomp($id_result);
+my @parts=split(/=/,$id_result);
+my $last_part=pop(@parts);
+my @id_group=split(/,/,$last_part);
+foreach my $group_string (@id_group){
+    my ($gidnumber,$group)=split(/\(/,$group_string);
+    $group=~s/\)//;
+    $all_vars{'host'}{'room7'}{$group}=$gidnumber;
+}
 
 
 # get list of the current groups for this process
@@ -332,19 +346,20 @@ my $testopt=GetOptions(
 # Prüfen, ob Optionen erkannt wurden, sonst Abbruch
 &check_options($testopt);
 
+# ???
 # exit with warning if user is NOT in group vboxusers (only vboxusers are allowed to 
 # use passwordless sudo to change permissions of a machine)
-if ($all_vars{'user'}{'uid'} ne "root"){
-    if (not exists $all_vars{'user'}{'gid'}{$permissive_group}){
-        # user in not in permissive group
-        print "$all_vars{'user'}{'uid'} is not in group $permissive_group\n";
-        my $message="$all_vars{'user'}{'uid'} muss in der Gruppe $permissive_group sein um leoclient2 verwenden zu können";
-        system("/usr/bin/zenity --warning --text='$message'");
-        exit;
-    } else {
-        print "  * OK: $all_vars{'user'}{'uid'} is in group $permissive_group\n";
-    }
-}
+#if ($all_vars{'user'}{'uid'} ne "root"){
+#    if (not exists $all_vars{'user'}{'gid'}{$permissive_group}){
+#        # user in not in permissive group
+#        print "$all_vars{'user'}{'uid'} is not in group $permissive_group\n";
+#        my $message="$all_vars{'user'}{'uid'} muss in der Gruppe $permissive_group sein um leoclient2 verwenden zu können";
+#        system("/usr/bin/zenity --warning --text='$message'");
+#        exit;
+#    } else {
+#        print "  * OK: $all_vars{'user'}{'uid'} is in group $permissive_group\n";
+#    }
+#}
 
 
 if ($help==1){
@@ -694,7 +709,8 @@ if ($set_permissions==1){
 
         # fix permissions
         # make sure root can change owners and permissions
-        system("chown -R $ENV{SUDO_USER}.$permissive_group $path");
+#        system("chown -R $ENV{SUDO_USER}.$permissive_group $path");# ???
+        system("chown -R $ENV{SUDO_USER}. $path");
         my $defaults=$path."/defaults";
         system("chown -R root.root $defaults");
         system("chmod -R 0555 $defaults");
@@ -2661,15 +2677,37 @@ sub create_radiobuttons {
              $room_check_ok=0;
              $host_check_ok=0;
         }
+
+        # linuxmuster6 server
         if ($room_check==1){
           if (exists ${all_vars}{'snapshots'}{$button}{'access'}{'rooms'}{$all_vars{'host'}{'room'}}){
-	      INFO "Room $all_vars{'host'}{'room'} is ",
+	      INFO "LMN6: Room $all_vars{'host'}{'room'} is ",
                    ${all_vars}{'snapshots'}{$button}{'access'}{'rooms'}{$all_vars{'host'}{'room'}};
               $room_check_ok=1; 
           } else {
-              INFO "Room >$all_vars{'host'}{'room'}< not found as allowed room";
+              INFO "LMN6: Room >$all_vars{'host'}{'room'}< not found as allowed room";
           }
         }
+
+
+        # linuxmuster7 server
+	my $ref_all_vars=\%all_vars;
+	my $lmn7_count=0;
+	my $lmn7_roomlist_string="";
+	foreach my $room (keys %{ $ref_all_vars->{'snapshots'}{$button}{'access'}{'rooms'} }) {
+            # test all allowed rooms
+	    $lmn7_roomlist_string=$lmn7_roomlist_string." ".$room;
+	    if (exists $all_vars{'host'}{'room7'}{$room}){
+		$room_check_ok=1;
+		$lmn7_count=1;
+	    }
+	}
+	if ($lmn7_count==1){
+            INFO "LMN7: ONE of groups $lmn7_roomlist_string  found as allowed room";
+	} else {
+            INFO "LMN7: NONE of groups $lmn7_roomlist_string  found as allowed room";
+	}
+
 
         if ($host_check==1){
           # hostname on a linbo client can have an -w added at the end
