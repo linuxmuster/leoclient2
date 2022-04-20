@@ -16,6 +16,58 @@ Example:
 git tag V-0.4.1-1
 
 
+New way to package on github:
+
+
+0. configuration file is:
+   .github/workflows/release.yml
+
+1. The build process inludes only files that are committed to the repository on github
+   --> commit all changes and push them to github
+
+2. update changelog file:
+   # cd leoclient2
+   # dch -i 
+     -> set version number (example: 3.15.3-1)
+     -> add a comment to the changelog
+        * use multilines here
+     -> set a valid repo like lmn7 OR lmn71...
+        see configuration file .github/workflows/release.yml
+
+3. commit and push all changes
+
+4. Tag the commit like:
+   To later trigger the build use tagslike this:
+   # git tag v0.90.1-1
+   (Other tags will not trigger the build)
+
+5. Push the tag to github and trigger the package build:
+   # git push --tags
+   (To remove Tags and Releases: https://github.com/linuxmuster/leoclient2 -> Releases)
+   
+   You can watch the progress at: https://github.com/linuxmuster/leoclient2 -> TAB: Actions
+   Klick on the build name to see more details/errors during the build
+
+   Time needed:
+   Build DEB Package:                    3:00 min
+   Github Release:                       0:15 min
+   Push latest release to archive repo:  0:15 min 
+
+   You can check/(delete) the build on https://github.com/linuxmuster/leoclient2 -> Releases
+
+   The package build also triggers a pull request to the linuxmuster/deb repo
+
+6. Go to the linuxmuster/deb repo: https://github.com/linuxmuster/deb
+   Merge the pull request triggered by the build
+
+
+7. Check if the packages are in the correct repo:
+   https://github.com/linuxmuster/deb/tree/main/packages/leoclient2
+
+
+
+
+
 ############################################################
 # Hints 
 ############################################################

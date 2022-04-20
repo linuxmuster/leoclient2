@@ -1,3 +1,9 @@
+leoclient2 (0.9.10-1) lmn71-testing; urgency=medium
+
+  *  first package built on github 
+
+ -- bz <bz@adler>  Thu, 21 Apr 2022 00:08:31 +0200
+
 leoclient2 (0.8.0-1) bionic-testing; urgency=medium
 
   * mitnehmen (GOCACHE) of remote machines, lmn7 room permission stuff
