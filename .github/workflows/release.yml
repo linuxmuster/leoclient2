@@ -17,7 +17,7 @@ jobs:
         uses: actions/checkout@v2
 
       - name: Install dependencies
-        run: sudo apt update && sudo apt install debhelper build-essential devscripts -y
+        run: sudo apt update && sudo apt install debhelper perl-base fakeroot -y
 
       - name: Build
         run: make deb # leoclient2 package build command
