@@ -23,7 +23,7 @@ jobs:
         run: make deb # leoclient2 package build command
 
       - name: Copy artifacts
-        run: mkdir package && cp ../leoclient2-* ./package 
+        run: mkdir package && cp ../leoclient2-* ./package && cp ../leoclient2_*
 
       - name: Upload artifact
         uses: actions/upload-artifact@v2
