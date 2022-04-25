@@ -30,6 +30,9 @@ case "$1" in
         mkdir -p /media/leoclient2-vm
         chmod 0777 /media/leoclient2-vm
     fi
+    # install missing Gtk2.pm module (strarting with ubuntu jammy)
+    echo "While the module compiles, make yourself a cup of tea"
+    cpanm -S --force --skip-installed Gtk2
     ;;
 
     abort-upgrade|abort-remove|abort-deconfigure)
