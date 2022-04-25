@@ -10,7 +10,7 @@ Standards-Version: 3.5.2
 Package: leoclient2-leovirtstarter-client
 Architecture: all
 Suggests: 
-Depends: libfilesys-df-perl, liblog-log4perl-perl, zenity, libio-interface-perl, rsync, libglib-perl, libpango-perl, libgdk-pixbuf-2.0-0, libgtk2.0-dev, pkg-config, cpanminus
+Depends: libfilesys-df-perl, liblog-log4perl-perl, zenity, libio-interface-perl, rsync, libglib-perl, libpango-perl, libgdk-pixbuf-2.0-0, libgtk2.0-dev,libcanberra-gtk-module, pkg-config, cpanminus
 Description: alternativ software to start VirtualBox
  leovirtstarter2 copies and caches VirtualBox snapshots and starts
  them
