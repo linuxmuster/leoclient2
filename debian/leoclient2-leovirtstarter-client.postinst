@@ -31,7 +31,9 @@ case "$1" in
         chmod 0777 /media/leoclient2-vm
     fi
     # install missing Gtk2.pm module (strarting with ubuntu jammy)
+    echo ""
     echo "While the module compiles, make yourself a cup of tea"
+    echo ""
     cpanm -S --force --skip-installed Gtk2
     ;;
 

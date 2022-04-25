@@ -6,6 +6,16 @@ Make official package:
 make deb
 
 ############################################################
+Gtk2.pm
+############################################################
+- support for Gtk2.pm Perl module was cancelled in ubuntu jammy
+- the module is compiled and installed in the postinstall script
+  with cpanminus/cpanm, see:
+
+https://www.linode.com/docs/guides/manage-cpan-modules-with-cpan-minus/
+
+
+############################################################
 Packaging:
 ############################################################
 
