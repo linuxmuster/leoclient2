@@ -1,6 +1,6 @@
-leoclient2 (0.9.10-8) lmn71-testing; urgency=medium
+leoclient2 (0.9.10-9) lmn71-testing; urgency=medium
 
-  *  first package built on github 
+  *  first package built on github, compiling Gtk2 module on installation 
 
  -- bz <bz@adler>  Thu, 21 Apr 2022 00:08:31 +0200
 
