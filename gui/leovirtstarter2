@@ -311,8 +311,16 @@ my $log="/tmp/leovirtstarter2.log";
 # allow everybody to log into the logfile
 #umask 000;
 
+# open a different logfile when calles as root
+# (opening same logfile would generate an fatal error)
+if ($all_vars{'user'}{'uid'} eq "root"){
+    $log="/tmp/leovirtstarter2.root.log";
+}
+
+
 #print Dumper(%all_vars);
 # change $INFO to $DEBUG to see more
+print "  * Opening logfile $log\n";
 Log::Log4perl->easy_init({ 
 #                level   => $INFO,
                 level   => $DEBUG,
