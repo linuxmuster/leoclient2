@@ -249,27 +249,26 @@ if (not defined $host_uid){
     $all_vars{'host'}{'linuxmuster-client'} = 0; 
     $host_uid=0;
 } else {
-    $all_vars{'host'}{'linuxmuster-client'} = 1; 
+    $all_vars{'host'}{'linuxmuster-client'} = 1;
+    # additional info for version 7.x server
+    # parse multiple group memberships from id command
+    my $id_result=`id $hostname\$`;
+    chomp($id_result);
+    my @parts=split(/=/,$id_result);
+    my $last_part=pop(@parts);
+    my @id_group=split(/,/,$last_part);
+    foreach my $group_string (@id_group){
+        my ($gidnumber,$group)=split(/\(/,$group_string);
+        $group=~s/\)//;
+        $all_vars{'host'}{'room7'}{$group}=$gidnumber;
+    }
 }
+
 
 my @host_entry= getpwuid($host_uid);
 my $host_gid=$host_entry[3];
 $all_vars{'host'}{'roomuidnumber'} = $host_entry[3];
 $all_vars{'host'}{'room'} = getgrgid($host_gid);
-
-
-# additional info for version 7.x server
-# parse multiple group memberships from id command
-my $id_result=`id $hostname\$`;
-chomp($id_result);
-my @parts=split(/=/,$id_result);
-my $last_part=pop(@parts);
-my @id_group=split(/,/,$last_part);
-foreach my $group_string (@id_group){
-    my ($gidnumber,$group)=split(/\(/,$group_string);
-    $group=~s/\)//;
-    $all_vars{'host'}{'room7'}{$group}=$gidnumber;
-}
 
 
 # get list of the current groups for this process
@@ -310,16 +309,18 @@ my $snapshot_search_dir="";
 my $ignore_virtualbox=0;
 my $log="/tmp/leovirtstarter2.log";
 # allow everybody to log into the logfile
-umask 000;
+#umask 000;
+
+#print Dumper(%all_vars);
 # change $INFO to $DEBUG to see more
 Log::Log4perl->easy_init({ 
 #                level   => $INFO,
                 level   => $DEBUG,
+                umask => 0000,
                 file    => ">>$log" } );    
 
 #use leoclient2::leovirtstarter2;
 use Filesys::Df;
-
 
 
 # Parsen der Optionen
