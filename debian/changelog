@@ -1,4 +1,4 @@
-leoclient2 (0.9.10-11) lmn71-testing; urgency=medium
+leoclient2 (0.9.10-12) lmn71-testing; urgency=medium
 
   * opening a different logfile when run as root
 
