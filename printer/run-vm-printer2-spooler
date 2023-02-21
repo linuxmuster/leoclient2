@@ -105,7 +105,11 @@ sub spooler {
             if (-f $abs_path){
                 # print command goes here instead of "sleep 3" --> "lp $abs_path" 
                 INFO "Printing:   $abs_path \n";
-                system("lp $abs_path && echo '   ---> Printed successfully' >> $log || echo '   ---> ERROR printing $abs_path' >> $log");
+                # system("lp $abs_path && echo '   ---> Printed successfully' >> $log || echo '   ---> ERROR printing $abs_path' >> $log");
+                my $tmp_path_with_fonts="/tmp/spoolerfile_with_fonts.pdf";
+		my $command="gs -o $tmp_path_with_fonts -sDEVICE=pdfwrite -dEmbedAllFonts=true -sFONTPATH=\"/usr/share/fonts/truetype\" $abs_path".
+		       "; lp $tmp_path_with_fonts && echo '   ---> Printed successfully' >> $log || echo '   ---> ERROR printing $abs_path' >> $log"
+                system($command);
                 # moving away file
                 INFO "Moving source:     $abs_path\n";
                 INFO "       target:     $final_file\n";
