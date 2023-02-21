@@ -1,3 +1,9 @@
+leoclient2 (0.9.12-1) lmn71-testing; urgency=medium
+
+  * syntax error fixed, keep pdf with fonts, delete pdf without fonts
+
+ -- bz <bz@adler>  Tue, 21 Feb 2023 17:26:22 +0100
+
 leoclient2 (0.9.11-3) lmn71-testing; urgency=medium
 
   * some mods to build on newer ubuntu
