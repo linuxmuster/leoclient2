@@ -1,3 +1,9 @@
+leoclient2 (0.9.11-3) lmn71-testing; urgency=medium
+
+  * some mods to build on newer ubuntu
+
+ -- bz <bz@adler>  Tue, 21 Feb 2023 15:15:38 +0100
+
 leoclient2 (0.9.11-1) lmn71-testing; urgency=medium
 
   * use ghostscript to embed fonts before printing
