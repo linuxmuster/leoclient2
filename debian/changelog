@@ -1,3 +1,9 @@
+leoclient2 (0.9.11-1) lmn71-testing; urgency=medium
+
+  * use ghostscript to embed fonts before printing
+
+ -- bz <bz@adler>  Tue, 21 Feb 2023 14:58:53 +0100
+
 leoclient2 (0.9.10-12) lmn71-testing; urgency=medium
 
   * opening a different logfile when run as root
