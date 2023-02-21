@@ -113,7 +113,8 @@ sub spooler {
                 # moving away file
                 INFO "Moving source:     $abs_path\n";
                 INFO "       target:     $final_file\n";
-                system("mv $abs_path $final_file && echo '   ---> Moved successfully' >> $log || echo '   ---> ERROR moving $abs_path' >> $log");
+                system("mv $tmp_path_with_fonts $final_file && echo '   ---> Moved successfully' >> $log || echo '   ---> ERROR moving $abs_path' >> $log");		
+                system("rm  $abs_path");		
             }
         }
     }
