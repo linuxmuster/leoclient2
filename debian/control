@@ -31,7 +31,7 @@ Package: leoclient2-vm-printer
 Architecture: all
 Suggests: 
 Pre-Depends:
-Depends: liblinux-inotify2-perl, liblog-log4perl-perl
+Depends: liblinux-inotify2-perl, liblog-log4perl-perl, ghostscript
 Description: Watches a directory used for virtual machine printing. 
  Sends the created files to the default printer
 
